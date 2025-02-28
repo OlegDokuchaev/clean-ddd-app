@@ -2,32 +2,32 @@ package create_order
 
 import "github.com/google/uuid"
 
-type Result struct {
+type EventBase struct {
 	ID uuid.UUID
 }
 
 type ItemsReserved struct {
 	OrderID uuid.UUID
-	Result
+	EventBase
 }
 
 type ItemsReservationFailed struct {
 	OrderID uuid.UUID
-	Result
+	EventBase
 }
 
 type CourierAssignmentFailed struct {
 	OrderID uuid.UUID
-	Result
+	EventBase
 }
 
 type CourierAssigned struct {
 	OrderID   uuid.UUID
 	CourierID uuid.UUID
-	Result
+	EventBase
 }
 
 type ItemsReleased struct {
 	OrderID uuid.UUID
-	Result
+	EventBase
 }
