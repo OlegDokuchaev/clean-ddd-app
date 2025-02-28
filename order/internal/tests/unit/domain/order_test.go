@@ -177,7 +177,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivering() {
 		s.Run(tc.name, func() {
 			ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
 			err := tc.setup(ord)
-			require.NoError(s.T(), err, "setup должен выполниться без ошибки")
+			require.NoError(s.T(), err)
 
 			err = ord.NoteDelivering(tc.courierID)
 
@@ -225,7 +225,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivered() {
 		s.Run(tc.name, func() {
 			ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
 			err := tc.setup(ord)
-			require.NoError(s.T(), err, "setup должен выполниться без ошибки")
+			require.NoError(s.T(), err)
 
 			err = ord.NoteDelivered()
 
