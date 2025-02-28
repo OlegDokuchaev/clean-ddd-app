@@ -32,7 +32,8 @@ type AssignCourierCmd struct {
 }
 
 type BeginDeliveryCmd struct {
-	OrderID uuid.UUID
+	OrderID   uuid.UUID
+	CourierID uuid.UUID
 	Cmd
 }
 
