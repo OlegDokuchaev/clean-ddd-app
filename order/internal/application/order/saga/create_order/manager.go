@@ -1,7 +1,10 @@
 package create_order
 
-import orderDomain "order/internal/domain/order"
+import (
+	"context"
+	orderDomain "order/internal/domain/order"
+)
 
 type Manager interface {
-	Create(order *orderDomain.Order)
+	Create(ctx context.Context, order *orderDomain.Order)
 }
