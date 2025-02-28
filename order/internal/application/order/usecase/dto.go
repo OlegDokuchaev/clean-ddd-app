@@ -12,5 +12,6 @@ type CreateDto struct {
 }
 
 type BeginDeliveryDto struct {
-	courierID uuid.UUID
+	OrderID   uuid.UUID
+	CourierID uuid.UUID
 }
