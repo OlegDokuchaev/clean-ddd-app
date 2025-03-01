@@ -16,43 +16,45 @@ type OrderDomainTestSuite struct {
 func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
 	tests := []struct {
 		name           string
-		setup          func(ord *orderDomain.Order) error
+		setup          func() *orderDomain.Order
 		expectedStatus orderDomain.Status
-		expectError    bool
+		expectedErr    error
 	}{
 		{
 			name: "Success: Order in Delivering",
-			setup: func(ord *orderDomain.Order) error {
-				return ord.NoteDelivering(uuid.New())
+			setup: func() *orderDomain.Order {
+				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
+				return ord
 			},
 			expectedStatus: orderDomain.CustomerCanceled,
-			expectError:    false,
+			expectedErr:    nil,
 		},
 		{
 			name: "Failure: Order remains in Created",
-			setup: func(ord *orderDomain.Order) error {
-				return nil
+			setup: func() *orderDomain.Order {
+				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
 			},
 			expectedStatus: orderDomain.Created,
-			expectError:    true,
+			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
 		},
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		s.Run(tc.name, func() {
-			ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
-			err := tc.setup(ord)
-			require.NoError(s.T(), err)
+			s.T().Parallel()
+			order := tc.setup()
 
-			err = ord.NoteCanceledByCustomer()
+			err := order.NoteCanceledByCustomer()
 
-			if tc.expectError {
+			if tc.expectedErr != nil {
 				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, orderDomain.ErrUnsupportedStatusTransition)
+				require.ErrorIs(s.T(), err, tc.expectedErr)
 			} else {
 				require.NoError(s.T(), err)
 			}
-			require.Equal(s.T(), tc.expectedStatus, ord.Status)
+			require.Equal(s.T(), tc.expectedStatus, order.Status)
 		})
 	}
 }
@@ -60,43 +62,45 @@ func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
 func (s *OrderDomainTestSuite) TestNoteCanceledOutOfStock() {
 	tests := []struct {
 		name           string
-		setup          func(ord *orderDomain.Order) error
+		setup          func() *orderDomain.Order
 		expectedStatus orderDomain.Status
-		expectError    bool
+		expectedErr    error
 	}{
 		{
 			name: "Success: Order in Created (default)",
-			setup: func(ord *orderDomain.Order) error {
-				return nil
+			setup: func() *orderDomain.Order {
+				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
 			},
 			expectedStatus: orderDomain.CanceledOutOfStock,
-			expectError:    false,
+			expectedErr:    nil,
 		},
 		{
 			name: "Failure: Order in Delivering",
-			setup: func(ord *orderDomain.Order) error {
-				return ord.NoteDelivering(uuid.New())
+			setup: func() *orderDomain.Order {
+				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
+				return ord
 			},
 			expectedStatus: orderDomain.Delivering,
-			expectError:    true,
+			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
 		},
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		s.Run(tc.name, func() {
-			ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
-			err := tc.setup(ord)
-			require.NoError(s.T(), err)
+			s.T().Parallel()
+			order := tc.setup()
 
-			err = ord.NoteCanceledOutOfStock()
+			err := order.NoteCanceledOutOfStock()
 
-			if tc.expectError {
+			if tc.expectedErr != nil {
 				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, orderDomain.ErrUnsupportedStatusTransition)
+				require.ErrorIs(s.T(), err, tc.expectedErr)
 			} else {
 				require.NoError(s.T(), err)
 			}
-			require.Equal(s.T(), tc.expectedStatus, ord.Status)
+			require.Equal(s.T(), tc.expectedStatus, order.Status)
 		})
 	}
 }
@@ -104,43 +108,45 @@ func (s *OrderDomainTestSuite) TestNoteCanceledOutOfStock() {
 func (s *OrderDomainTestSuite) TestNoteCanceledCourierNotFound() {
 	tests := []struct {
 		name           string
-		setup          func(ord *orderDomain.Order) error
+		setup          func() *orderDomain.Order
 		expectedStatus orderDomain.Status
-		expectError    bool
+		expectedErr    error
 	}{
 		{
 			name: "Success: Order in Created (default)",
-			setup: func(ord *orderDomain.Order) error {
-				return nil
+			setup: func() *orderDomain.Order {
+				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
 			},
 			expectedStatus: orderDomain.CanceledCourierNotFound,
-			expectError:    false,
+			expectedErr:    nil,
 		},
 		{
 			name: "Failure: Order in Delivering",
-			setup: func(ord *orderDomain.Order) error {
-				return ord.NoteDelivering(uuid.New())
+			setup: func() *orderDomain.Order {
+				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
+				return ord
 			},
 			expectedStatus: orderDomain.Delivering,
-			expectError:    true,
+			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
 		},
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		s.Run(tc.name, func() {
-			ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
-			err := tc.setup(ord)
-			require.NoError(s.T(), err)
+			s.T().Parallel()
+			order := tc.setup()
 
-			err = ord.NoteCanceledCourierNotFound()
+			err := order.NoteCanceledCourierNotFound()
 
-			if tc.expectError {
+			if tc.expectedErr != nil {
 				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, orderDomain.ErrUnsupportedStatusTransition)
+				require.ErrorIs(s.T(), err, tc.expectedErr)
 			} else {
 				require.NoError(s.T(), err)
 			}
-			require.Equal(s.T(), tc.expectedStatus, ord.Status)
+			require.Equal(s.T(), tc.expectedStatus, order.Status)
 		})
 	}
 }
@@ -148,50 +154,50 @@ func (s *OrderDomainTestSuite) TestNoteCanceledCourierNotFound() {
 func (s *OrderDomainTestSuite) TestNoteDelivering() {
 	tests := []struct {
 		name           string
-		setup          func(ord *orderDomain.Order) error
+		setup          func() *orderDomain.Order
 		courierID      uuid.UUID
 		expectedStatus orderDomain.Status
-		expectError    bool
+		expectedErr    error
 	}{
 		{
 			name: "Success: Order in Created",
-			setup: func(ord *orderDomain.Order) error {
-				return nil
+			setup: func() *orderDomain.Order {
+				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
 			},
 			courierID:      uuid.New(),
 			expectedStatus: orderDomain.Delivering,
-			expectError:    false,
+			expectedErr:    nil,
 		},
 		{
 			name: "Failure: Order already in Delivering",
-			setup: func(ord *orderDomain.Order) error {
-				return ord.NoteDelivering(uuid.New())
+			setup: func() *orderDomain.Order {
+				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
+				return ord
 			},
 			courierID:      uuid.New(),
 			expectedStatus: orderDomain.Delivering,
-			expectError:    true,
+			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
 		},
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		s.Run(tc.name, func() {
-			ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
-			err := tc.setup(ord)
-			require.NoError(s.T(), err)
+			s.T().Parallel()
+			order := tc.setup()
 
-			err = ord.NoteDelivering(tc.courierID)
+			err := order.NoteDelivering(tc.courierID)
 
-			if tc.expectError {
+			if tc.expectedErr != nil {
 				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, orderDomain.ErrUnsupportedStatusTransition)
+				require.ErrorIs(s.T(), err, tc.expectedErr)
 			} else {
 				require.NoError(s.T(), err)
+				require.NotNil(s.T(), order.Delivery.CourierID)
+				require.Equal(s.T(), tc.courierID, *order.Delivery.CourierID)
 			}
-			require.Equal(s.T(), tc.expectedStatus, ord.Status)
-			if !tc.expectError {
-				require.NotNil(s.T(), ord.Delivery.CourierID)
-				require.Equal(s.T(), tc.courierID, *ord.Delivery.CourierID)
-			}
+			require.Equal(s.T(), tc.expectedStatus, order.Status)
 		})
 	}
 }
@@ -199,47 +205,47 @@ func (s *OrderDomainTestSuite) TestNoteDelivering() {
 func (s *OrderDomainTestSuite) TestNoteDelivered() {
 	tests := []struct {
 		name           string
-		setup          func(ord *orderDomain.Order) error
+		setup          func() *orderDomain.Order
 		expectedStatus orderDomain.Status
-		expectError    bool
+		expectedErr    error
 	}{
 		{
 			name: "Success: Order in Delivering",
-			setup: func(ord *orderDomain.Order) error {
-				return ord.NoteDelivering(uuid.New())
+			setup: func() *orderDomain.Order {
+				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
+				return ord
 			},
 			expectedStatus: orderDomain.Delivered,
-			expectError:    false,
+			expectedErr:    nil,
 		},
 		{
 			name: "Failure: Order in Created (default)",
-			setup: func(ord *orderDomain.Order) error {
-				return nil
+			setup: func() *orderDomain.Order {
+				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
 			},
 			expectedStatus: orderDomain.Created,
-			expectError:    true,
+			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
 		},
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		s.Run(tc.name, func() {
-			ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
-			err := tc.setup(ord)
-			require.NoError(s.T(), err)
+			s.T().Parallel()
+			order := tc.setup()
 
-			err = ord.NoteDelivered()
+			err := order.NoteDelivered()
 
-			if tc.expectError {
+			if tc.expectedErr != nil {
 				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, orderDomain.ErrUnsupportedStatusTransition)
+				require.ErrorIs(s.T(), err, tc.expectedErr)
 			} else {
 				require.NoError(s.T(), err)
+				require.NotNil(s.T(), order.Delivery.Arrived)
+				require.WithinDuration(s.T(), time.Now(), *order.Delivery.Arrived, time.Second)
 			}
-			require.Equal(s.T(), tc.expectedStatus, ord.Status)
-			if !tc.expectError {
-				require.NotNil(s.T(), ord.Delivery.Arrived)
-				require.WithinDuration(s.T(), time.Now(), *ord.Delivery.Arrived, time.Second)
-			}
+			require.Equal(s.T(), tc.expectedStatus, order.Status)
 		})
 	}
 }
