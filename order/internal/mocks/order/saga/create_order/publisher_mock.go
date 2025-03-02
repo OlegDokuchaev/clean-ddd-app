@@ -39,3 +39,5 @@ func (p *PublisherMock) PublishCancelCourierNotFoundCmd(ctx context.Context, cmd
 	args := p.Called(ctx, cmd)
 	return args.Error(0)
 }
+
+var _ createOrderSaga.Publisher = (*PublisherMock)(nil)
