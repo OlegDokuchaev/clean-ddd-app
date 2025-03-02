@@ -20,7 +20,7 @@ func Create(event domain.Event) (*Message, error) {
 func parsePayload(event domain.Event) ([]byte, error) {
 	payload, err := json.Marshal(event.Payload())
 	if err != nil {
-		return nil, err
+		return nil, ErrInvalidOutboxPayload
 	}
 	return payload, nil
 }
