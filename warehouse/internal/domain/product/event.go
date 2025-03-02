@@ -13,6 +13,6 @@ type CreatedPayload struct {
 	ProductID uuid.UUID
 }
 
-func newCreatedEvent(payload CreatedPayload) domain.Event {
+func NewCreatedEvent(payload CreatedPayload) domain.Event {
 	return domain.NewEvent(CreatedEventName, payload)
 }

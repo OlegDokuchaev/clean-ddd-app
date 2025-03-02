@@ -22,7 +22,7 @@ func Create(name string, price decimal.Decimal) (*Product, []*domain.Event, erro
 		Price:   price,
 		Created: time.Now(),
 	}
-	event := newCreatedEvent(CreatedPayload{
+	event := NewCreatedEvent(CreatedPayload{
 		ProductID: product.ID,
 	})
 
