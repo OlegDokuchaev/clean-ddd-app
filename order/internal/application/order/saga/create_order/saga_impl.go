@@ -65,3 +65,5 @@ func (s *SagaImpl) HandleCourierAssigned(ctx context.Context, event CourierAssig
 	}
 	return s.publisher.PublishBeginDeliveryCmd(ctx, cmd)
 }
+
+var _ Saga = (*SagaImpl)(nil)
