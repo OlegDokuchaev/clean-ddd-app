@@ -35,3 +35,5 @@ func (r *RepositoryMock) GetCurrentByCourier(ctx context.Context, courierID uuid
 	args := r.Called(ctx, courierID)
 	return args.Get(0).([]*orderDomain.Order), args.Error(1)
 }
+
+var _ orderDomain.Repository = (*RepositoryMock)(nil)
