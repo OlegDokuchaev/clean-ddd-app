@@ -117,3 +117,5 @@ func (u *UseCaseImpl) GetAllByCustomer(ctx context.Context, customerID uuid.UUID
 func (u *UseCaseImpl) GetCurrentByCourier(ctx context.Context, courierID uuid.UUID) ([]*orderDomain.Order, error) {
 	return u.repo.GetCurrentByCourier(ctx, courierID)
 }
+
+var _ UseCase = (*UseCaseImpl)(nil)
