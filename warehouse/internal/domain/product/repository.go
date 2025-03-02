@@ -7,5 +7,5 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, product *Product) error
-	GetById(ctx context.Context, productID uuid.UUID) (*Product, error)
+	GetByID(ctx context.Context, productID uuid.UUID) (*Product, error)
 }
