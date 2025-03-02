@@ -26,5 +26,5 @@ func Create(name string, price decimal.Decimal) (*Product, []domain.Event, error
 		ProductID: product.ID,
 	})
 
-	return product, []domain.Event{&event}, nil
+	return product, []domain.Event{event}, nil
 }
