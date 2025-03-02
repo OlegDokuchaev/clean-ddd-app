@@ -21,7 +21,7 @@ func (r *RepositoryMock) Update(ctx context.Context, order *orderDomain.Order) e
 	return args.Error(0)
 }
 
-func (r *RepositoryMock) GetById(ctx context.Context, orderID uuid.UUID) (*orderDomain.Order, error) {
+func (r *RepositoryMock) GetByID(ctx context.Context, orderID uuid.UUID) (*orderDomain.Order, error) {
 	args := r.Called(ctx, orderID)
 	return args.Get(0).(*orderDomain.Order), args.Error(1)
 }

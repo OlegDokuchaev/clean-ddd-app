@@ -31,7 +31,7 @@ func (u *UseCaseImpl) Create(ctx context.Context, data CreateDto) (uuid.UUID, er
 }
 
 func (u *UseCaseImpl) CancelByCustomer(ctx context.Context, orderID uuid.UUID) error {
-	order, err := u.repo.GetById(ctx, orderID)
+	order, err := u.repo.GetByID(ctx, orderID)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (u *UseCaseImpl) CancelByCustomer(ctx context.Context, orderID uuid.UUID) e
 }
 
 func (u *UseCaseImpl) CancelOutOfStock(ctx context.Context, orderID uuid.UUID) error {
-	order, err := u.repo.GetById(ctx, orderID)
+	order, err := u.repo.GetByID(ctx, orderID)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (u *UseCaseImpl) CancelOutOfStock(ctx context.Context, orderID uuid.UUID) e
 }
 
 func (u *UseCaseImpl) CancelCourierNotFound(ctx context.Context, orderID uuid.UUID) error {
-	order, err := u.repo.GetById(ctx, orderID)
+	order, err := u.repo.GetByID(ctx, orderID)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (u *UseCaseImpl) CancelCourierNotFound(ctx context.Context, orderID uuid.UU
 }
 
 func (u *UseCaseImpl) BeginDelivery(ctx context.Context, data BeginDeliveryDto) error {
-	order, err := u.repo.GetById(ctx, data.OrderID)
+	order, err := u.repo.GetByID(ctx, data.OrderID)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (u *UseCaseImpl) BeginDelivery(ctx context.Context, data BeginDeliveryDto) 
 }
 
 func (u *UseCaseImpl) CompleteDelivery(ctx context.Context, orderID uuid.UUID) error {
-	order, err := u.repo.GetById(ctx, orderID)
+	order, err := u.repo.GetByID(ctx, orderID)
 	if err != nil {
 		return err
 	}

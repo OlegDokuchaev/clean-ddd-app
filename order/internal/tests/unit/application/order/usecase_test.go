@@ -98,7 +98,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
 			},
@@ -106,10 +106,10 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 			finalStatus: orderDomain.CustomerCanceled,
 		},
 		{
-			name: "Failure: repo.GetById error",
+			name: "Failure: repo.GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).
+				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
 			},
@@ -120,7 +120,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 			name: "Failure: domain method error (order in Created)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
 			expectedErr: orderDomain.ErrUnsupportedStatusTransition,
@@ -131,7 +131,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
 			},
@@ -175,7 +175,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 			name: "Success: Order in Created (default)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
 			},
@@ -183,10 +183,10 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 			finalStatus: orderDomain.CanceledOutOfStock,
 		},
 		{
-			name: "Failure: GetById error",
+			name: "Failure: GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).
+				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
 			},
@@ -198,7 +198,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
 			expectedErr: orderDomain.ErrUnsupportedStatusTransition,
@@ -208,7 +208,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
 			},
@@ -252,7 +252,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 			name: "Success: Order in Created",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
 			},
@@ -260,10 +260,10 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 			finalStatus: orderDomain.CanceledCourierNotFound,
 		},
 		{
-			name: "Failure: GetById error",
+			name: "Failure: GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).
+				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
 			},
@@ -275,7 +275,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
 			expectedErr: orderDomain.ErrUnsupportedStatusTransition,
@@ -285,7 +285,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
 			},
@@ -333,7 +333,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
 				}
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return dto, o
 			},
@@ -349,21 +349,21 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
 				}
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return dto, o
 			},
 			expectedErr: orderDomain.ErrUnsupportedStatusTransition,
 			finalStatus: orderDomain.Delivering,
 		},
 		{
-			name: "Failure: repo.GetById error",
+			name: "Failure: repo.GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order) {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
 				dto := usecase.BeginDeliveryDto{
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
 				}
-				repo.On("GetById", s.ctx, o.ID).
+				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return dto, o
 			},
@@ -378,7 +378,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
 				}
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return dto, o
 			},
@@ -423,7 +423,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
 			},
@@ -431,10 +431,10 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 			finalStatus: orderDomain.Delivered,
 		},
 		{
-			name: "Failure: GetById error",
+			name: "Failure: GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).
+				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
 			},
@@ -445,7 +445,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 			name: "Failure: domain method error (order in Created)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
 			expectedErr: orderDomain.ErrUnsupportedStatusTransition,
@@ -456,7 +456,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
 				o := orderDomain.Create(uuid.New(), "Some Address", nil)
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
-				repo.On("GetById", s.ctx, o.ID).Return(o, nil).Once()
+				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
 			},
