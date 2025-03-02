@@ -28,6 +28,8 @@ func (e event) Payload() EventPayload {
 	return e.payload
 }
 
+var _ Event = (*event)(nil)
+
 func newEvent(name string, payload EventPayload) event {
 	return event{
 		id:      uuid.New(),
