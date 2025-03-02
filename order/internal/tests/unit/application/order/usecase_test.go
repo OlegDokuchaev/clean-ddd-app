@@ -27,13 +27,12 @@ func (s *OrderUseCaseTestSuite) SetupTest() {
 }
 
 func (s *OrderUseCaseTestSuite) TestCreate() {
-	type testCase struct {
+	tests := []struct {
 		name        string
 		dto         usecase.CreateDto
 		setup       func(repo *orderMock.RepositoryMock, manager *createOrderMock.ManagerMock)
 		expectedErr error
-	}
-	tests := []testCase{
+	}{
 		{
 			name: "Success",
 			dto: usecase.CreateDto{
