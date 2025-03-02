@@ -8,12 +8,12 @@ import (
 	domain "warehouse/internal/domain/common"
 )
 
-func Create(name string, price decimal.Decimal) (*Product, []*domain.Event, error) {
+func Create(name string, price decimal.Decimal) (*Product, []domain.Event, error) {
 	if price.LessThanOrEqual(decimal.Zero) {
-		return nil, []*domain.Event{}, ErrInvalidProductPrice
+		return nil, []domain.Event{}, ErrInvalidProductPrice
 	}
 	if strings.TrimSpace(name) == "" {
-		return nil, []*domain.Event{}, ErrInvalidProductName
+		return nil, []domain.Event{}, ErrInvalidProductName
 	}
 
 	product := &Product{
@@ -26,5 +26,5 @@ func Create(name string, price decimal.Decimal) (*Product, []*domain.Event, erro
 		ProductID: product.ID,
 	})
 
-	return product, []*domain.Event{&event}, nil
+	return product, []domain.Event{&event}, nil
 }
