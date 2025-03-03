@@ -12,6 +12,12 @@ type UseCaseImpl struct {
 	uow uow.UoW
 }
 
+func NewUseCase(uow uow.UoW) *UseCaseImpl {
+	return &UseCaseImpl{
+		uow: uow,
+	}
+}
+
 func (u *UseCaseImpl) Create(ctx context.Context, data CreateDto) (uuid.UUID, error) {
 	product, events, err := productDomain.Create(data.Name, data.Price)
 	if err != nil {
