@@ -13,15 +13,23 @@ type Item struct {
 }
 
 func (i *Item) Reserve(count int) error {
+	if count <= 0 {
+		return ErrInvalidItemCount
+	}
+
 	finalCount := i.Count - count
 	if finalCount <= 0 {
 		return ErrInvalidItemCount
 	}
 	i.Count = finalCount
+
 	return nil
 }
 
 func (i *Item) Release(count int) error {
+	if count <= 0 {
+		return ErrInvalidItemCount
+	}
 	i.Count += count
 	return nil
 }
