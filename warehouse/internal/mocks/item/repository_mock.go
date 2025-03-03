@@ -37,4 +37,9 @@ func (r *RepositoryMock) GetAllByIDs(ctx context.Context, itemIDs ...uuid.UUID) 
 	return args.Get(0).([]*itemDomain.Item), args.Error(1)
 }
 
+func (r *RepositoryMock) GetAll(ctx context.Context) ([]*itemDomain.Item, error) {
+	args := r.Called(ctx)
+	return args.Get(0).([]*itemDomain.Item), args.Error(1)
+}
+
 var _ itemDomain.Repository = (*RepositoryMock)(nil)
