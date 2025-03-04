@@ -9,10 +9,16 @@ const (
 	CreatedEventName = "product.ProductCreated"
 )
 
+type CreateEvent struct {
+	domain.EventBase[CreatedPayload]
+}
+
+func (e CreateEvent) Name() string {
+	return CreatedEventName
+}
+
 type CreatedPayload struct {
 	ProductID uuid.UUID
 }
 
-func NewCreatedEvent(payload CreatedPayload) domain.Event {
-	return domain.NewEvent(CreatedEventName, payload)
-}
+var _ domain.Event = (*CreateEvent)(nil)

@@ -11,33 +11,24 @@ type (
 		Payload() EventPayload
 	}
 
-	event struct {
+	EventBase[T EventPayload] struct {
 		id      uuid.UUID
-		name    string
-		payload EventPayload
+		payload T
 	}
 )
 
-func (e event) ID() uuid.UUID {
+func (e EventBase[T]) ID() uuid.UUID {
 	return e.id
 }
-func (e event) Name() string {
-	return e.name
-}
-func (e event) Payload() EventPayload {
+func (e EventBase[T]) Payload() EventPayload {
 	return e.payload
 }
 
-var _ Event = (*event)(nil)
-
-func newEvent(name string, payload EventPayload) event {
-	return event{
-		id:      uuid.New(),
-		name:    name,
-		payload: payload,
+func NewEvent[P EventPayload, T ~struct{ EventBase[P] }](payload P) T {
+	return T{
+		EventBase: EventBase[P]{
+			id:      uuid.New(),
+			payload: payload,
+		},
 	}
-}
-
-func NewEvent(name string, payload EventPayload) Event {
-	return newEvent(name, payload)
 }
