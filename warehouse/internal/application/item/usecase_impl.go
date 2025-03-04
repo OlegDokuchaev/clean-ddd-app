@@ -2,7 +2,7 @@ package item
 
 import (
 	"context"
-	domainItem "warehouse/internal/domain/item"
+	itemDomain "warehouse/internal/domain/item"
 	"warehouse/internal/domain/uow"
 
 	"github.com/google/uuid"
@@ -22,7 +22,7 @@ func (u *UseCaseImpl) Create(ctx context.Context, data CreateDto) (uuid.UUID, er
 		return uuid.Nil, err
 	}
 
-	item, err := domainItem.Create(product, data.Count)
+	item, err := itemDomain.Create(product, data.Count)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -67,7 +67,7 @@ func (u *UseCaseImpl) Release(ctx context.Context, data ReleaseDto) error {
 	return nil
 }
 
-func (u *UseCaseImpl) GetAll(ctx context.Context) ([]*domainItem.Item, error) {
+func (u *UseCaseImpl) GetAll(ctx context.Context) ([]*itemDomain.Item, error) {
 	return u.uow.Item().GetAll(ctx)
 }
 
