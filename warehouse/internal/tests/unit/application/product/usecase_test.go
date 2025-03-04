@@ -34,10 +34,10 @@ func (s *ProductUseCaseTestSuite) TestCreate() {
 			name: "Success",
 			dto:  productApplication.CreateDto{Name: "ValidProduct", Price: decimal.NewFromInt(1)},
 			setup: func(uow *mocks.UoWMock) {
-				uow.On("Transaction", mock.Anything, mock.Anything).Once()
-				uow.ProductMock.On("Create", mock.Anything, mock.Anything).
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+				uow.ProductMock.On("Create", s.ctx, mock.Anything).
 					Return(nil).Once()
-				uow.OutboxMock.On("Create", mock.Anything, mock.Anything).
+				uow.OutboxMock.On("Create", s.ctx, mock.Anything).
 					Return(nil).Once()
 			},
 			expectedErr: nil,
@@ -52,8 +52,8 @@ func (s *ProductUseCaseTestSuite) TestCreate() {
 			name: "Failure: Product repository create error",
 			dto:  productApplication.CreateDto{Name: "ValidProduct", Price: decimal.NewFromInt(1)},
 			setup: func(uow *mocks.UoWMock) {
-				uow.On("Transaction", mock.Anything, mock.Anything).Once()
-				uow.ProductMock.On("Create", mock.Anything, mock.Anything).
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+				uow.ProductMock.On("Create", s.ctx, mock.Anything).
 					Return(errors.New("failed to build message")).Once()
 			},
 			expectedErr: errors.New("failed to build message"),
@@ -62,10 +62,10 @@ func (s *ProductUseCaseTestSuite) TestCreate() {
 			name: "Failure: Outbox repository create error",
 			dto:  productApplication.CreateDto{Name: "ValidProduct", Price: decimal.NewFromInt(1)},
 			setup: func(uow *mocks.UoWMock) {
-				uow.On("Transaction", mock.Anything, mock.Anything).Once()
-				uow.ProductMock.On("Create", mock.Anything, mock.Anything).
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+				uow.ProductMock.On("Create", s.ctx, mock.Anything).
 					Return(nil).Once()
-				uow.OutboxMock.On("Create", mock.Anything, mock.Anything).
+				uow.OutboxMock.On("Create", s.ctx, mock.Anything).
 					Return(errors.New("failed to build message")).Once()
 			},
 			expectedErr: errors.New("failed to build message"),
@@ -74,7 +74,7 @@ func (s *ProductUseCaseTestSuite) TestCreate() {
 			name: "Failure: UoW transaction error",
 			dto:  productApplication.CreateDto{Name: "ValidProduct", Price: decimal.NewFromInt(1)},
 			setup: func(uow *mocks.UoWMock) {
-				uow.On("Transaction", mock.Anything, mock.Anything).
+				uow.On("Transaction", s.ctx, mock.Anything).
 					Return(errors.New("transaction error")).Once()
 			},
 			expectedErr: errors.New("transaction error"),
