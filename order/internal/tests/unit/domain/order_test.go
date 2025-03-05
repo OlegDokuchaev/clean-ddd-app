@@ -28,6 +28,87 @@ func (s *OrderDomainTestSuite) createTestOrder() *orderDomain.Order {
 	return order
 }
 
+func (s *OrderDomainTestSuite) TestCreate() {
+	tests := []struct {
+		name        string
+		CustomerID  uuid.UUID
+		Address     string
+		Items       []orderDomain.Item
+		expectedErr error
+	}{
+		{
+			name:       "Success",
+			CustomerID: uuid.New(),
+			Address:    "Test Address",
+			Items: []orderDomain.Item{
+				{
+					ProductID: uuid.New(),
+					Price:     decimal.NewFromInt(100),
+					Count:     1,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Failure: Invalid items",
+			CustomerID:  uuid.New(),
+			Address:     "Test Address",
+			Items:       []orderDomain.Item{},
+			expectedErr: orderDomain.ErrInvalidItems,
+		},
+		{
+			name:        "Failure: Invalid address",
+			CustomerID:  uuid.New(),
+			Address:     "",
+			Items:       []orderDomain.Item{},
+			expectedErr: orderDomain.ErrInvalidAddress,
+		},
+		{
+			name:       "Failure: Invalid item price",
+			CustomerID: uuid.New(),
+			Address:    "Test Address",
+			Items: []orderDomain.Item{
+				{
+					ProductID: uuid.New(),
+					Price:     decimal.NewFromInt(-1),
+					Count:     1,
+				},
+			},
+			expectedErr: orderDomain.ErrInvalidItems,
+		},
+		{
+			name:       "Failure: Invalid item count",
+			CustomerID: uuid.New(),
+			Address:    "Test Address",
+			Items: []orderDomain.Item{
+				{
+					ProductID: uuid.New(),
+					Price:     decimal.NewFromInt(100),
+					Count:     0,
+				},
+			},
+			expectedErr: orderDomain.ErrInvalidItems,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		s.Run(tc.name, func() {
+			s.T().Parallel()
+
+			order, err := orderDomain.Create(tc.CustomerID, tc.Address, tc.Items)
+
+			if tc.expectedErr != nil {
+				require.Error(s.T(), err)
+				require.ErrorIs(s.T(), err, tc.expectedErr)
+			} else {
+				require.NoError(s.T(), err)
+				require.NotNil(s.T(), order)
+			}
+		})
+	}
+}
+
 func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
 	tests := []struct {
 		name           string
