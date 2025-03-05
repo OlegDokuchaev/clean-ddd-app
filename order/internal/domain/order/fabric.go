@@ -1,11 +1,27 @@
 package order
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-func Create(CustomerID uuid.UUID, Address string, Items []Item) *Order {
+func validateAddress(address string) bool {
+	return address != ""
+}
+
+func validateItems(items []Item) bool {
+	return len(items) > 0
+}
+
+func Create(CustomerID uuid.UUID, Address string, Items []Item) (*Order, error) {
+	if !validateAddress(Address) {
+		return nil, ErrInvalidAddress
+	}
+	if !validateItems(Items) {
+		return nil, ErrInvalidItems
+	}
+
 	return &Order{
 		ID:         uuid.New(),
 		CustomerID: CustomerID,
@@ -18,5 +34,5 @@ func Create(CustomerID uuid.UUID, Address string, Items []Item) *Order {
 			Arrived:   nil,
 		},
 		Items: Items,
-	}
+	}, nil
 }

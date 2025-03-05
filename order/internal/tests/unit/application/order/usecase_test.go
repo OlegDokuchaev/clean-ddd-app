@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -26,6 +27,19 @@ func (s *OrderUseCaseTestSuite) SetupTest() {
 	s.ctx = context.Background()
 }
 
+func (s *OrderUseCaseTestSuite) createTestOrder() *orderDomain.Order {
+	items := []orderDomain.Item{
+		{
+			ProductID: uuid.New(),
+			Price:     decimal.NewFromInt(100),
+		},
+	}
+
+	order, err := orderDomain.Create(uuid.New(), "Some Address", items)
+	require.NoError(s.T(), err)
+	return order
+}
+
 func (s *OrderUseCaseTestSuite) TestCreate() {
 	tests := []struct {
 		name        string
@@ -38,7 +52,12 @@ func (s *OrderUseCaseTestSuite) TestCreate() {
 			dto: usecase.CreateDto{
 				CustomerID: uuid.New(),
 				Address:    "Test Address",
-				Items:      []orderDomain.Item{},
+				Items: []orderDomain.Item{
+					{
+						ProductID: uuid.New(),
+						Price:     decimal.NewFromInt(100),
+					},
+				},
 			},
 			setup: func(repo *orderMock.RepositoryMock, manager *createOrderMock.ManagerMock) {
 				repo.On("Create", s.ctx, mock.Anything).Return(nil).Once()
@@ -51,7 +70,12 @@ func (s *OrderUseCaseTestSuite) TestCreate() {
 			dto: usecase.CreateDto{
 				CustomerID: uuid.New(),
 				Address:    "Test Address",
-				Items:      []orderDomain.Item{},
+				Items: []orderDomain.Item{
+					{
+						ProductID: uuid.New(),
+						Price:     decimal.NewFromInt(100),
+					},
+				},
 			},
 			setup: func(repo *orderMock.RepositoryMock, manager *createOrderMock.ManagerMock) {
 				repo.On("Create", s.ctx, mock.Anything).Return(errors.New("repo error")).Once()
@@ -96,7 +120,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 		{
 			name: "Success: Order in Delivering",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
@@ -108,7 +132,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 		{
 			name: "Failure: repo.GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
@@ -119,7 +143,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 		{
 			name: "Failure: domain method error (order in Created)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
@@ -129,7 +153,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 		{
 			name: "Failure: repo.Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
@@ -174,7 +198,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 		{
 			name: "Success: Order in Created (default)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
@@ -185,7 +209,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 		{
 			name: "Failure: GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
@@ -196,7 +220,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 		{
 			name: "Failure: domain method error (order in Delivering)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
@@ -207,7 +231,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 		{
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
@@ -251,7 +275,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 		{
 			name: "Success: Order in Created",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
@@ -262,7 +286,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 		{
 			name: "Failure: GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
@@ -273,7 +297,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 		{
 			name: "Failure: domain method error (order in Delivering)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
@@ -284,7 +308,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 		{
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
@@ -328,7 +352,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 		{
 			name: "Success: Order in Created",
 			setup: func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order) {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				dto := usecase.BeginDeliveryDto{
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
@@ -343,7 +367,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 		{
 			name: "Failure: domain method error (already in Delivering)",
 			setup: func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order) {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
 				dto := usecase.BeginDeliveryDto{
 					OrderID:   o.ID,
@@ -358,7 +382,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 		{
 			name: "Failure: repo.GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order) {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				dto := usecase.BeginDeliveryDto{
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
@@ -373,7 +397,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 		{
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order) {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				dto := usecase.BeginDeliveryDto{
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
@@ -421,7 +445,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 		{
 			name: "Success: Order in Delivering",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
@@ -433,7 +457,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 		{
 			name: "Failure: GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
@@ -444,7 +468,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 		{
 			name: "Failure: domain method error (order in Created)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
@@ -454,7 +478,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 		{
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := orderDomain.Create(uuid.New(), "Some Address", nil)
+				o := s.createTestOrder()
 				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
@@ -502,8 +526,8 @@ func (s *OrderUseCaseTestSuite) TestGetAllByCustomer() {
 			setup: func(repo *orderMock.RepositoryMock) (uuid.UUID, []*orderDomain.Order) {
 				customerID := uuid.New()
 				expectedOrders := []*orderDomain.Order{
-					orderDomain.Create(customerID, "Address 1", []orderDomain.Item{}),
-					orderDomain.Create(customerID, "Address 2", []orderDomain.Item{}),
+					s.createTestOrder(),
+					s.createTestOrder(),
 				}
 				repo.On("GetAllByCustomer", s.ctx, customerID).Return(expectedOrders, nil).Once()
 				return customerID, expectedOrders
@@ -558,8 +582,8 @@ func (s *OrderUseCaseTestSuite) TestGetCurrentByCourier() {
 			setup: func(repo *orderMock.RepositoryMock) (uuid.UUID, []*orderDomain.Order) {
 				courierID := uuid.New()
 				expectedOrders := []*orderDomain.Order{
-					orderDomain.Create(uuid.New(), "Address 1", []orderDomain.Item{}),
-					orderDomain.Create(uuid.New(), "Address 2", []orderDomain.Item{}),
+					s.createTestOrder(),
+					s.createTestOrder(),
 				}
 				repo.On("GetCurrentByCourier", s.ctx, courierID).Return(expectedOrders, nil).Once()
 				return courierID, expectedOrders

@@ -1,16 +1,30 @@
 package domain
 
 import (
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	orderDomain "order/internal/domain/order"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 type OrderDomainTestSuite struct {
 	suite.Suite
+}
+
+func (s *OrderDomainTestSuite) createTestOrder() *orderDomain.Order {
+	items := []orderDomain.Item{
+		{
+			ProductID: uuid.New(),
+			Price:     decimal.NewFromInt(100),
+		},
+	}
+	order, err := orderDomain.Create(uuid.New(), "Test Address", items)
+	require.NoError(s.T(), err)
+	return order
 }
 
 func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
@@ -23,7 +37,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
 		{
 			name: "Success: Order in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				ord := s.createTestOrder()
 				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
 				return ord
 			},
@@ -33,7 +47,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
 		{
 			name: "Failure: Order remains in Created",
 			setup: func() *orderDomain.Order {
-				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				return s.createTestOrder()
 			},
 			expectedStatus: orderDomain.Created,
 			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
@@ -69,7 +83,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledOutOfStock() {
 		{
 			name: "Success: Order in Created (default)",
 			setup: func() *orderDomain.Order {
-				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				return s.createTestOrder()
 			},
 			expectedStatus: orderDomain.CanceledOutOfStock,
 			expectedErr:    nil,
@@ -77,7 +91,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledOutOfStock() {
 		{
 			name: "Failure: Order in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				ord := s.createTestOrder()
 				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
 				return ord
 			},
@@ -115,7 +129,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledCourierNotFound() {
 		{
 			name: "Success: Order in Created (default)",
 			setup: func() *orderDomain.Order {
-				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				return s.createTestOrder()
 			},
 			expectedStatus: orderDomain.CanceledCourierNotFound,
 			expectedErr:    nil,
@@ -123,7 +137,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledCourierNotFound() {
 		{
 			name: "Failure: Order in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				ord := s.createTestOrder()
 				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
 				return ord
 			},
@@ -162,7 +176,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivering() {
 		{
 			name: "Success: Order in Created",
 			setup: func() *orderDomain.Order {
-				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				return s.createTestOrder()
 			},
 			courierID:      uuid.New(),
 			expectedStatus: orderDomain.Delivering,
@@ -171,7 +185,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivering() {
 		{
 			name: "Failure: Order already in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				ord := s.createTestOrder()
 				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
 				return ord
 			},
@@ -212,7 +226,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivered() {
 		{
 			name: "Success: Order in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				ord := s.createTestOrder()
 				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
 				return ord
 			},
@@ -222,7 +236,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivered() {
 		{
 			name: "Failure: Order in Created (default)",
 			setup: func() *orderDomain.Order {
-				return orderDomain.Create(uuid.New(), "Test Address", []orderDomain.Item{})
+				return s.createTestOrder()
 			},
 			expectedStatus: orderDomain.Created,
 			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,

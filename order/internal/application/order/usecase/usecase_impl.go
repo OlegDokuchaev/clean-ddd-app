@@ -20,9 +20,12 @@ func New(repo orderDomain.Repository, createOrderSagaManager createOrderSaga.Man
 }
 
 func (u *UseCaseImpl) Create(ctx context.Context, data CreateDto) (uuid.UUID, error) {
-	order := orderDomain.Create(data.CustomerID, data.Address, data.Items)
+	order, err := orderDomain.Create(data.CustomerID, data.Address, data.Items)
+	if err != nil {
+		return uuid.Nil, err
+	}
 
-	if err := u.repo.Create(ctx, order); err != nil {
+	if err = u.repo.Create(ctx, order); err != nil {
 		return uuid.Nil, err
 	}
 	u.createOrderSagaManager.Create(ctx, order)
