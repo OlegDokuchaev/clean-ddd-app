@@ -2,9 +2,10 @@ package domain
 
 import (
 	courierDomain "courier/internal/domain/courier"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type CourierDomainTestSuite struct {
@@ -29,6 +30,17 @@ func (s *CourierDomainTestSuite) TestSetPassword() {
 			newPassword:      "new password",
 			expectedPassword: "new password",
 			expectedErr:      nil,
+		},
+		{
+			name: "Failure: Empty password",
+			setup: func() *courierDomain.Courier {
+				courier, err := courierDomain.Create("test", "+79032895555", "password")
+				require.NoError(s.T(), err)
+				return courier
+			},
+			newPassword:      "",
+			expectedPassword: "password",
+			expectedErr:      courierDomain.ErrInvalidCourierPassword,
 		},
 	}
 
