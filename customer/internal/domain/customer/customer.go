@@ -16,6 +16,10 @@ type Customer struct {
 }
 
 func (c *Customer) SetPassword(password string) error {
+	if !validatePassword(password) {
+		return ErrInvalidCustomerPassword
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return ErrInvalidCustomerPassword
