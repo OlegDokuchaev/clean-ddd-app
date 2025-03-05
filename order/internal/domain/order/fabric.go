@@ -6,14 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-func validateAddress(address string) bool {
-	return address != ""
-}
-
-func validateItems(items []Item) bool {
-	return len(items) > 0
-}
-
 func Create(CustomerID uuid.UUID, Address string, Items []Item) (*Order, error) {
 	if !validateAddress(Address) {
 		return nil, ErrInvalidAddress

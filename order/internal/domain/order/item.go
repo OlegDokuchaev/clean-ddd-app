@@ -8,4 +8,5 @@ import (
 type Item struct {
 	ProductID uuid.UUID
 	Price     decimal.Decimal
+	Count     int
 }

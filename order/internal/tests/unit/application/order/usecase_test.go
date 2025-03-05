@@ -32,6 +32,7 @@ func (s *OrderUseCaseTestSuite) createTestOrder() *orderDomain.Order {
 		{
 			ProductID: uuid.New(),
 			Price:     decimal.NewFromInt(100),
+			Count:     1,
 		},
 	}
 
@@ -56,6 +57,7 @@ func (s *OrderUseCaseTestSuite) TestCreate() {
 					{
 						ProductID: uuid.New(),
 						Price:     decimal.NewFromInt(100),
+						Count:     1,
 					},
 				},
 			},
@@ -74,6 +76,7 @@ func (s *OrderUseCaseTestSuite) TestCreate() {
 					{
 						ProductID: uuid.New(),
 						Price:     decimal.NewFromInt(100),
+						Count:     1,
 					},
 				},
 			},

@@ -20,6 +20,7 @@ func (s *OrderDomainTestSuite) createTestOrder() *orderDomain.Order {
 		{
 			ProductID: uuid.New(),
 			Price:     decimal.NewFromInt(100),
+			Count:     1,
 		},
 	}
 	order, err := orderDomain.Create(uuid.New(), "Test Address", items)
