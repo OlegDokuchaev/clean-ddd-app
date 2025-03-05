@@ -15,11 +15,14 @@ type Courier struct {
 }
 
 func (c *Courier) SetPassword(password string) error {
+	if !validatePassword(password) {
+		return ErrInvalidCourierPassword
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return ErrInvalidCourierPassword
 	}
-
 	c.Password = hash
 	return nil
 }
