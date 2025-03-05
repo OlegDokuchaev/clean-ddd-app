@@ -11,6 +11,12 @@ type UseCaseImpl struct {
 	repo courierDomain.Repository
 }
 
+func NewUseCase(repo courierDomain.Repository) *UseCaseImpl {
+	return &UseCaseImpl{
+		repo: repo,
+	}
+}
+
 func (u *UseCaseImpl) AssignOrder(ctx context.Context, _ uuid.UUID) (uuid.UUID, error) {
 	orders, err := u.repo.GetAll(ctx)
 	if err != nil {
