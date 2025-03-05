@@ -1,11 +1,12 @@
 package domain
 
 import (
+	"testing"
+	productDomain "warehouse/internal/domain/product"
+
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"testing"
-	productDomain "warehouse/internal/domain/product"
 )
 
 type ProductDomainTestSuite struct {
@@ -65,7 +66,7 @@ func (p *ProductDomainTestSuite) TestCreate() {
 				require.NoError(p.T(), err)
 				require.NotNil(p.T(), product)
 				require.Len(p.T(), events, 1)
-				require.Equal(p.T(), events[0].Name(), productDomain.CreatedEventName)
+				require.IsType(p.T(), productDomain.CreateEvent{}, events[0])
 			}
 		})
 	}
