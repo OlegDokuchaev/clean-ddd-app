@@ -1,7 +1,7 @@
 package domain
 
 import (
-	courierDomain "courier/internal/domain"
+	courierDomain "courier/internal/domain/courier"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"testing"
