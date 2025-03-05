@@ -22,7 +22,7 @@ func validatePassword(password string) bool {
 	return password != ""
 }
 
-func CreateCustomer(name, phone, password string) (*Customer, error) {
+func Create(name, phone, password string) (*Customer, error) {
 	if !validateName(name) {
 		return nil, ErrInvalidCustomerName
 	}

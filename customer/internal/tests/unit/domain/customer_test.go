@@ -61,7 +61,7 @@ func (s *CustomerTestSuite) TestCreateCustomer() {
 		s.Run(tc.name, func() {
 			s.T().Parallel()
 
-			customer, err := customerDomain.CreateCustomer(tc.Cname, tc.phone, tc.password)
+			customer, err := customerDomain.Create(tc.Cname, tc.phone, tc.password)
 
 			if tc.expectedErr != nil {
 				require.Error(s.T(), err)
@@ -85,7 +85,7 @@ func (s *CustomerTestSuite) TestSetPassword() {
 		{
 			name: "Success",
 			setup: func() *customerDomain.Customer {
-				customer, err := customerDomain.CreateCustomer("test", "+79032895555", "password")
+				customer, err := customerDomain.Create("test", "+79032895555", "password")
 				require.NoError(s.T(), err)
 				return customer
 			},
@@ -96,7 +96,7 @@ func (s *CustomerTestSuite) TestSetPassword() {
 		{
 			name: "Failure: Empty password",
 			setup: func() *customerDomain.Customer {
-				customer, err := customerDomain.CreateCustomer("test", "+79032895555", "password")
+				customer, err := customerDomain.Create("test", "+79032895555", "password")
 				require.NoError(s.T(), err)
 				return customer
 			},
@@ -135,7 +135,7 @@ func (s *CustomerTestSuite) TestCheckPassword() {
 		{
 			name: "Success",
 			setup: func() *customerDomain.Customer {
-				customer, err := customerDomain.CreateCustomer("test", "+79032895555", "password")
+				customer, err := customerDomain.Create("test", "+79032895555", "password")
 				require.NoError(s.T(), err)
 				return customer
 			},
@@ -145,7 +145,7 @@ func (s *CustomerTestSuite) TestCheckPassword() {
 		{
 			name: "Failure: Invalid password",
 			setup: func() *customerDomain.Customer {
-				customer, err := customerDomain.CreateCustomer("test", "+79032895555", "password")
+				customer, err := customerDomain.Create("test", "+79032895555", "password")
 				require.NoError(s.T(), err)
 				return customer
 			},
