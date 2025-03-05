@@ -3,7 +3,6 @@ package courier
 import (
 	"context"
 	courierDomain "courier/internal/domain/courier"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -16,8 +15,8 @@ func (r *RepositoryMock) Create(ctx context.Context, courier *courierDomain.Cour
 	return args.Error(0)
 }
 
-func (r *RepositoryMock) GetByID(ctx context.Context, orderID uuid.UUID) (*courierDomain.Courier, error) {
-	args := r.Called(ctx, orderID)
+func (r *RepositoryMock) GetByPhone(ctx context.Context, phone string) (*courierDomain.Courier, error) {
+	args := r.Called(ctx, phone)
 	return args.Get(0).(*courierDomain.Courier), args.Error(1)
 }
 
