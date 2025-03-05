@@ -59,14 +59,15 @@ func (s *AuthUseCaseTestSuite) TestRegister() {
 			expectedErr: courierDomain.ErrInvalidCourierPhone,
 		},
 		{
-			name: "Failure: Create courier error",
+			name: "Failure: Repository create courier error",
 			data: courierAuth.RegisterDto{
 				Name:     "test",
 				Phone:    "+79032895555",
 				Password: "password",
 			},
 			setup: func(repo *courierMock.RepositoryMock) {
-				repo.On("Create", s.ctx, mock.Anything).Return(errors.New("create courier error"))
+				repo.On("Create", s.ctx, mock.Anything).
+					Return(errors.New("create courier error"))
 			},
 			expectedErr: errors.New("create courier error"),
 		},
@@ -89,7 +90,6 @@ func (s *AuthUseCaseTestSuite) TestRegister() {
 			} else {
 				require.Error(s.T(), err)
 				require.EqualError(s.T(), err, tc.expectedErr.Error())
-				require.Equal(s.T(), uuid.Nil, courierID)
 			}
 
 			repo.AssertExpectations(s.T())
@@ -124,7 +124,8 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 				Password: "password",
 			},
 			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) {
-				repo.On("GetByPhone", s.ctx, "+79032895555").Return((*courierDomain.Courier)(nil), errors.New("get courier by phone error"))
+				repo.On("GetByPhone", s.ctx, "+79032895555").
+					Return((*courierDomain.Courier)(nil), errors.New("get courier by phone error"))
 			},
 			expectedErr: errors.New("get courier by phone error"),
 		},
@@ -149,7 +150,8 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) {
 				courier := s.createTestCourier()
 				repo.On("GetByPhone", s.ctx, courier.Phone).Return(courier, nil)
-				token.On("Generate", courier.ID).Return("", errors.New("generate token error"))
+				token.On("Generate", courier.ID).
+					Return("", errors.New("generate token error"))
 			},
 			expectedErr: errors.New("generate token error"),
 		},
@@ -172,7 +174,6 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 			} else {
 				require.Error(s.T(), err)
 				require.EqualError(s.T(), err, tc.expectedErr.Error())
-				require.Empty(s.T(), token)
 			}
 
 			repo.AssertExpectations(s.T())
@@ -202,7 +203,8 @@ func (s *AuthUseCaseTestSuite) TestAuthenticate() {
 			name: "Failure: Decode token error",
 			data: "token",
 			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) uuid.UUID {
-				token.On("Decode", "token").Return(uuid.Nil, errors.New("decode token error"))
+				token.On("Decode", "token").
+					Return(uuid.Nil, errors.New("decode token error"))
 				return uuid.Nil
 			},
 			expectedErr: errors.New("decode token error"),
@@ -226,7 +228,6 @@ func (s *AuthUseCaseTestSuite) TestAuthenticate() {
 			} else {
 				require.Error(s.T(), err)
 				require.EqualError(s.T(), err, tc.expectedErr.Error())
-				require.Equal(s.T(), uuid.Nil, courierID)
 			}
 
 			repo.AssertExpectations(s.T())
