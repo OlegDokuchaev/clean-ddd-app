@@ -9,13 +9,13 @@ import (
 
 type UseCaseImpl struct {
 	repo         courierDomain.Repository
-	tokenService TokenService
+	tokenManager TokenManager
 }
 
-func NewUseCase(repo courierDomain.Repository, tokenService TokenService) *UseCaseImpl {
+func NewUseCase(repo courierDomain.Repository, tokenManager TokenManager) *UseCaseImpl {
 	return &UseCaseImpl{
 		repo:         repo,
-		tokenService: tokenService,
+		tokenManager: tokenManager,
 	}
 }
 
@@ -42,20 +42,11 @@ func (u *UseCaseImpl) Login(ctx context.Context, data LoginDto) (string, error) 
 		return "", courierDomain.ErrInvalidCourierPassword
 	}
 
-	token, err := u.tokenService.Generate(courier.ID)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
+	return u.tokenManager.Generate(courier.ID)
 }
 
 func (u *UseCaseImpl) Authenticate(_ context.Context, token string) (uuid.UUID, error) {
-	courierID, err := u.tokenService.Decode(token)
-	if err != nil {
-		return uuid.Nil, err
-	}
-	return courierID, nil
+	return u.tokenManager.Decode(token)
 }
 
 var _ UseCase = (*UseCaseImpl)(nil)

@@ -2,7 +2,7 @@ package auth
 
 import "github.com/google/uuid"
 
-type TokenService interface {
+type TokenManager interface {
 	Generate(courierID uuid.UUID) (string, error)
 	Decode(token string) (uuid.UUID, error)
 }

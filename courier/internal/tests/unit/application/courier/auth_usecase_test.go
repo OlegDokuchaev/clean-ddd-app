@@ -78,8 +78,8 @@ func (s *AuthUseCaseTestSuite) TestRegister() {
 		s.Run(tc.name, func() {
 			s.T().Parallel()
 			repo := new(courierMock.RepositoryMock)
-			token := new(courierMock.TokenServiceMock)
-			uc := courierAuth.NewUseCase(repo, token)
+			tokenManager := new(courierMock.TokenManagerMock)
+			uc := courierAuth.NewUseCase(repo, tokenManager)
 			tc.setup(repo)
 
 			courierID, err := uc.Register(s.ctx, tc.data)
@@ -101,7 +101,7 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 	tests := []struct {
 		name        string
 		data        courierAuth.LoginDto
-		setup       func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock)
+		setup       func(repo *courierMock.RepositoryMock, token *courierMock.TokenManagerMock)
 		expectedErr error
 	}{
 		{
@@ -110,7 +110,7 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 				Phone:    "+79032895555",
 				Password: "password",
 			},
-			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) {
+			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenManagerMock) {
 				courier := s.createTestCourier()
 				repo.On("GetByPhone", s.ctx, courier.Phone).Return(courier, nil)
 				token.On("Generate", courier.ID).Return("token", nil)
@@ -123,7 +123,7 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 				Phone:    "+79032895555",
 				Password: "password",
 			},
-			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) {
+			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenManagerMock) {
 				repo.On("GetByPhone", s.ctx, "+79032895555").
 					Return((*courierDomain.Courier)(nil), errors.New("get courier by phone error"))
 			},
@@ -135,7 +135,7 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 				Phone:    "+79032895555",
 				Password: "invalid password",
 			},
-			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) {
+			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenManagerMock) {
 				courier := s.createTestCourier()
 				repo.On("GetByPhone", s.ctx, courier.Phone).Return(courier, nil)
 			},
@@ -147,7 +147,7 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 				Phone:    "+79032895555",
 				Password: "password",
 			},
-			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) {
+			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenManagerMock) {
 				courier := s.createTestCourier()
 				repo.On("GetByPhone", s.ctx, courier.Phone).Return(courier, nil)
 				token.On("Generate", courier.ID).
@@ -162,9 +162,9 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 		s.Run(tc.name, func() {
 			s.T().Parallel()
 			repo := new(courierMock.RepositoryMock)
-			tokenService := new(courierMock.TokenServiceMock)
-			uc := courierAuth.NewUseCase(repo, tokenService)
-			tc.setup(repo, tokenService)
+			tokenManager := new(courierMock.TokenManagerMock)
+			uc := courierAuth.NewUseCase(repo, tokenManager)
+			tc.setup(repo, tokenManager)
 
 			token, err := uc.Login(s.ctx, tc.data)
 
@@ -177,7 +177,7 @@ func (s *AuthUseCaseTestSuite) TestLogin() {
 			}
 
 			repo.AssertExpectations(s.T())
-			tokenService.AssertExpectations(s.T())
+			tokenManager.AssertExpectations(s.T())
 		})
 	}
 }
@@ -186,13 +186,13 @@ func (s *AuthUseCaseTestSuite) TestAuthenticate() {
 	tests := []struct {
 		name        string
 		data        string
-		setup       func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) uuid.UUID
+		setup       func(repo *courierMock.RepositoryMock, token *courierMock.TokenManagerMock) uuid.UUID
 		expectedErr error
 	}{
 		{
 			name: "Success",
 			data: "token",
-			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) uuid.UUID {
+			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenManagerMock) uuid.UUID {
 				courierID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 				token.On("Decode", "token").Return(courierID, nil)
 				return courierID
@@ -202,7 +202,7 @@ func (s *AuthUseCaseTestSuite) TestAuthenticate() {
 		{
 			name: "Failure: Decode token error",
 			data: "token",
-			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenServiceMock) uuid.UUID {
+			setup: func(repo *courierMock.RepositoryMock, token *courierMock.TokenManagerMock) uuid.UUID {
 				token.On("Decode", "token").
 					Return(uuid.Nil, errors.New("decode token error"))
 				return uuid.Nil
@@ -216,9 +216,9 @@ func (s *AuthUseCaseTestSuite) TestAuthenticate() {
 		s.Run(tc.name, func() {
 			s.T().Parallel()
 			repo := new(courierMock.RepositoryMock)
-			tokenService := new(courierMock.TokenServiceMock)
-			uc := courierAuth.NewUseCase(repo, tokenService)
-			expectedCourierID := tc.setup(repo, tokenService)
+			tokenManager := new(courierMock.TokenManagerMock)
+			uc := courierAuth.NewUseCase(repo, tokenManager)
+			expectedCourierID := tc.setup(repo, tokenManager)
 
 			courierID, err := uc.Authenticate(s.ctx, tc.data)
 
@@ -231,7 +231,7 @@ func (s *AuthUseCaseTestSuite) TestAuthenticate() {
 			}
 
 			repo.AssertExpectations(s.T())
-			tokenService.AssertExpectations(s.T())
+			tokenManager.AssertExpectations(s.T())
 		})
 	}
 }
