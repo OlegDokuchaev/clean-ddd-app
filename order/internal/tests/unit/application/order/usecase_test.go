@@ -68,7 +68,17 @@ func (s *OrderUseCaseTestSuite) TestCreate() {
 			expectedErr: nil,
 		},
 		{
-			name: "Failure: repository error",
+			name: "Failure: Create order error",
+			dto: usecase.CreateDto{
+				CustomerID: uuid.New(),
+				Address:    "Test Address",
+				Items:      []orderDomain.Item{},
+			},
+			setup:       func(repo *orderMock.RepositoryMock, manager *createOrderMock.ManagerMock) {},
+			expectedErr: orderDomain.ErrInvalidItems,
+		},
+		{
+			name: "Failure: Repository create order error",
 			dto: usecase.CreateDto{
 				CustomerID: uuid.New(),
 				Address:    "Test Address",
