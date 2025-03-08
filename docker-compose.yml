@@ -17,5 +17,21 @@ services:
       timeout: 5s
       retries: 5
 
+  warehouse_db:
+    container_name: "clean_app_warehouse_db"
+    image: postgres:latest
+    volumes:
+      - postgres_data_warehouse:/var/lib/postgresql/data/
+    ports:
+      - "5445:5432"
+    env_file:
+      - ./warehouse/.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data_order:
+  postgres_data_warehouse:
