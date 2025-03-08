@@ -41,8 +41,10 @@ func (s *OrderRepositoryTestSuite) SetupSuite() {
 }
 
 func (s *OrderRepositoryTestSuite) TearDownSuite() {
-	err := s.testDB.Container.Terminate(s.ctx)
-	require.NoError(s.T(), err)
+	if s.testDB != nil {
+		err := s.testDB.Container.Terminate(s.ctx)
+		require.NoError(s.T(), err)
+	}
 }
 
 func (s *OrderRepositoryTestSuite) getRepo() orderDomain.Repository {
@@ -85,6 +87,10 @@ func (s *OrderRepositoryTestSuite) TestCreate() {
 				require.Equal(s.T(), tc.expectedError, err)
 			} else {
 				require.NoError(s.T(), err)
+				createdOrder, err := repo.GetByID(s.ctx, tc.order.ID)
+				require.NoError(s.T(), err)
+				require.NotNil(s.T(), createdOrder)
+				require.Equal(s.T(), tc.order.ID, createdOrder.ID)
 			}
 		})
 	}
