@@ -14,4 +14,10 @@ CREATE TABLE items (
     product_id UUID NOT NULL references products(id)
 );
 
+CREATE TABLE outbox_messages (
+    id UUID PRIMARY KEY,
+    type TEXT NOT NULL,
+    payload BYTEA NOT NULL
+);
+
 commit;
