@@ -8,7 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
-var ErrProductNotFound = errors.New("product not found")
+var (
+	ErrProductAlreadyExists = errors.New("product already exists")
+	ErrProductNotFound      = errors.New("product not found")
+)
 
 func ParseError(err error) error {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -17,8 +20,18 @@ func ParseError(err error) error {
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
-		return fmt.Errorf("product not saved: %v", pgErr)
+		return parsePgError(pgErr)
 	}
 
 	return err
+}
+
+func parsePgError(err *pgconn.PgError) error {
+	switch err.ConstraintName {
+	case "products_pkey":
+		return ErrProductAlreadyExists
+
+	default:
+		return fmt.Errorf("product not saved: %v", err)
+	}
 }
