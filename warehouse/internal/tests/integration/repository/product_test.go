@@ -60,30 +60,44 @@ func (s *ProductRepositoryTestSuite) createTestProduct() *productDomain.Product 
 func (s *ProductRepositoryTestSuite) TestCreate() {
 	tests := []struct {
 		name          string
-		product       *productDomain.Product
+		setup         func(repo productDomain.Repository) *productDomain.Product
 		expectedError error
 	}{
 		{
-			name:          "Success",
-			product:       s.createTestProduct(),
+			name: "Success",
+			setup: func(repo productDomain.Repository) *productDomain.Product {
+				return s.createTestProduct()
+			},
 			expectedError: nil,
+		},
+		{
+			name: "Failure: Product already exists",
+			setup: func(repo productDomain.Repository) *productDomain.Product {
+				product := s.createTestProduct()
+				err := repo.Create(s.ctx, product)
+				require.NoError(s.T(), err)
+				return product
+			},
+			expectedError: productRepository.ErrProductAlreadyExists,
 		},
 	}
 
 	repo := s.getRepo()
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			err := repo.Create(s.ctx, tc.product)
+			product := tc.setup(repo)
+			err := repo.Create(s.ctx, product)
 
 			if tc.expectedError != nil {
 				require.Error(s.T(), err)
 				require.Equal(s.T(), tc.expectedError, err)
 			} else {
 				require.NoError(s.T(), err)
-				createdProduct, err := repo.GetByID(s.ctx, tc.product.ID)
+
+				createdProduct, err := repo.GetByID(s.ctx, product.ID)
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), createdProduct)
-				require.Equal(s.T(), tc.product.ID, createdProduct.ID)
+				require.Equal(s.T(), product.ID, createdProduct.ID)
 			}
 		})
 	}
