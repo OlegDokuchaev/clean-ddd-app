@@ -18,7 +18,7 @@ func New(db *gorm.DB) *RepositoryImpl {
 }
 
 func (r *RepositoryImpl) Create(ctx context.Context, product *productDomain.Product) error {
-	productModel := toModel(product)
+	productModel := ToModel(product)
 	res := r.db.WithContext(ctx).Create(&productModel)
 	return ParseError(res.Error)
 }
@@ -29,7 +29,7 @@ func (r *RepositoryImpl) GetByID(ctx context.Context, productID uuid.UUID) (*pro
 	if res.Error != nil {
 		return nil, ParseError(res.Error)
 	}
-	return toDomain(productModel), nil
+	return ToDomain(productModel), nil
 }
 
 var _ productDomain.Repository = (*RepositoryImpl)(nil)
