@@ -8,7 +8,7 @@ import (
 type Courier struct {
 	ID       uuid.UUID `gorm:"primaryKey"`
 	Name     string
-	Phone    string
+	Phone    string `gorm:"unique"`
 	Password []byte
 	Created  time.Time
 }
