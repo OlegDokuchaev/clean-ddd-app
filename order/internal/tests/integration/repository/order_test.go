@@ -67,30 +67,44 @@ func (s *OrderRepositoryTestSuite) createTestOrder() *orderDomain.Order {
 func (s *OrderRepositoryTestSuite) TestCreate() {
 	tests := []struct {
 		name          string
-		order         *orderDomain.Order
+		setup         func(repo orderDomain.Repository) *orderDomain.Order
 		expectedError error
 	}{
 		{
-			name:          "Success",
-			order:         s.createTestOrder(),
+			name: "Success",
+			setup: func(_ orderDomain.Repository) *orderDomain.Order {
+				return s.createTestOrder()
+			},
 			expectedError: nil,
+		},
+		{
+			name: "Failure: Order already exists",
+			setup: func(repo orderDomain.Repository) *orderDomain.Order {
+				order := s.createTestOrder()
+				err := repo.Create(s.ctx, order)
+				require.NoError(s.T(), err)
+				return order
+			},
+			expectedError: orderRepository.ErrOrderAlreadyExists,
 		},
 	}
 
 	repo := s.getRepo()
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			err := repo.Create(s.ctx, tc.order)
+			order := tc.setup(repo)
+			err := repo.Create(s.ctx, order)
 
 			if tc.expectedError != nil {
 				require.Error(s.T(), err)
 				require.Equal(s.T(), tc.expectedError, err)
 			} else {
 				require.NoError(s.T(), err)
-				createdOrder, err := repo.GetByID(s.ctx, tc.order.ID)
+
+				createdOrder, err := repo.GetByID(s.ctx, order.ID)
 				require.NoError(s.T(), err)
 				require.NotNil(s.T(), createdOrder)
-				require.Equal(s.T(), tc.order.ID, createdOrder.ID)
+				require.Equal(s.T(), order.ID, createdOrder.ID)
 			}
 		})
 	}
@@ -123,14 +137,29 @@ func (s *OrderRepositoryTestSuite) TestUpdate() {
 			expectedError: nil,
 		},
 		{
-			name: "Failure: Order not found",
+			name: "Success: Update delivery",
 			setup: func(repo orderDomain.Repository) *orderDomain.Order {
-				return s.createTestOrder()
+				order := s.createTestOrder()
+				err := repo.Create(s.ctx, order)
+				require.NoError(s.T(), err)
+				return order
 			},
 			update: func(order *orderDomain.Order) {
 				err := order.NoteDelivering(uuid.New())
 				require.NoError(s.T(), err)
 			},
+			verify: func(updated, expected *orderDomain.Order) {
+				require.Equal(s.T(), expected.ID, updated.ID)
+				require.Equal(s.T(), expected.Delivery.CourierID, updated.Delivery.CourierID)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Failure: Order not found",
+			setup: func(repo orderDomain.Repository) *orderDomain.Order {
+				return s.createTestOrder()
+			},
+			update:        func(order *orderDomain.Order) {},
 			verify:        func(updated, expected *orderDomain.Order) {},
 			expectedError: orderRepository.ErrOrderNotFound,
 		},
@@ -175,7 +204,7 @@ func (s *OrderRepositoryTestSuite) TestGetByID() {
 		},
 		{
 			name: "Failure: Order not found",
-			setup: func(repo orderDomain.Repository) uuid.UUID {
+			setup: func(_ orderDomain.Repository) uuid.UUID {
 				return uuid.New()
 			},
 			expectedError: orderRepository.ErrOrderNotFound,
@@ -239,7 +268,7 @@ func (s *OrderRepositoryTestSuite) TestGetAllByCustomer() {
 		{
 			name:       "Success: No orders",
 			customerID: uuid.New(),
-			setup: func(repo orderDomain.Repository, customerID uuid.UUID) []uuid.UUID {
+			setup: func(_ orderDomain.Repository, _ uuid.UUID) []uuid.UUID {
 				return []uuid.UUID{}
 			},
 			expectedError: nil,
@@ -259,13 +288,8 @@ func (s *OrderRepositoryTestSuite) TestGetAllByCustomer() {
 			} else {
 				require.NoError(s.T(), err)
 				require.Equal(s.T(), len(orderIDs), len(orders))
-				orderIDMap := make(map[uuid.UUID]struct{}, len(orderIDs))
-				for _, id := range orderIDs {
-					orderIDMap[id] = struct{}{}
-				}
 				for _, order := range orders {
-					_, exists := orderIDMap[order.ID]
-					require.True(s.T(), exists)
+					require.Contains(s.T(), orderIDs, order.ID)
 				}
 			}
 		})
@@ -284,9 +308,12 @@ func (s *OrderRepositoryTestSuite) TestGetCurrentByCourier() {
 			courierID: uuid.New(),
 			setup: func(repo orderDomain.Repository, courierID uuid.UUID) []uuid.UUID {
 				order := s.createTestOrder()
-				order.Delivery.CourierID = &courierID
-				err := repo.Create(s.ctx, order)
+				err := order.NoteDelivering(courierID)
 				require.NoError(s.T(), err)
+
+				err = repo.Create(s.ctx, order)
+				require.NoError(s.T(), err)
+
 				return []uuid.UUID{order.ID}
 			},
 		},
@@ -297,9 +324,12 @@ func (s *OrderRepositoryTestSuite) TestGetCurrentByCourier() {
 				var orderIDs []uuid.UUID
 				for i := 0; i < 3; i++ {
 					order := s.createTestOrder()
-					order.Delivery.CourierID = &courierID
-					err := repo.Create(s.ctx, order)
+					err := order.NoteDelivering(courierID)
 					require.NoError(s.T(), err)
+
+					err = repo.Create(s.ctx, order)
+					require.NoError(s.T(), err)
+
 					orderIDs = append(orderIDs, order.ID)
 				}
 				return orderIDs
@@ -308,7 +338,7 @@ func (s *OrderRepositoryTestSuite) TestGetCurrentByCourier() {
 		{
 			name:      "Success: No orders",
 			courierID: uuid.New(),
-			setup: func(repo orderDomain.Repository, courierID uuid.UUID) []uuid.UUID {
+			setup: func(_ orderDomain.Repository, _ uuid.UUID) []uuid.UUID {
 				return []uuid.UUID{}
 			},
 			expectedError: nil,
@@ -328,13 +358,8 @@ func (s *OrderRepositoryTestSuite) TestGetCurrentByCourier() {
 			} else {
 				require.NoError(s.T(), err)
 				require.Equal(s.T(), len(orderIDs), len(orders))
-				orderIDMap := make(map[uuid.UUID]struct{}, len(orderIDs))
-				for _, id := range orderIDs {
-					orderIDMap[id] = struct{}{}
-				}
 				for _, order := range orders {
-					_, exists := orderIDMap[order.ID]
-					require.True(s.T(), exists)
+					require.Contains(s.T(), orderIDs, order.ID)
 				}
 			}
 		})
