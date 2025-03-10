@@ -7,86 +7,86 @@ import (
 	"github.com/google/uuid"
 )
 
-func toOrder(orderModel tables.Order) *orderDomain.Order {
+func ToDomain(model *tables.Order) *orderDomain.Order {
 	return &orderDomain.Order{
-		ID:         orderModel.ID,
-		CustomerID: orderModel.CustomerID,
-		Status:     orderModel.Status,
-		Created:    orderModel.Created,
-		Version:    orderModel.Version,
-		Items:      toOrderItems(orderModel.Items),
-		Delivery:   toDelivery(orderModel.Delivery),
+		ID:         model.ID,
+		CustomerID: model.CustomerID,
+		Status:     model.Status,
+		Created:    model.Created,
+		Version:    model.Version,
+		Items:      toItemDomains(model.Items),
+		Delivery:   toDeliveryDomain(model.Delivery),
 	}
 }
 
-func toOrders(orderModels []*tables.Order) []*orderDomain.Order {
-	orders := make([]*orderDomain.Order, 0, len(orderModels))
-	for _, orderModel := range orderModels {
-		orders = append(orders, toOrder(*orderModel))
-	}
-	return orders
-}
-
-func toOrderItems(items []tables.OrderItem) []orderDomain.Item {
-	orderItems := make([]orderDomain.Item, 0, len(items))
-	for _, item := range items {
-		orderItems = append(orderItems, toOrderItem(item))
-	}
-	return orderItems
-}
-
-func toOrderItem(item tables.OrderItem) orderDomain.Item {
+func toItemDomain(model tables.OrderItem) orderDomain.Item {
 	return orderDomain.Item{
-		ProductID: item.ProductID,
-		Price:     item.Price,
-		Count:     item.Count,
+		ProductID: model.ProductID,
+		Price:     model.Price,
+		Count:     model.Count,
 	}
 }
 
-func toDelivery(delivery tables.Delivery) orderDomain.Delivery {
+func toDeliveryDomain(model tables.Delivery) orderDomain.Delivery {
 	return orderDomain.Delivery{
-		CourierID: delivery.CourierID,
-		Address:   delivery.Address,
-		Arrived:   delivery.Arrived,
+		CourierID: model.CourierID,
+		Address:   model.Address,
+		Arrived:   model.Arrived,
 	}
 }
 
-func toOrderModel(order *orderDomain.Order) tables.Order {
-	return tables.Order{
-		ID:         order.ID,
-		CustomerID: order.CustomerID,
-		Status:     order.Status,
-		Created:    order.Created,
-		Version:    order.Version,
-		Items:      toOrderItemsModel(order.ID, order.Items),
-		Delivery:   toDeliveryModel(order.ID, order.Delivery),
+func ToDomains(models []*tables.Order) []*orderDomain.Order {
+	domains := make([]*orderDomain.Order, 0, len(models))
+	for _, model := range models {
+		domains = append(domains, ToDomain(model))
+	}
+	return domains
+}
+
+func toItemDomains(models []tables.OrderItem) []orderDomain.Item {
+	domains := make([]orderDomain.Item, 0, len(models))
+	for _, model := range models {
+		domains = append(domains, toItemDomain(model))
+	}
+	return domains
+}
+
+func ToModel(domain *orderDomain.Order) *tables.Order {
+	return &tables.Order{
+		ID:         domain.ID,
+		CustomerID: domain.CustomerID,
+		Status:     domain.Status,
+		Created:    domain.Created,
+		Version:    domain.Version,
+		Items:      toItemModels(domain.ID, domain.Items),
+		Delivery:   toDeliveryModel(domain.ID, domain.Delivery),
 	}
 }
 
-func toOrderItemsModel(orderID uuid.UUID, items []orderDomain.Item) []tables.OrderItem {
-	orderItems := make([]tables.OrderItem, 0, len(items))
-	for _, item := range items {
-		orderItems = append(orderItems, toOrderItemModel(orderID, item))
+func toItemModels(orderID uuid.UUID, domains []orderDomain.Item) []tables.OrderItem {
+	models := make([]tables.OrderItem, 0, len(domains))
+	for _, domain := range domains {
+		models = append(models, toItemModel(orderID, domain))
 	}
-	return orderItems
+	return models
 }
 
-func toOrderItemModel(orderID uuid.UUID, item orderDomain.Item) tables.OrderItem {
+func toItemModel(orderID uuid.UUID, domain orderDomain.Item) tables.OrderItem {
 	return tables.OrderItem{
 		ID:        uuid.New(),
 		OrderID:   orderID,
-		ProductID: item.ProductID,
-		Price:     item.Price,
-		Count:     item.Count,
+		ProductID: domain.ProductID,
+		Price:     domain.Price,
+		Count:     domain.Count,
 	}
 }
 
-func toDeliveryModel(orderID uuid.UUID, delivery orderDomain.Delivery) tables.Delivery {
+func toDeliveryModel(orderID uuid.UUID, domain orderDomain.Delivery) tables.Delivery {
 	return tables.Delivery{
 		ID:        uuid.New(),
 		OrderID:   orderID,
-		CourierID: delivery.CourierID,
-		Address:   delivery.Address,
-		Arrived:   delivery.Arrived,
+		CourierID: domain.CourierID,
+		Address:   domain.Address,
+		Arrived:   domain.Arrived,
 	}
 }

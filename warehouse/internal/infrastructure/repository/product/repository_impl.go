@@ -29,7 +29,7 @@ func (r *RepositoryImpl) GetByID(ctx context.Context, productID uuid.UUID) (*pro
 	if res.Error != nil {
 		return nil, ParseError(res.Error)
 	}
-	return ToDomain(productModel), nil
+	return ToDomain(&productModel), nil
 }
 
 var _ productDomain.Repository = (*RepositoryImpl)(nil)

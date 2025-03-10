@@ -17,22 +17,22 @@ func New(db *gorm.DB) *RepositoryImpl {
 }
 
 func (r *RepositoryImpl) Create(ctx context.Context, order *orderDomain.Order) error {
-	orderModel := toOrderModel(order)
-	res := r.db.WithContext(ctx).Create(&orderModel)
+	orderModel := ToModel(order)
+	res := r.db.WithContext(ctx).Create(orderModel)
 	return ParseError(res.Error)
 }
 
 func (r *RepositoryImpl) Update(ctx context.Context, order *orderDomain.Order) error {
 	newVersion := uuid.New()
-	orderModel := toOrderModel(order)
+	orderModel := ToModel(order)
 
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		res := tx.Model(&tables.Order{}).
-			Where("id = ? AND version = ?", order.ID, order.Version).
+			Where("id = ? AND version = ?", orderModel.ID, orderModel.Version).
 			Updates(map[string]any{
-				"customer_id": order.CustomerID,
-				"status":      order.Status,
-				"created":     order.Created,
+				"customer_id": orderModel.CustomerID,
+				"status":      orderModel.Status,
+				"created":     orderModel.Created,
 				"version":     newVersion,
 			})
 		if res.Error != nil {
@@ -42,7 +42,7 @@ func (r *RepositoryImpl) Update(ctx context.Context, order *orderDomain.Order) e
 			return ErrOrderNotFound
 		}
 
-		return updateDelivery(tx, order.ID, orderModel.Delivery)
+		return updateDelivery(tx, orderModel.ID, orderModel.Delivery)
 	})
 
 	if err == nil {
@@ -60,7 +60,7 @@ func (r *RepositoryImpl) GetByID(ctx context.Context, orderID uuid.UUID) (*order
 		First(&orderModel).Error; err != nil {
 		return nil, ParseError(err)
 	}
-	return toOrder(orderModel), nil
+	return ToDomain(&orderModel), nil
 }
 
 func (r *RepositoryImpl) GetAllByCustomer(ctx context.Context, customerID uuid.UUID) ([]*orderDomain.Order, error) {
@@ -72,7 +72,7 @@ func (r *RepositoryImpl) GetAllByCustomer(ctx context.Context, customerID uuid.U
 		Find(&orderModels).Error; err != nil {
 		return nil, ParseError(err)
 	}
-	return toOrders(orderModels), nil
+	return ToDomains(orderModels), nil
 }
 
 func (r *RepositoryImpl) GetCurrentByCourier(ctx context.Context, courierID uuid.UUID) ([]*orderDomain.Order, error) {
@@ -85,7 +85,7 @@ func (r *RepositoryImpl) GetCurrentByCourier(ctx context.Context, courierID uuid
 		Find(&orderModels).Error; err != nil {
 		return nil, ParseError(err)
 	}
-	return toOrders(orderModels), nil
+	return ToDomains(orderModels), nil
 }
 
 func updateDelivery(tx *gorm.DB, orderID uuid.UUID, delivery tables.Delivery) error {
