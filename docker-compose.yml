@@ -47,7 +47,23 @@ services:
       timeout: 5s
       retries: 5
 
+  customer_db:
+    container_name: "clean_app_customer_db"
+    image: postgres:latest
+    volumes:
+      - postgres_data_customer:/var/lib/postgresql/data/
+    ports:
+      - "5447:5432"
+    env_file:
+      - ./customer/.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data_order:
   postgres_data_warehouse:
   postgres_data_courier:
+  postgres_data_customer:
