@@ -5,7 +5,7 @@ import (
 	"warehouse/internal/infrastructure/db/tables"
 )
 
-func ToDomain(model tables.Product) *productDomain.Product {
+func ToDomain(model *tables.Product) *productDomain.Product {
 	return &productDomain.Product{
 		ID:      model.ID,
 		Name:    model.Name,
