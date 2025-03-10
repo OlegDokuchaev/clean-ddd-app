@@ -1,5 +1,7 @@
 package outbox
 
+import "context"
+
 type Publisher interface {
-	Publish(message *Message) error
+	Publish(ctx context.Context, message *Message) error
 }
