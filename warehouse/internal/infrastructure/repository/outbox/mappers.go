@@ -5,26 +5,26 @@ import (
 	"warehouse/internal/infrastructure/db/tables"
 )
 
-func ToDomain(message *tables.OutboxMessage) *outboxDomain.Message {
+func ToDomain(model *tables.OutboxMessage) *outboxDomain.Message {
 	return &outboxDomain.Message{
-		ID:      message.ID,
-		Type:    message.Type,
-		Payload: message.Payload,
+		ID:      model.ID,
+		Type:    model.Type,
+		Payload: model.Payload,
 	}
 }
 
-func ToDomains(messages []*tables.OutboxMessage) []*outboxDomain.Message {
-	domains := make([]*outboxDomain.Message, 0, len(messages))
-	for _, message := range messages {
-		domains = append(domains, ToDomain(message))
+func ToDomains(models []*tables.OutboxMessage) []*outboxDomain.Message {
+	domains := make([]*outboxDomain.Message, 0, len(models))
+	for _, model := range models {
+		domains = append(domains, ToDomain(model))
 	}
 	return domains
 }
 
-func ToModel(message *outboxDomain.Message) *tables.OutboxMessage {
+func ToModel(domain *outboxDomain.Message) *tables.OutboxMessage {
 	return &tables.OutboxMessage{
-		ID:      message.ID,
-		Type:    message.Type,
-		Payload: message.Payload,
+		ID:      domain.ID,
+		Type:    domain.Type,
+		Payload: domain.Payload,
 	}
 }
