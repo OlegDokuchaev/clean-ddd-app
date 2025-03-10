@@ -7,7 +7,8 @@ import (
 
 type Customer struct {
 	ID       uuid.UUID `gorm:"primaryKey"`
-	Phone    string    `gorm:"unique"`
+	Name     string
+	Phone    string `gorm:"unique"`
 	Email    string
 	Password []byte
 	Created  time.Time
