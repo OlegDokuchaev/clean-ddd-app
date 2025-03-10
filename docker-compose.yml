@@ -32,6 +32,22 @@ services:
       timeout: 5s
       retries: 5
 
+  courier_db:
+    container_name: "clean_app_courier_db"
+    image: postgres:latest
+    volumes:
+      - postgres_data_courier:/var/lib/postgresql/data/
+    ports:
+      - "5446:5432"
+    env_file:
+      - ./courier/.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data_order:
   postgres_data_warehouse:
+  postgres_data_courier:
