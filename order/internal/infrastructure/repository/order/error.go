@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	ErrOrderNotFound = errors.New("order not found")
+	ErrOrderAlreadyExists = errors.New("order already exists")
+	ErrOrderNotFound      = errors.New("order not found")
 )
 
 func ParseError(err error) error {
@@ -18,11 +19,18 @@ func ParseError(err error) error {
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
-		switch pgErr.ConstraintName {
-		default:
-			return fmt.Errorf("order not saved: %v", pgErr)
-		}
+		return parsePgError(pgErr)
 	}
 
 	return err
+}
+
+func parsePgError(err *pgconn.PgError) error {
+	switch err.ConstraintName {
+	case "orders_pkey":
+		return ErrOrderAlreadyExists
+
+	default:
+		return fmt.Errorf("order not saved: %v", err)
+	}
 }
