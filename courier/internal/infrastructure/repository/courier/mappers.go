@@ -5,30 +5,30 @@ import (
 	"courier/internal/infrastructure/db/tables"
 )
 
-func ToDomain(courier *tables.Courier) *courierDomain.Courier {
+func ToDomain(model *tables.Courier) *courierDomain.Courier {
 	return &courierDomain.Courier{
-		ID:       courier.ID,
-		Name:     courier.Name,
-		Phone:    courier.Phone,
-		Password: courier.Password,
-		Created:  courier.Created,
+		ID:       model.ID,
+		Name:     model.Name,
+		Phone:    model.Phone,
+		Password: model.Password,
+		Created:  model.Created,
 	}
 }
 
-func ToDomains(couriers []*tables.Courier) []*courierDomain.Courier {
-	domains := make([]*courierDomain.Courier, 0, len(couriers))
-	for _, courier := range couriers {
-		domains = append(domains, ToDomain(courier))
+func ToDomains(models []*tables.Courier) []*courierDomain.Courier {
+	domains := make([]*courierDomain.Courier, 0, len(models))
+	for _, model := range models {
+		domains = append(domains, ToDomain(model))
 	}
 	return domains
 }
 
-func ToModel(courier *courierDomain.Courier) *tables.Courier {
+func ToModel(domain *courierDomain.Courier) *tables.Courier {
 	return &tables.Courier{
-		ID:       courier.ID,
-		Name:     courier.Name,
-		Phone:    courier.Phone,
-		Password: courier.Password,
-		Created:  courier.Created,
+		ID:       domain.ID,
+		Name:     domain.Name,
+		Phone:    domain.Phone,
+		Password: domain.Password,
+		Created:  domain.Created,
 	}
 }
