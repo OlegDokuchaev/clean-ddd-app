@@ -11,7 +11,7 @@ func ToDomain(model *tables.Item) *itemDomain.Item {
 		ID:      model.ID,
 		Count:   model.Count,
 		Version: model.Version,
-		Product: productRepository.ToDomain(model.Product),
+		Product: productRepository.ToDomain(&model.Product),
 	}
 }
 
