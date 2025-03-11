@@ -6,7 +6,6 @@ import (
 	"context"
 	"testing"
 	productDomain "warehouse/internal/domain/product"
-	"warehouse/internal/infrastructure/db"
 	"warehouse/internal/infrastructure/db/migrations"
 	productRepository "warehouse/internal/infrastructure/repository/product"
 	"warehouse/internal/tests/testutils"
@@ -24,19 +23,12 @@ type ProductRepositoryTestSuite struct {
 }
 
 func (s *ProductRepositoryTestSuite) SetupSuite() {
-	config, err := db.NewConfig()
-	require.NoError(s.T(), err)
-
 	mConfig, err := migrations.NewConfig()
 	require.NoError(s.T(), err)
 
 	s.ctx = context.Background()
 
-	testDB, err := testutils.NewTestDB(s.ctx, config, mConfig)
-	require.NoError(s.T(), err)
-	s.testDB = testDB
-
-	err = s.testDB.Migrations.Up()
+	s.testDB, err = testutils.NewTestDB(s.ctx, mConfig)
 	require.NoError(s.T(), err)
 }
 

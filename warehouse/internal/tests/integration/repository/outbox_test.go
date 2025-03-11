@@ -6,7 +6,6 @@ import (
 	domain "warehouse/internal/domain/common"
 	outboxDomain "warehouse/internal/domain/outbox"
 	productDomain "warehouse/internal/domain/product"
-	"warehouse/internal/infrastructure/db"
 	"warehouse/internal/infrastructure/db/migrations"
 	outboxRepository "warehouse/internal/infrastructure/repository/outbox"
 	"warehouse/internal/tests/testutils"
@@ -23,19 +22,12 @@ type OutboxRepositoryTestSuite struct {
 }
 
 func (s *OutboxRepositoryTestSuite) SetupSuite() {
-	config, err := db.NewConfig()
-	require.NoError(s.T(), err)
-
 	mConfig, err := migrations.NewConfig()
 	require.NoError(s.T(), err)
 
 	s.ctx = context.Background()
 
-	testDB, err := testutils.NewTestDB(s.ctx, config, mConfig)
-	require.NoError(s.T(), err)
-	s.testDB = testDB
-
-	err = s.testDB.Migrations.Up()
+	s.testDB, err = testutils.NewTestDB(s.ctx, mConfig)
 	require.NoError(s.T(), err)
 }
 

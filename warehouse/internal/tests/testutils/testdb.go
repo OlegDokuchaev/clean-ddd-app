@@ -3,60 +3,60 @@ package testutils
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/docker/go-connections/nat"
 	"github.com/golang-migrate/migrate/v4"
 	migratePostgres "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
-	"warehouse/internal/infrastructure/db"
 	"warehouse/internal/infrastructure/db/migrations"
 
 	"github.com/testcontainers/testcontainers-go"
+	postgresContainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
+const (
+	TestDbName = "name"
+	TestDbUser = "user"
+	TestDbPass = "password"
+)
+
 type TestDB struct {
-	DB         *gorm.DB
-	Container  testcontainers.Container
-	Migrations *migrate.Migrate
+	DB        *gorm.DB
+	Container testcontainers.Container
 }
 
-func SetupTestDatabase(ctx context.Context, config *db.Config) (testcontainers.Container, error) {
-	req := testcontainers.ContainerRequest{
-		Image:        "postgres:14",
-		ExposedPorts: []string{config.Port},
-		Env: map[string]string{
-			"POSTGRES_USER":     config.Username,
-			"POSTGRES_PASSWORD": config.Password,
-			"POSTGRES_DB":       config.Database,
-		},
-		WaitingFor: wait.ForListeningPort(nat.Port(config.Port)),
-	}
-
-	return testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
+func SetupTestDatabase(ctx context.Context) (testcontainers.Container, error) {
+	return postgresContainer.Run(ctx,
+		"postgres:16-alpine",
+		postgresContainer.WithDatabase(TestDbName),
+		postgresContainer.WithUsername(TestDbUser),
+		postgresContainer.WithPassword(TestDbPass),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second)),
+	)
 }
 
-func CreateDSN(ctx context.Context, container testcontainers.Container, config *db.Config) (string, error) {
+func CreateDSN(ctx context.Context, container testcontainers.Container) (string, error) {
 	host, err := container.Host(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	port, err := container.MappedPort(ctx, nat.Port(config.Port))
+	port, err := container.MappedPort(ctx, "5432/tcp")
 	if err != nil {
 		return "", err
 	}
 
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port.Int(), config.Username, config.Password, config.Database,
+		host, port.Int(), TestDbUser, TestDbPass, TestDbName,
 	), nil
 }
 
@@ -82,35 +82,42 @@ func SetupMigrations(gormDB *gorm.DB, config *migrations.Config) (*migrate.Migra
 
 	return migrate.NewWithDatabaseInstance(
 		"file://"+config.MigrationsPath,
-		"postgres",
+		TestDbPass,
 		driver,
 	)
 }
 
-func NewTestDB(ctx context.Context, config *db.Config, mConfig *migrations.Config) (*TestDB, error) {
-	container, err := SetupTestDatabase(ctx, config)
+func NewTestDB(ctx context.Context, mConfig *migrations.Config) (*TestDB, error) {
+	container, err := SetupTestDatabase(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup database: %w", err)
 	}
+	defer func() {
+		if err != nil {
+			_ = container.Terminate(ctx)
+		}
+	}()
 
-	dsn, err := CreateDSN(ctx, container, config)
+	dsn, err := CreateDSN(ctx, container)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DSN: %w", err)
 	}
 
-	gormDB, err := InitGORM(dsn)
+	db, err := InitGORM(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init GORM: %w", err)
 	}
 
-	setupMigrations, err := SetupMigrations(gormDB, mConfig)
+	migration, err := SetupMigrations(db, mConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup migrations: %w", err)
 	}
+	if err = migration.Up(); err != nil {
+		return nil, fmt.Errorf("failed to up migrations: %w", err)
+	}
 
 	return &TestDB{
-		DB:         gormDB,
-		Container:  container,
-		Migrations: setupMigrations,
+		DB:        db,
+		Container: container,
 	}, nil
 }
