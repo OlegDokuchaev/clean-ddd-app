@@ -50,9 +50,8 @@ func (s *OutboxTestSuite) TestPublish() {
 	tests := []struct {
 		name            string
 		message         *outbox.Message
-		setupPublisher  func() outbox.Publisher
 		expectedError   error
-		validateMessage func(t require.TestingT, message kafka.Message)
+		validateMessage func(message *outbox.Message, kafkaMsg kafka.Message)
 	}{
 		{
 			name: "Success",
@@ -64,16 +63,12 @@ func (s *OutboxTestSuite) TestPublish() {
 				require.NoError(s.T(), err)
 				return msg
 			}(),
-			setupPublisher: func() outbox.Publisher {
-				config := &outboxPublisher.Config{ProductTopic: testutils.TestTopic}
-				return outboxPublisher.NewPublisher(config, s.testMessaging.Writer)
-			},
 			expectedError: nil,
-			validateMessage: func(t require.TestingT, message kafka.Message) {
-				var payload product.CreatedPayload
-				err := json.Unmarshal(message.Value, &payload)
-				require.NoError(t, err)
-				require.NotEmpty(t, payload.ProductID)
+			validateMessage: func(message *outbox.Message, kafkaMsg kafka.Message) {
+				var payload outbox.Message
+				err := json.Unmarshal(kafkaMsg.Value, &payload)
+				require.NoError(s.T(), err)
+				require.EqualValues(s.T(), *message, payload)
 			},
 		},
 		{
@@ -83,18 +78,14 @@ func (s *OutboxTestSuite) TestPublish() {
 				Type:    "unknown.event",
 				Payload: []byte(`{"test": "data"}`),
 			},
-			setupPublisher: func() outbox.Publisher {
-				config := &outboxPublisher.Config{ProductTopic: testutils.TestTopic}
-				return outboxPublisher.NewPublisher(config, s.testMessaging.Writer)
-			},
-			expectedError: outboxPublisher.ErrInvalidOutboxMessage,
+			validateMessage: func(message *outbox.Message, kafkaMsg kafka.Message) {},
+			expectedError:   outboxPublisher.ErrInvalidOutboxMessage,
 		},
 	}
 
+	publisher := outboxPublisher.NewPublisher(s.testMessaging.Writer)
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			publisher := tt.setupPublisher()
-
 			err := publisher.Publish(s.ctx, tt.message)
 
 			if tt.expectedError != nil {
@@ -106,9 +97,9 @@ func (s *OutboxTestSuite) TestPublish() {
 				ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 				defer cancel()
 
-				message, err := s.testMessaging.Reader.ReadMessage(ctx)
+				kafkaMsg, err := s.testMessaging.Reader.ReadMessage(ctx)
 				require.NoError(s.T(), err)
-				tt.validateMessage(s.T(), message)
+				tt.validateMessage(tt.message, kafkaMsg)
 			}
 		})
 	}

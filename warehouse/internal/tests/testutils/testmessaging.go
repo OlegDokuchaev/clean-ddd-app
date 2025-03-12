@@ -76,6 +76,7 @@ func createTopic(ctx context.Context, url string) error {
 func CreateWriter(url string) *kafka.Writer {
 	return &kafka.Writer{
 		Addr:     kafka.TCP(url),
+		Topic:    TestTopic,
 		Balancer: &kafka.LeastBytes{},
 	}
 }
