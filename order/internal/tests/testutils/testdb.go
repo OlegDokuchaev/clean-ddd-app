@@ -24,8 +24,12 @@ const (
 )
 
 type TestDB struct {
-	Container testcontainers.Container
 	DB        *gorm.DB
+	container testcontainers.Container
+}
+
+func (d *TestDB) Close(ctx context.Context) error {
+	return d.container.Terminate(ctx)
 }
 
 func setupDBContainer(ctx context.Context) (testcontainers.Container, error) {
@@ -139,6 +143,6 @@ func NewTestDB(ctx context.Context, config *migrations.Config) (*TestDB, error) 
 
 	return &TestDB{
 		DB:        db,
-		Container: container,
+		container: container,
 	}, nil
 }

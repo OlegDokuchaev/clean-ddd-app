@@ -12,7 +12,7 @@ import (
 )
 
 type TestMessaging struct {
-	Container testcontainers.Container
+	container testcontainers.Container
 	url       string
 }
 
@@ -65,7 +65,7 @@ func (m *TestMessaging) CreateReader(topic string) *kafka.Reader {
 }
 
 func (m *TestMessaging) Close(ctx context.Context) error {
-	return m.Container.Terminate(ctx)
+	return m.container.Terminate(ctx)
 }
 
 func setupKafkaContainer(ctx context.Context) (testcontainers.Container, error) {
@@ -104,7 +104,7 @@ func NewTestMessaging(ctx context.Context) (*TestMessaging, error) {
 	}
 
 	return &TestMessaging{
-		Container: container,
+		container: container,
 		url:       url,
 	}, nil
 }
