@@ -5,7 +5,6 @@ package repository
 import (
 	"context"
 	courierDomain "courier/internal/domain/courier"
-	"courier/internal/infrastructure/db"
 	"courier/internal/infrastructure/db/migrations"
 	courierRepository "courier/internal/infrastructure/repository/courier"
 	"courier/internal/tests/testutils"
@@ -25,19 +24,12 @@ type CourierRepositoryTestSuite struct {
 }
 
 func (s *CourierRepositoryTestSuite) SetupSuite() {
-	config, err := db.NewConfig()
-	require.NoError(s.T(), err)
-
-	mConfig, err := migrations.NewConfig()
+	config, err := migrations.NewConfig()
 	require.NoError(s.T(), err)
 
 	s.ctx = context.Background()
 
-	testDB, err := testutils.NewTestDB(s.ctx, config, mConfig)
-	require.NoError(s.T(), err)
-	s.testDB = testDB
-
-	err = s.testDB.Migrations.Up()
+	s.testDB, err = testutils.NewTestDB(s.ctx, config)
 	require.NoError(s.T(), err)
 }
 
