@@ -68,7 +68,7 @@ func (m *TestMessaging) Close(ctx context.Context) error {
 	return m.Container.Terminate(ctx)
 }
 
-func setUpContainer(ctx context.Context) (testcontainers.Container, error) {
+func setupKafkaContainer(ctx context.Context) (testcontainers.Container, error) {
 	return kafkaContainer.Run(ctx,
 		"confluentinc/confluent-local:7.5.0",
 		kafkaContainer.WithClusterID("test-cluster"),
@@ -90,18 +90,16 @@ func createUrl(ctx context.Context, container testcontainers.Container) (string,
 }
 
 func NewTestMessaging(ctx context.Context) (*TestMessaging, error) {
-	container, err := setUpContainer(ctx)
+	container, err := setupKafkaContainer(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup container: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			_ = container.Terminate(ctx)
-		}
-	}()
 
 	url, err := createUrl(ctx, container)
 	if err != nil {
+		if err := container.Terminate(ctx); err != nil {
+			return nil, fmt.Errorf("failed to terminate database: %w", err)
+		}
 		return nil, fmt.Errorf("failed to create url: %w", err)
 	}
 
