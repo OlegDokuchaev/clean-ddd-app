@@ -5,7 +5,6 @@ package repository
 import (
 	"context"
 	orderDomain "order/internal/domain/order"
-	"order/internal/infrastructure/db"
 	"order/internal/infrastructure/db/migrations"
 	orderRepository "order/internal/infrastructure/repository/order"
 	"order/internal/tests/testutils"
@@ -24,19 +23,12 @@ type OrderRepositoryTestSuite struct {
 }
 
 func (s *OrderRepositoryTestSuite) SetupSuite() {
-	config, err := db.NewConfig()
-	require.NoError(s.T(), err)
-
 	mConfig, err := migrations.NewConfig()
 	require.NoError(s.T(), err)
 
 	s.ctx = context.Background()
 
-	testDB, err := testutils.NewTestDB(s.ctx, config, mConfig)
-	require.NoError(s.T(), err)
-	s.testDB = testDB
-
-	err = s.testDB.Migrations.Up()
+	s.testDB, err = testutils.NewTestDB(s.ctx, mConfig)
 	require.NoError(s.T(), err)
 }
 
