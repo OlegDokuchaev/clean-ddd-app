@@ -5,7 +5,6 @@ package repository
 import (
 	"context"
 	customerDomain "customer/internal/domain/customer"
-	"customer/internal/infrastructure/db"
 	"customer/internal/infrastructure/db/migrations"
 	customerRepository "customer/internal/infrastructure/repository/customer"
 	"customer/internal/tests/testutils"
@@ -24,19 +23,12 @@ type CustomerRepositoryTestSuite struct {
 }
 
 func (s *CustomerRepositoryTestSuite) SetupSuite() {
-	config, err := db.NewConfig()
-	require.NoError(s.T(), err)
-
-	mConfig, err := migrations.NewConfig()
+	config, err := migrations.NewConfig()
 	require.NoError(s.T(), err)
 
 	s.ctx = context.Background()
 
-	testDB, err := testutils.NewTestDB(s.ctx, config, mConfig)
-	require.NoError(s.T(), err)
-	s.testDB = testDB
-
-	err = s.testDB.Migrations.Up()
+	s.testDB, err = testutils.NewTestDB(s.ctx, config)
 	require.NoError(s.T(), err)
 }
 
