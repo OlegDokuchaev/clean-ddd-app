@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 	domain "warehouse/internal/domain/common"
-	"warehouse/internal/domain/outbox"
-	"warehouse/internal/domain/product"
+	outboxDomain "warehouse/internal/domain/outbox"
+	productDomain "warehouse/internal/domain/product"
 	outboxPublisher "warehouse/internal/infrastructure/publisher/outbox"
 	"warehouse/internal/tests/testutils"
 
@@ -19,10 +19,18 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const (
+	ProductTopic = "product-topic"
+)
+
 type OutboxTestSuite struct {
 	suite.Suite
-	ctx           context.Context
+	ctx context.Context
+
 	testMessaging *testutils.TestMessaging
+
+	productWriter *kafka.Writer
+	productReader *kafka.Reader
 }
 
 func (s *OutboxTestSuite) SetupSuite() {
@@ -31,41 +39,53 @@ func (s *OutboxTestSuite) SetupSuite() {
 	testMessaging, err := testutils.NewTestMessaging(s.ctx)
 	require.NoError(s.T(), err)
 	s.testMessaging = testMessaging
+
+	err = s.testMessaging.CreateTopics(s.ctx, ProductTopic)
+	require.NoError(s.T(), err)
+
+	s.productWriter = s.testMessaging.CreateWriter(ProductTopic)
+	s.productReader = s.testMessaging.CreateReader(ProductTopic)
 }
 
 func (s *OutboxTestSuite) TearDownSuite() {
-	if s.testMessaging != nil {
-		err := s.testMessaging.Writer.Close()
+	if s.productWriter != nil {
+		err := s.productWriter.Close()
 		require.NoError(s.T(), err)
-
-		err = s.testMessaging.Reader.Close()
-		require.NoError(s.T(), err)
-
-		err = s.testMessaging.Container.Terminate(s.ctx)
+		err = s.productReader.Close()
 		require.NoError(s.T(), err)
 	}
+
+	if s.testMessaging != nil {
+		err := s.testMessaging.Container.Terminate(s.ctx)
+		require.NoError(s.T(), err)
+	}
+}
+
+func (s *OutboxTestSuite) createTestPublisher() outboxDomain.Publisher {
+	return outboxPublisher.NewPublisher(s.productWriter)
 }
 
 func (s *OutboxTestSuite) TestPublish() {
 	tests := []struct {
 		name            string
-		message         *outbox.Message
+		message         *outboxDomain.Message
 		expectedError   error
-		validateMessage func(message *outbox.Message, kafkaMsg kafka.Message)
+		validateMessage func(message *outboxDomain.Message, kafkaMsg kafka.Message)
 	}{
 		{
 			name: "Success",
-			message: func() *outbox.Message {
-				event := domain.NewEvent[product.CreatedPayload, product.CreateEvent](product.CreatedPayload{
+			message: func() *outboxDomain.Message {
+				payload := productDomain.CreatedPayload{
 					ProductID: uuid.New(),
-				})
-				msg, err := outbox.Create(event)
+				}
+				event := domain.NewEvent[productDomain.CreatedPayload, productDomain.CreateEvent](payload)
+				msg, err := outboxDomain.Create(event)
 				require.NoError(s.T(), err)
 				return msg
 			}(),
 			expectedError: nil,
-			validateMessage: func(message *outbox.Message, kafkaMsg kafka.Message) {
-				var payload outbox.Message
+			validateMessage: func(message *outboxDomain.Message, kafkaMsg kafka.Message) {
+				var payload outboxDomain.Message
 				err := json.Unmarshal(kafkaMsg.Value, &payload)
 				require.NoError(s.T(), err)
 				require.EqualValues(s.T(), *message, payload)
@@ -73,17 +93,17 @@ func (s *OutboxTestSuite) TestPublish() {
 		},
 		{
 			name: "Failure: Invalid message type",
-			message: &outbox.Message{
+			message: &outboxDomain.Message{
 				ID:      uuid.New(),
 				Type:    "unknown.event",
 				Payload: []byte(`{"test": "data"}`),
 			},
-			validateMessage: func(message *outbox.Message, kafkaMsg kafka.Message) {},
+			validateMessage: func(message *outboxDomain.Message, kafkaMsg kafka.Message) {},
 			expectedError:   outboxPublisher.ErrInvalidOutboxMessage,
 		},
 	}
 
-	publisher := outboxPublisher.NewPublisher(s.testMessaging.Writer)
+	publisher := s.createTestPublisher()
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			err := publisher.Publish(s.ctx, tt.message)
@@ -97,7 +117,7 @@ func (s *OutboxTestSuite) TestPublish() {
 				ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 				defer cancel()
 
-				kafkaMsg, err := s.testMessaging.Reader.ReadMessage(ctx)
+				kafkaMsg, err := s.productReader.ReadMessage(ctx)
 				require.NoError(s.T(), err)
 				tt.validateMessage(tt.message, kafkaMsg)
 			}

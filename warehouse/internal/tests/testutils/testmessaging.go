@@ -3,46 +3,21 @@ package testutils
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
+
 	"github.com/segmentio/kafka-go"
 	"github.com/testcontainers/testcontainers-go"
 	kafkaContainer "github.com/testcontainers/testcontainers-go/modules/kafka"
-	"net"
-	"strconv"
-)
-
-const (
-	TestTopic = "test"
 )
 
 type TestMessaging struct {
 	Container testcontainers.Container
-	Writer    *kafka.Writer
-	Reader    *kafka.Reader
+	url       string
 }
 
-func SetUpContainer(ctx context.Context) (testcontainers.Container, error) {
-	return kafkaContainer.Run(ctx,
-		"confluentinc/confluent-local:7.5.0",
-		kafkaContainer.WithClusterID("test-cluster"),
-	)
-}
-
-func CreateUrl(ctx context.Context, container testcontainers.Container) (string, error) {
-	host, err := container.Host(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	port, err := container.MappedPort(ctx, "9093/tcp")
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s:%s", host, port.Port()), nil
-}
-
-func createTopic(ctx context.Context, url string) error {
-	conn, err := kafka.DialContext(ctx, "tcp", url)
+func (m *TestMessaging) CreateTopics(ctx context.Context, topics ...string) error {
+	conn, err := kafka.DialContext(ctx, "tcp", m.url)
 	if err != nil {
 		return err
 	}
@@ -63,58 +38,73 @@ func createTopic(ctx context.Context, url string) error {
 		_ = controllerConn.Close()
 	}()
 
-	topicConfigs := []kafka.TopicConfig{
-		{
-			Topic:             TestTopic,
+	topicConfigs := make([]kafka.TopicConfig, 0, len(topics))
+	for _, topic := range topics {
+		topicConfigs = append(topicConfigs, kafka.TopicConfig{
+			Topic:             topic,
 			NumPartitions:     1,
 			ReplicationFactor: 1,
-		},
+		})
 	}
 	return controllerConn.CreateTopics(topicConfigs...)
 }
 
-func CreateWriter(url string) *kafka.Writer {
+func (m *TestMessaging) CreateWriter(topic string) *kafka.Writer {
 	return &kafka.Writer{
-		Addr:     kafka.TCP(url),
-		Topic:    TestTopic,
+		Addr:     kafka.TCP(m.url),
+		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 	}
 }
 
-func CreateReader(url string) *kafka.Reader {
+func (m *TestMessaging) CreateReader(topic string) *kafka.Reader {
 	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{url},
-		GroupID: "consumer-group-id",
-		Topic:   TestTopic,
+		Brokers: []string{m.url},
+		Topic:   topic,
 	})
 }
 
+func (m *TestMessaging) Close(ctx context.Context) error {
+	return m.Container.Terminate(ctx)
+}
+
+func setupKafkaContainer(ctx context.Context) (testcontainers.Container, error) {
+	return kafkaContainer.Run(ctx,
+		"confluentinc/confluent-local:7.5.0",
+		kafkaContainer.WithClusterID("test-cluster"),
+	)
+}
+
+func createUrl(ctx context.Context, container testcontainers.Container) (string, error) {
+	host, err := container.Host(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	port, err := container.MappedPort(ctx, "9093/tcp")
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s:%s", host, port.Port()), nil
+}
+
 func NewTestMessaging(ctx context.Context) (*TestMessaging, error) {
-	container, err := SetUpContainer(ctx)
+	container, err := setupKafkaContainer(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup container: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			_ = container.Terminate(ctx)
-		}
-	}()
 
-	url, err := CreateUrl(ctx, container)
+	url, err := createUrl(ctx, container)
 	if err != nil {
+		if err := container.Terminate(ctx); err != nil {
+			return nil, fmt.Errorf("failed to terminate database: %w", err)
+		}
 		return nil, fmt.Errorf("failed to create url: %w", err)
 	}
 
-	if err = createTopic(ctx, url); err != nil {
-		return nil, fmt.Errorf("failed to create topic: %w", err)
-	}
-
-	writer := CreateWriter(url)
-	reader := CreateReader(url)
-
 	return &TestMessaging{
 		Container: container,
-		Writer:    writer,
-		Reader:    reader,
+		url:       url,
 	}, nil
 }
