@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"warehouse/internal/infrastructure/db/migrations"
 
 	"github.com/golang-migrate/migrate/v4"
 	migratePostgres "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-
-	"warehouse/internal/infrastructure/db/migrations"
-
 	"github.com/testcontainers/testcontainers-go"
 	postgresContainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -26,11 +24,11 @@ const (
 )
 
 type TestDB struct {
-	DB        *gorm.DB
 	Container testcontainers.Container
+	DB        *gorm.DB
 }
 
-func SetupTestDatabase(ctx context.Context) (testcontainers.Container, error) {
+func setupDBContainer(ctx context.Context) (testcontainers.Container, error) {
 	return postgresContainer.Run(ctx,
 		"postgres:16-alpine",
 		postgresContainer.WithDatabase(TestDbName),
@@ -43,7 +41,7 @@ func SetupTestDatabase(ctx context.Context) (testcontainers.Container, error) {
 	)
 }
 
-func CreateDSN(ctx context.Context, container testcontainers.Container) (string, error) {
+func createDSN(ctx context.Context, container testcontainers.Container) (string, error) {
 	host, err := container.Host(ctx)
 	if err != nil {
 		return "", err
@@ -60,7 +58,7 @@ func CreateDSN(ctx context.Context, container testcontainers.Container) (string,
 	), nil
 }
 
-func InitGORM(dsn string) (*gorm.DB, error) {
+func initGORM(dsn string) (*gorm.DB, error) {
 	return gorm.Open(
 		postgres.Open(dsn),
 		&gorm.Config{
@@ -69,8 +67,22 @@ func InitGORM(dsn string) (*gorm.DB, error) {
 	)
 }
 
-func SetupMigrations(gormDB *gorm.DB, config *migrations.Config) (*migrate.Migrate, error) {
-	sqlDB, err := gormDB.DB()
+func createGORM(ctx context.Context, container testcontainers.Container) (*gorm.DB, error) {
+	dsn, err := createDSN(ctx, container)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create DSN: %w", err)
+	}
+
+	db, err := initGORM(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init GORM: %w", err)
+	}
+
+	return db, nil
+}
+
+func setupMigrations(db *gorm.DB, config *migrations.Config) (*migrate.Migrate, error) {
+	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
 	}
@@ -87,33 +99,42 @@ func SetupMigrations(gormDB *gorm.DB, config *migrations.Config) (*migrate.Migra
 	)
 }
 
-func NewTestDB(ctx context.Context, mConfig *migrations.Config) (*TestDB, error) {
-	container, err := SetupTestDatabase(ctx)
+func createMigrations(db *gorm.DB, config *migrations.Config) error {
+	migration, err := setupMigrations(db, config)
+	if err != nil {
+		return fmt.Errorf("failed to setup migrations: %w", err)
+	}
+	if err = migration.Up(); err != nil {
+		return fmt.Errorf("failed to up migrations: %w", err)
+	}
+	return nil
+}
+
+func createDB(ctx context.Context, container testcontainers.Container, config *migrations.Config) (*gorm.DB, error) {
+	db, err := createGORM(ctx, container)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = createMigrations(db, config); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func NewTestDB(ctx context.Context, config *migrations.Config) (*TestDB, error) {
+	container, err := setupDBContainer(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup database: %w", err)
 	}
-	defer func() {
-		if err != nil {
-			_ = container.Terminate(ctx)
+
+	db, err := createDB(ctx, container, config)
+	if err != nil {
+		if err := container.Terminate(ctx); err != nil {
+			return nil, fmt.Errorf("failed to terminate database: %w", err)
 		}
-	}()
-
-	dsn, err := CreateDSN(ctx, container)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create DSN: %w", err)
-	}
-
-	db, err := InitGORM(dsn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to init GORM: %w", err)
-	}
-
-	migration, err := SetupMigrations(db, mConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup migrations: %w", err)
-	}
-	if err = migration.Up(); err != nil {
-		return nil, fmt.Errorf("failed to up migrations: %w", err)
+		return nil, err
 	}
 
 	return &TestDB{

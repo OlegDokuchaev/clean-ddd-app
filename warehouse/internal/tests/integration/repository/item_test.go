@@ -25,12 +25,12 @@ type ItemRepositoryTestSuite struct {
 }
 
 func (s *ItemRepositoryTestSuite) SetupSuite() {
-	mConfig, err := migrations.NewConfig()
+	config, err := migrations.NewConfig()
 	require.NoError(s.T(), err)
 
 	s.ctx = context.Background()
 
-	s.testDB, err = testutils.NewTestDB(s.ctx, mConfig)
+	s.testDB, err = testutils.NewTestDB(s.ctx, config)
 	require.NoError(s.T(), err)
 }
 
