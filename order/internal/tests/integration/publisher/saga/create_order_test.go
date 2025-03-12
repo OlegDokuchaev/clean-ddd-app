@@ -5,7 +5,6 @@ package saga
 import (
 	"context"
 	"encoding/json"
-	"github.com/shopspring/decimal"
 	createOrder "order/internal/application/order/saga/create_order"
 	orderDomain "order/internal/domain/order"
 	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -98,7 +98,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd() {
 		name            string
 		cmd             createOrder.ReserveItemsCmd
 		validateMessage func(cmd createOrder.ReserveItemsCmd, message kafka.Message)
-		expectedError   bool
+		expectedError   error
 	}{
 		{
 			name: "Success",
@@ -126,17 +126,18 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd() {
 
 				require.EqualValues(s.T(), cmd, payload)
 			},
-			expectedError: false,
+			expectedError: nil,
 		},
 	}
 
 	publisher := s.createTestPublisher()
-	for _, test := range tests {
-		s.Run(test.name, func() {
-			err := publisher.PublishReserveItemsCmd(s.ctx, test.cmd)
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := publisher.PublishReserveItemsCmd(s.ctx, tt.cmd)
 
-			if test.expectedError {
+			if tt.expectedError != nil {
 				require.Error(s.T(), err)
+				require.ErrorIs(s.T(), err, tt.expectedError)
 			} else {
 				require.NoError(s.T(), err)
 
@@ -145,7 +146,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd() {
 
 				message, err := s.warehouseReader.ReadMessage(ctx)
 				require.NoError(s.T(), err)
-				test.validateMessage(test.cmd, message)
+				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
@@ -156,7 +157,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd() {
 		name            string
 		cmd             createOrder.ReleaseItemsCmd
 		validateMessage func(cmd createOrder.ReleaseItemsCmd, message kafka.Message)
-		expectedError   bool
+		expectedError   error
 	}{
 		{
 			name: "Success",
@@ -184,17 +185,18 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd() {
 
 				require.EqualValues(s.T(), cmd, payload)
 			},
-			expectedError: false,
+			expectedError: nil,
 		},
 	}
 
 	publisher := s.createTestPublisher()
-	for _, test := range tests {
-		s.Run(test.name, func() {
-			err := publisher.PublishReleaseItemsCmd(s.ctx, test.cmd)
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := publisher.PublishReleaseItemsCmd(s.ctx, tt.cmd)
 
-			if test.expectedError {
+			if tt.expectedError != nil {
 				require.Error(s.T(), err)
+				require.ErrorIs(s.T(), err, tt.expectedError)
 			} else {
 				require.NoError(s.T(), err)
 
@@ -203,7 +205,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd() {
 
 				message, err := s.warehouseReader.ReadMessage(ctx)
 				require.NoError(s.T(), err)
-				test.validateMessage(test.cmd, message)
+				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
@@ -214,7 +216,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelOutOfStockCmd() {
 		name            string
 		cmd             createOrder.CancelOutOfStockCmd
 		validateMessage func(cmd createOrder.CancelOutOfStockCmd, message kafka.Message)
-		expectedError   bool
+		expectedError   error
 	}{
 		{
 			name: "Success",
@@ -235,17 +237,18 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelOutOfStockCmd() {
 
 				require.EqualValues(s.T(), cmd, payload)
 			},
-			expectedError: false,
+			expectedError: nil,
 		},
 	}
 
 	publisher := s.createTestPublisher()
-	for _, test := range tests {
-		s.Run(test.name, func() {
-			err := publisher.PublishCancelOutOfStockCmd(s.ctx, test.cmd)
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := publisher.PublishCancelOutOfStockCmd(s.ctx, tt.cmd)
 
-			if test.expectedError {
+			if tt.expectedError != nil {
 				require.Error(s.T(), err)
+				require.ErrorIs(s.T(), err, tt.expectedError)
 			} else {
 				require.NoError(s.T(), err)
 
@@ -254,7 +257,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelOutOfStockCmd() {
 
 				message, err := s.orderReader.ReadMessage(ctx)
 				require.NoError(s.T(), err)
-				test.validateMessage(test.cmd, message)
+				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
@@ -265,7 +268,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishAssignCourierCmd() {
 		name            string
 		cmd             createOrder.AssignCourierCmd
 		validateMessage func(cmd createOrder.AssignCourierCmd, message kafka.Message)
-		expectedError   bool
+		expectedError   error
 	}{
 		{
 			name: "Success",
@@ -286,17 +289,18 @@ func (s *CreateOrderPublisherTestSuite) TestPublishAssignCourierCmd() {
 
 				require.EqualValues(s.T(), cmd, payload)
 			},
-			expectedError: false,
+			expectedError: nil,
 		},
 	}
 
 	publisher := s.createTestPublisher()
-	for _, test := range tests {
-		s.Run(test.name, func() {
-			err := publisher.PublishAssignCourierCmd(s.ctx, test.cmd)
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := publisher.PublishAssignCourierCmd(s.ctx, tt.cmd)
 
-			if test.expectedError {
+			if tt.expectedError != nil {
 				require.Error(s.T(), err)
+				require.ErrorIs(s.T(), err, tt.expectedError)
 			} else {
 				require.NoError(s.T(), err)
 
@@ -305,7 +309,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishAssignCourierCmd() {
 
 				message, err := s.courierReader.ReadMessage(ctx)
 				require.NoError(s.T(), err)
-				test.validateMessage(test.cmd, message)
+				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
@@ -316,7 +320,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishBeginDeliveryCmd() {
 		name            string
 		cmd             createOrder.BeginDeliveryCmd
 		validateMessage func(cmd createOrder.BeginDeliveryCmd, message kafka.Message)
-		expectedError   bool
+		expectedError   error
 	}{
 		{
 			name: "Success",
@@ -338,17 +342,18 @@ func (s *CreateOrderPublisherTestSuite) TestPublishBeginDeliveryCmd() {
 
 				require.EqualValues(s.T(), cmd, payload)
 			},
-			expectedError: false,
+			expectedError: nil,
 		},
 	}
 
 	publisher := s.createTestPublisher()
-	for _, test := range tests {
-		s.Run(test.name, func() {
-			err := publisher.PublishBeginDeliveryCmd(s.ctx, test.cmd)
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := publisher.PublishBeginDeliveryCmd(s.ctx, tt.cmd)
 
-			if test.expectedError {
+			if tt.expectedError != nil {
 				require.Error(s.T(), err)
+				require.ErrorIs(s.T(), err, tt.expectedError)
 			} else {
 				require.NoError(s.T(), err)
 
@@ -357,7 +362,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishBeginDeliveryCmd() {
 
 				message, err := s.orderReader.ReadMessage(ctx)
 				require.NoError(s.T(), err)
-				test.validateMessage(test.cmd, message)
+				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
@@ -368,7 +373,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd() {
 		name            string
 		cmd             createOrder.CancelCourierNotFoundCmd
 		validateMessage func(cmd createOrder.CancelCourierNotFoundCmd, message kafka.Message)
-		expectedError   bool
+		expectedError   error
 	}{
 		{
 			name: "Success",
@@ -389,17 +394,18 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd() {
 
 				require.EqualValues(s.T(), cmd, payload)
 			},
-			expectedError: false,
+			expectedError: nil,
 		},
 	}
 
 	publisher := s.createTestPublisher()
-	for _, test := range tests {
-		s.Run(test.name, func() {
-			err := publisher.PublishCancelCourierNotFoundCmd(s.ctx, test.cmd)
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := publisher.PublishCancelCourierNotFoundCmd(s.ctx, tt.cmd)
 
-			if test.expectedError {
+			if tt.expectedError != nil {
 				require.Error(s.T(), err)
+				require.ErrorIs(s.T(), err, tt.expectedError)
 			} else {
 				require.NoError(s.T(), err)
 
@@ -408,7 +414,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd() {
 
 				message, err := s.orderReader.ReadMessage(ctx)
 				require.NoError(s.T(), err)
-				test.validateMessage(test.cmd, message)
+				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
