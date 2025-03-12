@@ -56,7 +56,7 @@ func (s *OutboxTestSuite) TearDownSuite() {
 	}
 
 	if s.testMessaging != nil {
-		err := s.testMessaging.Container.Terminate(s.ctx)
+		err := s.testMessaging.Close(s.ctx)
 		require.NoError(s.T(), err)
 	}
 }

@@ -33,7 +33,7 @@ func (s *OutboxRepositoryTestSuite) SetupSuite() {
 
 func (s *OutboxRepositoryTestSuite) TearDownSuite() {
 	if s.testDB != nil {
-		err := s.testDB.Container.Terminate(s.ctx)
+		err := s.testDB.Close(s.ctx)
 		require.NoError(s.T(), err)
 	}
 }
