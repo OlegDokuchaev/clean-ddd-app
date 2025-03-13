@@ -35,7 +35,7 @@ func (s *CourierRepositoryTestSuite) SetupSuite() {
 
 func (s *CourierRepositoryTestSuite) TearDownSuite() {
 	if s.testDB != nil {
-		err := s.testDB.Container.Terminate(s.ctx)
+		err := s.testDB.Close(s.ctx)
 		require.NoError(s.T(), err)
 	}
 }
