@@ -31,9 +31,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
 		{
 			name: "Success",
 			event: createOrder.ItemsReserved{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID: uuid.New(),
 			},
 			setup: func(publisher *createOrderMock.PublisherMock) {
@@ -45,9 +42,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
 		{
 			name: "Failure: publisher error",
 			event: createOrder.ItemsReserved{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID: uuid.New(),
 			},
 			setup: func(publisher *createOrderMock.PublisherMock) {
@@ -90,9 +84,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
 		{
 			name: "Success",
 			event: createOrder.ItemsReservationFailed{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID: uuid.New(),
 			},
 			setup: func(publisher *createOrderMock.PublisherMock) {
@@ -104,9 +95,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
 		{
 			name: "Failure: publisher error",
 			event: createOrder.ItemsReservationFailed{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID: uuid.New(),
 			},
 			setup: func(publisher *createOrderMock.PublisherMock) {
@@ -149,9 +137,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 		{
 			name: "Success",
 			event: createOrder.CourierAssignmentFailed{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID: uuid.New(),
 			},
 			setup: func(publisher *createOrderMock.PublisherMock) {
@@ -163,9 +148,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 		{
 			name: "Failure: publisher error",
 			event: createOrder.CourierAssignmentFailed{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID: uuid.New(),
 			},
 			setup: func(publisher *createOrderMock.PublisherMock) {
@@ -208,9 +190,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
 		{
 			name: "Success",
 			event: createOrder.ItemsReleased{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID: uuid.New(),
 			},
 			setup: func(publisher *createOrderMock.PublisherMock) {
@@ -222,9 +201,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
 		{
 			name: "Failure: publisher error",
 			event: createOrder.ItemsReleased{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID: uuid.New(),
 			},
 			setup: func(publisher *createOrderMock.PublisherMock) {
@@ -267,9 +243,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
 		{
 			name: "Success",
 			event: createOrder.CourierAssigned{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID:   uuid.New(),
 				CourierID: uuid.New(),
 			},
@@ -282,9 +255,6 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
 		{
 			name: "Failure: publisher error",
 			event: createOrder.CourierAssigned{
-				Event: createOrder.Event{
-					ID: uuid.New(),
-				},
 				OrderID:   uuid.New(),
 				CourierID: uuid.New(),
 			},
