@@ -2,121 +2,99 @@ package commands
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
-	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
-
-	"github.com/segmentio/kafka-go"
+	"sync"
 )
 
 type Processor struct {
-	handler *Handler
-	reader  *kafka.Reader
-	writer  *kafka.Writer
+	handler      Handler
+	reader       Reader
+	writer       Writer
+	wg           sync.WaitGroup
+	shutdownChan chan struct{}
 }
 
-func NewProcessor(handler *Handler, reader *kafka.Reader, writer *kafka.Writer) *Processor {
+func NewProcessor(handler Handler, reader Reader, writer Writer) *Processor {
 	return &Processor{
-		handler: handler,
-		reader:  reader,
-		writer:  writer,
+		handler:      handler,
+		reader:       reader,
+		writer:       writer,
+		shutdownChan: make(chan struct{}),
 	}
 }
 
-func (p *Processor) readCmdMessage(ctx context.Context) (*createOrderPublisher.CmdMessage, error) {
-	msg, err := p.reader.ReadMessage(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error reading message: %w", err)
-	}
-
-	cmdMsg, err := parseCmdMessage(msg.Value)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing message: %w", err)
-	}
-
-	return cmdMsg, nil
+func (p *Processor) Start(ctx context.Context) {
+	p.wg.Add(1)
+	go p.processCommands(ctx)
 }
 
-func (p *Processor) writeResMessage(ctx context.Context, resMessage *ResMessage) error {
-	msg, err := json.Marshal(resMessage)
-	if err != nil {
-		return fmt.Errorf("error serializing response: %w", err)
-	}
+func (p *Processor) processCommands(ctx context.Context) {
+	defer p.wg.Done()
 
-	kafkaMsg := kafka.Message{
-		Value: msg,
-	}
-	if err = p.writer.WriteMessages(ctx, kafkaMsg); err != nil {
-		return fmt.Errorf("error sending message: %w", err)
-	}
+	processorCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	return nil
-}
+	go func() {
+		select {
+		case <-p.shutdownChan:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
 
-func (p *Processor) handleMessage(ctx context.Context, cmdMsg *createOrderPublisher.CmdMessage) error {
-	log.Printf("Processing message %s of type: %s", cmdMsg.ID, cmdMsg.Name)
-
-	resMsg, err := p.handler.Handle(ctx, cmdMsg)
-	if err != nil {
-		return fmt.Errorf("error handling message: %w", err)
-	}
-
-	if err = p.writeResMessage(ctx, resMsg); err != nil {
-		return fmt.Errorf("error sending response: %w", err)
-	}
-
-	log.Printf("Message %s successfully processed", cmdMsg.ID)
-	return nil
-}
-
-func (p *Processor) Process(ctx context.Context) {
 	log.Println("Starting command processor")
 
 	for {
 		select {
-		case <-ctx.Done():
-			log.Println("Stopping command processor")
+		case <-processorCtx.Done():
+			log.Println("Stopping command processor: context done")
 			return
 		default:
-			p.processNextMessage(ctx)
+			cmd, err := p.reader.Read(processorCtx)
+			if err != nil {
+				if processorCtx.Err() != nil {
+					return
+				}
+				log.Printf("Error reading command: %v", err)
+				continue
+			}
+
+			res, err := p.handler.Handle(processorCtx, cmd)
+			if err != nil {
+				log.Printf("Error handling command %s: %v", cmd.ID, err)
+				continue
+			}
+
+			if res != nil {
+				if err := p.writer.Write(processorCtx, res); err != nil {
+					log.Printf("Error sending response: %v", err)
+				}
+			}
+
+			log.Printf("Command %s successfully processed", cmd.ID)
 		}
 	}
 }
 
-func (p *Processor) processNextMessage(ctx context.Context) {
-	cmdMsg, err := p.readCmdMessage(ctx)
-	if err != nil {
-		log.Printf("Error reading message: %v", err)
-		return
-	}
-
-	log.Printf("Received message %s of type: %s", cmdMsg.ID, cmdMsg.Name)
-
-	if err = p.handleMessage(ctx, cmdMsg); err != nil {
-		log.Printf("Error processing message %s: %v", cmdMsg.ID, err)
-	}
+func (p *Processor) Stop() {
+	close(p.shutdownChan)
+	p.wg.Wait()
 }
 
 func (p *Processor) Close() error {
-	log.Println("Closing Kafka connections")
+	var lastErr error
+
+	p.Stop()
 
 	if err := p.reader.Close(); err != nil {
-		return fmt.Errorf("error closing Kafka reader: %w", err)
+		log.Printf("Error closing command reader: %v", err)
+		lastErr = err
 	}
 
 	if err := p.writer.Close(); err != nil {
-		return fmt.Errorf("error closing Kafka writer: %w", err)
+		log.Printf("Error closing response writer: %v", err)
+		lastErr = err
 	}
 
-	log.Println("Kafka connections successfully closed")
-	return nil
-}
-
-func parseCmdMessage(kafkaMsg []byte) (*createOrderPublisher.CmdMessage, error) {
-	var msg createOrderPublisher.CmdMessage
-	if err := json.Unmarshal(kafkaMsg, &msg); err != nil {
-		return nil, fmt.Errorf("error deserializing message: %w", err)
-	}
-	return &msg, nil
+	return lastErr
 }

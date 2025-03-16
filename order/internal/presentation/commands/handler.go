@@ -7,17 +7,22 @@ import (
 	createOrder "order/internal/application/order/saga/create_order"
 	orderUsecase "order/internal/application/order/usecase"
 	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
+	"order/internal/presentation/saga/create_order"
 )
 
-type Handler struct {
+type Handler interface {
+	Handle(ctx context.Context, cmdMsg *createOrderPublisher.CmdMessage) (*create_order.ResMessage, error)
+}
+
+type HandlerImpl struct {
 	usecase orderUsecase.UseCase
 }
 
-func NewHandler(usecase *orderUsecase.UseCase) *Handler {
-	return &Handler{usecase: *usecase}
+func NewHandler(usecase orderUsecase.UseCase) *HandlerImpl {
+	return &HandlerImpl{usecase: usecase}
 }
 
-func (h *Handler) Handle(ctx context.Context, cmdMsg *createOrderPublisher.CmdMessage) (*ResMessage, error) {
+func (h *HandlerImpl) Handle(ctx context.Context, cmdMsg *createOrderPublisher.CmdMessage) (*create_order.ResMessage, error) {
 	payloadBytes, err := json.Marshal(cmdMsg.Payload)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal payload: %w", err)
@@ -49,17 +54,17 @@ func (h *Handler) Handle(ctx context.Context, cmdMsg *createOrderPublisher.CmdMe
 	return nil, fmt.Errorf("unknown command: %s", cmdMsg.Name)
 }
 
-func (h *Handler) onCancelOutOfStock(ctx context.Context, cmd createOrder.CancelOutOfStockCmd) *ResMessage {
+func (h *HandlerImpl) onCancelOutOfStock(ctx context.Context, cmd createOrder.CancelOutOfStockCmd) *create_order.ResMessage {
 	_ = h.usecase.CancelOutOfStock(ctx, cmd.OrderID)
 	return nil
 }
 
-func (h *Handler) onCancelCourierNotFoundCmd(ctx context.Context, cmd createOrder.CancelCourierNotFoundCmd) *ResMessage {
+func (h *HandlerImpl) onCancelCourierNotFoundCmd(ctx context.Context, cmd createOrder.CancelCourierNotFoundCmd) *create_order.ResMessage {
 	_ = h.usecase.CancelCourierNotFound(ctx, cmd.OrderID)
 	return nil
 }
 
-func (h *Handler) onBeginDelivery(ctx context.Context, cmd createOrder.BeginDeliveryCmd) *ResMessage {
+func (h *HandlerImpl) onBeginDelivery(ctx context.Context, cmd createOrder.BeginDeliveryCmd) *create_order.ResMessage {
 	data := orderUsecase.BeginDeliveryDto{
 		OrderID:   cmd.OrderID,
 		CourierID: cmd.CourierID,
@@ -67,3 +72,5 @@ func (h *Handler) onBeginDelivery(ctx context.Context, cmd createOrder.BeginDeli
 	_ = h.usecase.BeginDelivery(ctx, data)
 	return nil
 }
+
+var _ Handler = (*HandlerImpl)(nil)
