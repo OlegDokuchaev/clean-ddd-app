@@ -7,20 +7,20 @@ import (
 func NewOrderCommandWriter(config *Config) *kafka.Writer {
 	return &kafka.Writer{
 		Addr:  kafka.TCP(config.Address),
-		Topic: config.OrderCommandTopic,
+		Topic: config.OrderCmdTopic,
 	}
 }
 
 func NewWarehouseCommandWriter(config *Config) *kafka.Writer {
 	return &kafka.Writer{
 		Addr:  kafka.TCP(config.Address),
-		Topic: config.WarehouseCommandTopic,
+		Topic: config.WarehouseCmdTopic,
 	}
 }
 
 func NewCourierCommandWriter(config *Config) *kafka.Writer {
 	return &kafka.Writer{
 		Addr:  kafka.TCP(config.Address),
-		Topic: config.CourierCommandTopic,
+		Topic: config.CourierCmdTopic,
 	}
 }

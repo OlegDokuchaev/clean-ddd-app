@@ -9,11 +9,16 @@ import (
 type Config struct {
 	Address string `envconfig:"KAFKA_ADDRESS" required:"true"`
 
-	OrderCommandTopic     string `envconfig:"KAFKA_ORDER_COMMAND_TOPIC" required:"true"`
-	WarehouseCommandTopic string `envconfig:"KAFKA_WAREHOUSE_COMMAND_TOPIC" required:"true"`
-	CourierCommandTopic   string `envconfig:"KAFKA_COURIER_COMMAND_TOPIC" required:"true"`
+	OrderCmdTopic           string `envconfig:"KAFKA_ORDER_COMMAND_TOPIC" required:"true"`
+	OrderCmdConsumerGroupID string `envconfig:"KAFKA_ORDER_COMMAND_CONSUMER_GROUP_ID" required:"true"`
 
-	OrderCommandConsumerGroupID string `envconfig:"KAFKA_ORDER_COMMAND_CONSUMER_GROUP_ID" required:"true"`
+	WarehouseCmdTopic              string `envconfig:"KAFKA_WAREHOUSE_COMMAND_TOPIC" required:"true"`
+	WarehouseCmdResTopic           string `envconfig:"KAFKA_WAREHOUSE_COMMAND_RESULT_TOPIC" required:"true"`
+	WarehouseCmdResConsumerGroupID string `envconfig:"KAFKA_WAREHOUSE_COMMAND_RESULT_CONSUMER_GROUP_ID" required:"true"`
+
+	CourierCmdTopic              string `envconfig:"KAFKA_COURIER_COMMAND_TOPIC" required:"true"`
+	CourierCmdResTopic           string `envconfig:"KAFKA_COURIER_COMMAND_RESULT_TOPIC" required:"true"`
+	CourierCmdResConsumerGroupID string `envconfig:"KAFKA_COURIER_COMMAND_RESULT_CONSUMER_GROUP_ID" required:"true"`
 }
 
 func NewConfig() (*Config, error) {
