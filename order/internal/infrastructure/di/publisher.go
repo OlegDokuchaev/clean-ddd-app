@@ -9,18 +9,20 @@ import (
 
 var PublisherModule = fx.Provide(
 	messaging.NewConfig,
+
 	fx.Annotate(
 		messaging.NewOrderCommandWriter,
-		fx.ParamTags(`name:"orderWriter"`),
+		fx.ResultTags(`name:"orderWriter"`),
 	),
 	fx.Annotate(
 		messaging.NewWarehouseCommandWriter,
-		fx.ParamTags(`name:"warehouseWriter"`),
+		fx.ResultTags(`name:"warehouseWriter"`),
 	),
 	fx.Annotate(
 		messaging.NewCourierCommandWriter,
-		fx.ParamTags(`name:"courierWriter"`),
+		fx.ResultTags(`name:"courierWriter"`),
 	),
+
 	fx.Annotate(
 		createOrderPublisher.NewPublisher,
 		fx.ParamTags(`name:"warehouseWriter"`, `name:"orderWriter"`, `name:"courierWriter"`),
