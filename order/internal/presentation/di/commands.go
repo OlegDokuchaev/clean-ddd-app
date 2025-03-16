@@ -13,14 +13,17 @@ var CommandsModule = fx.Provide(
 	messaging.NewOrderCommandWriter,
 	messaging.NewOrderCommandReader,
 	commands.NewHandler,
+	commands.NewReader,
+	commands.NewWriter,
 	commands.NewProcessor,
 	fx.Invoke(RunProcessor),
 )
 
-func RunProcessor(lc fx.Lifecycle, processor *commands.Processor) {
+func RunProcessor(lc fx.Lifecycle, processor *commands.Processor, reader *commands.ReaderImpl) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			go processor.Process(ctx)
+			reader.Start(ctx)
+			processor.Start(ctx)
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
