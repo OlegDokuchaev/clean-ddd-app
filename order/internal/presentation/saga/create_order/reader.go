@@ -12,7 +12,7 @@ import (
 type Reader interface {
 	Start(ctx context.Context)
 	Read(ctx context.Context) (*ResMessage, error)
-	Close() error
+	Stop()
 }
 
 type ReaderImpl struct {
@@ -35,6 +35,11 @@ func (c *ReaderImpl) Start(ctx context.Context) {
 	go c.consumeMessages(ctx)
 }
 
+func (c *ReaderImpl) Stop() {
+	log.Printf("Stopping reader...")
+	close(c.shutdownChan)
+}
+
 func (c *ReaderImpl) consumeMessages(ctx context.Context) {
 	defer close(c.messageChan)
 	defer close(c.errorChan)
@@ -52,14 +57,20 @@ func (c *ReaderImpl) consumeMessages(ctx context.Context) {
 
 			if err != nil {
 				if ctx.Err() != nil {
-					continue
+					return
 				}
 
+				// Check if shutdown was requested before reporting error
 				select {
-				case c.errorChan <- fmt.Errorf("error reading message: %w", err):
+				case <-c.shutdownChan:
+					return
 				default:
-					// Канал заполнен, логируем ошибку
-					log.Printf("Error channel full, dropping error: %v", err)
+					select {
+					case c.errorChan <- fmt.Errorf("error reading message: %w", err):
+					default:
+						// Error channel is full, logging error
+						log.Printf("Error channel full, dropping error: %v", err)
+					}
 				}
 				continue
 			}
@@ -67,10 +78,15 @@ func (c *ReaderImpl) consumeMessages(ctx context.Context) {
 			resMsg, err := c.parseMessage(msg.Value)
 			if err != nil {
 				select {
-				case c.errorChan <- fmt.Errorf("error parsing message: %w", err):
+				case <-c.shutdownChan:
+					return
 				default:
-					// Канал заполнен, логируем ошибку
-					log.Printf("Error channel full, dropping error: %v", err)
+					select {
+					case c.errorChan <- fmt.Errorf("error parsing message: %w", err):
+					default:
+						// Error channel is full, logging error
+						log.Printf("Error channel full, dropping error: %v", err)
+					}
 				}
 				continue
 			}
@@ -103,11 +119,6 @@ func (c *ReaderImpl) Read(ctx context.Context) (*ResMessage, error) {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
-}
-
-func (c *ReaderImpl) Close() error {
-	close(c.shutdownChan)
-	return c.reader.Close()
 }
 
 func (c *ReaderImpl) parseMessage(data []byte) (*ResMessage, error) {

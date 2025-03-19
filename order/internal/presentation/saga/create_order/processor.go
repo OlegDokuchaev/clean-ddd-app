@@ -68,22 +68,5 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 func (p *Processor) Stop() {
 	close(p.shutdownChan)
 	p.wg.Wait()
-}
-
-func (p *Processor) Close() error {
-	var cErr error
-
-	p.Stop()
-
-	if err := p.warehouseReader.Close(); err != nil {
-		log.Printf("Error closing warehouse receiver: %v", err)
-		cErr = err
-	}
-
-	if err := p.courierReader.Close(); err != nil {
-		log.Printf("Error closing courier receiver: %v", err)
-		cErr = err
-	}
-
-	return cErr
+	log.Println("Processor gracefully stopped")
 }

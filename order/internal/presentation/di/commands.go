@@ -2,6 +2,7 @@ package di
 
 import (
 	"context"
+	"log"
 	"order/internal/presentation/commands"
 
 	"go.uber.org/fx"
@@ -31,14 +32,24 @@ var CommandConsumerModule = fx.Options(
 func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, reader commands.Reader) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
+			log.Println("Starting command processor and reader...")
 			reader.Start(ctx)
 			processor.Start(ctx)
+			log.Println("Command components successfully started")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			if err := processor.Close(); err != nil {
-				return err
-			}
+			log.Println("Stopping command components...")
+
+			// First stop the reader to prevent it from trying to read from closed connections
+			log.Println("Stopping command reader...")
+			reader.Stop()
+
+			// Then stop the processor
+			log.Println("Stopping command processor...")
+			processor.Stop()
+
+			log.Println("All command components successfully stopped")
 			return nil
 		},
 	})

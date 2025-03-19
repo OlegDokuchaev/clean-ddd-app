@@ -13,7 +13,7 @@ import (
 type Reader interface {
 	Start(ctx context.Context)
 	Read(ctx context.Context) (*createOrderPublisher.CmdMessage, error)
-	Close() error
+	Stop()
 }
 
 type ReaderImpl struct {
@@ -36,6 +36,11 @@ func (r *ReaderImpl) Start(ctx context.Context) {
 	go r.readCommands(ctx)
 }
 
+func (r *ReaderImpl) Stop() {
+	log.Printf("Stopping command reader...")
+	close(r.shutdownChan)
+}
+
 func (r *ReaderImpl) readCommands(ctx context.Context) {
 	defer close(r.commandChan)
 	defer close(r.errorChan)
@@ -52,13 +57,20 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 			msg, err := r.reader.ReadMessage(ctx)
 			if err != nil {
 				if ctx.Err() != nil {
-					continue
+					return
 				}
 
+				// Check if shutdown was requested before reporting error
 				select {
-				case r.errorChan <- fmt.Errorf("error reading message: %w", err):
+				case <-r.shutdownChan:
+					return
 				default:
-					log.Printf("Error channel full, dropping error: %v", err)
+					// Only report error if we're not shutting down
+					select {
+					case r.errorChan <- fmt.Errorf("error reading message: %w", err):
+					default:
+						log.Printf("Error channel full, dropping error: %v", err)
+					}
 				}
 				continue
 			}
@@ -66,9 +78,14 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 			cmdMsg, err := parseCommandMessage(msg.Value)
 			if err != nil {
 				select {
-				case r.errorChan <- fmt.Errorf("error parsing message: %w", err):
+				case <-r.shutdownChan:
+					return
 				default:
-					log.Printf("Error channel full, dropping error: %v", err)
+					select {
+					case r.errorChan <- fmt.Errorf("error parsing message: %w", err):
+					default:
+						log.Printf("Error channel full, dropping error: %v", err)
+					}
 				}
 				continue
 			}
@@ -100,11 +117,6 @@ func (r *ReaderImpl) Read(ctx context.Context) (*createOrderPublisher.CmdMessage
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
-}
-
-func (r *ReaderImpl) Close() error {
-	close(r.shutdownChan)
-	return r.reader.Close()
 }
 
 var _ Reader = (*ReaderImpl)(nil)

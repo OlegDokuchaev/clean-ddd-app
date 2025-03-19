@@ -79,22 +79,5 @@ func (p *Processor) processCommands(ctx context.Context) {
 func (p *Processor) Stop() {
 	close(p.shutdownChan)
 	p.wg.Wait()
-}
-
-func (p *Processor) Close() error {
-	var lastErr error
-
-	p.Stop()
-
-	if err := p.reader.Close(); err != nil {
-		log.Printf("Error closing command reader: %v", err)
-		lastErr = err
-	}
-
-	if err := p.writer.Close(); err != nil {
-		log.Printf("Error closing response writer: %v", err)
-		lastErr = err
-	}
-
-	return lastErr
+	log.Println("Command processor gracefully stopped")
 }

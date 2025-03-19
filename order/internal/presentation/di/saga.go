@@ -2,10 +2,10 @@ package di
 
 import (
 	"context"
-	"go.uber.org/fx"
 	"log"
-
 	"order/internal/presentation/saga/create_order"
+
+	"go.uber.org/fx"
 )
 
 var SagaConsumerModule = fx.Options(
@@ -57,15 +57,18 @@ func runProcessor(in struct {
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
+			log.Println("Stopping saga components...")
+
+			// First stop all readers to prevent them from trying to read from closed connections
+			log.Println("Stopping saga readers...")
+			in.WarehouseReader.Stop()
+			in.CourierReader.Stop()
+
+			// Then stop the processor
 			log.Println("Stopping saga processor...")
+			in.Processor.Stop()
 
-			err := in.Processor.Close()
-			if err != nil {
-				log.Printf("Error stopping saga processor: %v", err)
-				return err
-			}
-
-			log.Println("Saga processor successfully stopped")
+			log.Println("All saga components successfully stopped")
 			return nil
 		},
 	})
