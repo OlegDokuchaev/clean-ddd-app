@@ -131,3 +131,5 @@ func (h *OrderServiceHandler) GetCurrentOrdersByCourier(ctx context.Context, req
 
 	return response.ToGetCurrentOrdersByCourierResponse(orders), nil
 }
+
+var _ orderv1.OrderServiceServer = (*OrderServiceHandler)(nil)
