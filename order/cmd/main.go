@@ -3,28 +3,35 @@ package main
 import (
 	"context"
 	"log"
+	appDI "order/internal/application/di"
+	infraDI "order/internal/infrastructure/di"
+	presentationDI "order/internal/presentation/di"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"go.uber.org/fx"
-
-	appDI "order/internal/application/di"
-	infraDI "order/internal/infrastructure/di"
-	presentationDI "order/internal/presentation/di"
 )
 
 func main() {
 	app := fx.New(
+		// Infrastructure modules
+		infraDI.MessagingModule,
+		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
 		infraDI.PublisherModule,
+
+		// Application modules
 		appDI.UseCaseModule,
 		appDI.SagaModule,
-		presentationDI.GRPCModule,
-		presentationDI.CommandsModule,
-		presentationDI.SagaModule,
 
+		// Presentation modules
+		presentationDI.GRPCModule,
+		presentationDI.CommandConsumerModule,
+		presentationDI.SagaConsumerModule,
+
+		// Add logging for application startup and shutdown
 		fx.Invoke(func(lc fx.Lifecycle) {
 			lc.Append(fx.Hook{
 				OnStart: func(context.Context) error {
