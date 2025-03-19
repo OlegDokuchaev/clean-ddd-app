@@ -10,6 +10,7 @@ import (
 )
 
 type Reader interface {
+	Start(ctx context.Context)
 	Read(ctx context.Context) (*ResMessage, error)
 	Close() error
 }
