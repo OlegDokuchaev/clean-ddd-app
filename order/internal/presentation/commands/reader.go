@@ -11,6 +11,7 @@ import (
 )
 
 type Reader interface {
+	Start(ctx context.Context)
 	Read(ctx context.Context) (*createOrderPublisher.CmdMessage, error)
 	Close() error
 }
