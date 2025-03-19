@@ -2,24 +2,33 @@ package di
 
 import (
 	"context"
-	"order/internal/infrastructure/messaging"
 	"order/internal/presentation/commands"
 
 	"go.uber.org/fx"
 )
 
-var CommandsModule = fx.Provide(
-	messaging.NewConfig,
-	messaging.NewOrderCommandWriter,
-	messaging.NewOrderCommandReader,
-	commands.NewHandler,
-	commands.NewReader,
-	commands.NewWriter,
-	commands.NewProcessor,
-	fx.Invoke(RunProcessor),
+var CommandConsumerModule = fx.Options(
+	fx.Provide(
+		fx.Annotate(
+			commands.NewHandler,
+			fx.As(new(commands.Handler)),
+		),
+		fx.Annotate(
+			commands.NewReader,
+			fx.ParamTags(`name:"orderCommandReader"`),
+			fx.As(new(commands.Reader)),
+		),
+		fx.Annotate(
+			commands.NewWriter,
+			fx.ParamTags(`name:"orderCommandResWriter"`),
+			fx.As(new(commands.Writer)),
+		),
+		commands.NewProcessor,
+	),
+	fx.Invoke(setupCommandsLifecycle),
 )
 
-func RunProcessor(lc fx.Lifecycle, processor *commands.Processor, reader *commands.ReaderImpl) {
+func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, reader commands.Reader) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			reader.Start(ctx)

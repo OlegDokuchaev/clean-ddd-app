@@ -12,7 +12,16 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func NewGRPCServer(lc fx.Lifecycle, cfg *orderv1.Config, orderHandler *handler.OrderServiceHandler) *grpc.Server {
+var GRPCModule = fx.Provide(
+	orderv1.NewConfig,
+	fx.Annotate(
+		handler.NewOrderServiceHandler,
+		fx.As(new(orderv1.OrderServiceServer)),
+	),
+	newGRPCServer,
+)
+
+func newGRPCServer(lc fx.Lifecycle, cfg *orderv1.Config, orderHandler orderv1.OrderServiceServer) *grpc.Server {
 	server := grpc.NewServer()
 	orderv1.RegisterOrderServiceServer(server, orderHandler)
 	reflection.Register(server)
@@ -42,12 +51,3 @@ func NewGRPCServer(lc fx.Lifecycle, cfg *orderv1.Config, orderHandler *handler.O
 
 	return server
 }
-
-var GRPCModule = fx.Provide(
-	orderv1.NewConfig,
-	fx.Annotate(
-		handler.NewOrderServiceHandler,
-		fx.As(new(orderv1.OrderServiceServer)),
-	),
-	NewGRPCServer,
-)

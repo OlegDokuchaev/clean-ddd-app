@@ -2,44 +2,38 @@ package di
 
 import (
 	"context"
+	"go.uber.org/fx"
 	"log"
 
-	"go.uber.org/fx"
-
-	"order/internal/infrastructure/messaging"
 	"order/internal/presentation/saga/create_order"
 )
 
-var SagaModule = fx.Provide(
-	messaging.NewConfig,
+var SagaConsumerModule = fx.Options(
+	fx.Provide(
+		// Saga event readers
+		fx.Annotate(
+			create_order.NewReader,
+			fx.ParamTags(`name:"warehouseCommandResultReader"`),
+			fx.ResultTags(`name:"warehouseReader"`),
+			fx.As(new(create_order.Reader)),
+		),
+		fx.Annotate(
+			create_order.NewReader,
+			fx.ParamTags(`name:"courierCommandResultReader"`),
+			fx.ResultTags(`name:"courierReader"`),
+			fx.As(new(create_order.Reader)),
+		),
 
-	fx.Annotate(
-		messaging.NewWarehouseCommandResultReader,
-		fx.ResultTags(`name:"warehouseKafkaReader"`),
+		// Saga handler and processor
+		fx.Annotate(
+			create_order.NewHandler,
+			fx.As(new(create_order.Handler)),
+		),
+		fx.Annotate(
+			create_order.NewProcessor,
+			fx.ParamTags(``, `name:"warehouseReader"`, `name:"courierReader"`),
+		),
 	),
-
-	fx.Annotate(
-		messaging.NewCourierCommandResultReader,
-		fx.ResultTags(`name:"courierKafkaReader"`),
-	),
-
-	fx.Annotate(
-		create_order.NewReader,
-		fx.ParamTags(`name:"warehouseKafkaReader"`),
-		fx.ResultTags(`name:"warehouseReader"`),
-	),
-	fx.Annotate(
-		create_order.NewReader,
-		fx.ParamTags(`name:"courierKafkaReader"`),
-		fx.ResultTags(`name:"courierReader"`),
-	),
-
-	create_order.NewHandler,
-	fx.Annotate(
-		create_order.NewProcessor,
-		fx.ParamTags(``, `name:"warehouseReader"`, `name:"courierReader"`),
-	),
-
 	fx.Invoke(runProcessor),
 )
 
@@ -48,8 +42,8 @@ func runProcessor(in struct {
 
 	Lifecycle       fx.Lifecycle
 	Processor       *create_order.Processor
-	WarehouseReader *create_order.ReaderImpl `name:"warehouseReader"`
-	CourierReader   *create_order.ReaderImpl `name:"courierReader"`
+	WarehouseReader create_order.Reader `name:"warehouseReader"`
+	CourierReader   create_order.Reader `name:"courierReader"`
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
