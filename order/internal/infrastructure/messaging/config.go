@@ -10,6 +10,7 @@ type Config struct {
 	Address string `envconfig:"KAFKA_ADDRESS" required:"true"`
 
 	OrderCmdTopic           string `envconfig:"KAFKA_ORDER_COMMAND_TOPIC" required:"true"`
+	OrderCmdResTopic        string `envconfig:"KAFKA_ORDER_COMMAND_RESULT_TOPIC" required:"true"`
 	OrderCmdConsumerGroupID string `envconfig:"KAFKA_ORDER_COMMAND_CONSUMER_GROUP_ID" required:"true"`
 
 	WarehouseCmdTopic              string `envconfig:"KAFKA_WAREHOUSE_COMMAND_TOPIC" required:"true"`

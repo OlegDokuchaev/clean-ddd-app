@@ -24,3 +24,10 @@ func NewCourierCommandWriter(config *Config) *kafka.Writer {
 		Topic: config.CourierCmdTopic,
 	}
 }
+
+func NewOrderCommandResWriter(config *Config) *kafka.Writer {
+	return &kafka.Writer{
+		Addr:  kafka.TCP(config.Address),
+		Topic: config.OrderCmdResTopic,
+	}
+}
