@@ -2,6 +2,8 @@ package di
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"order/internal/presentation/saga/create_order"
 
@@ -49,8 +51,12 @@ func runProcessor(in struct {
 		OnStart: func(ctx context.Context) error {
 			log.Println("Starting saga readers and processor...")
 
-			in.WarehouseReader.Start(ctx)
-			in.CourierReader.Start(ctx)
+			if err := in.WarehouseReader.Start(ctx); err != nil {
+				return err
+			}
+			if err := in.CourierReader.Start(ctx); err != nil {
+				return err
+			}
 			if err := in.Processor.Start(ctx); err != nil {
 				return err
 			}
@@ -61,14 +67,23 @@ func runProcessor(in struct {
 		OnStop: func(ctx context.Context) error {
 			log.Println("Stopping saga components...")
 
-			err := in.Processor.Stop()
-			in.WarehouseReader.Stop()
-			in.CourierReader.Stop()
-
-			if err == nil {
-				log.Println("All saga components successfully stopped")
+			var errs []error
+			if err := in.Processor.Stop(); err != nil {
+				errs = append(errs, fmt.Errorf("processor stop error: %w", err))
 			}
-			return err
+			if err := in.WarehouseReader.Stop(); err != nil {
+				errs = append(errs, fmt.Errorf("warehouse reader stop error: %w", err))
+			}
+			if err := in.CourierReader.Stop(); err != nil {
+				errs = append(errs, fmt.Errorf("courier reader stop error: %w", err))
+			}
+
+			if len(errs) > 0 {
+				return errors.Join(errs...)
+			}
+
+			log.Println("All saga components successfully stopped")
+			return nil
 		},
 	})
 }

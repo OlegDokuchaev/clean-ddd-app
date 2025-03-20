@@ -2,6 +2,8 @@ package di
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"order/internal/presentation/commands"
 
@@ -34,7 +36,9 @@ func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, read
 		OnStart: func(ctx context.Context) error {
 			log.Println("Starting command processor and reader...")
 
-			reader.Start(ctx)
+			if err := reader.Start(ctx); err != nil {
+				return err
+			}
 			if err := processor.Start(ctx); err != nil {
 				return err
 			}
@@ -45,12 +49,19 @@ func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, read
 		OnStop: func(ctx context.Context) error {
 			log.Println("Stopping command components...")
 
-			err := processor.Stop()
-			reader.Stop()
-
-			if err == nil {
-				log.Println("All saga components successfully stopped")
+			var errs []error
+			if err := processor.Stop(); err != nil {
+				errs = append(errs, fmt.Errorf("processor stop error: %w", err))
 			}
+			if err := reader.Stop(); err != nil {
+				errs = append(errs, fmt.Errorf("reader stop error: %w", err))
+			}
+
+			if len(errs) > 0 {
+				return errors.Join(errs...)
+			}
+
+			log.Println("All command components successfully stopped")
 			return nil
 		},
 	})

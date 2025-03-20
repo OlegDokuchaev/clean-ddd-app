@@ -3,6 +3,7 @@ package create_order
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -11,9 +12,9 @@ import (
 )
 
 type Reader interface {
-	Start(ctx context.Context)
+	Start(ctx context.Context) error
 	Read(ctx context.Context) (*ResMessage, error)
-	Stop()
+	Stop() error
 }
 
 type ReaderImpl struct {
@@ -35,13 +36,12 @@ func NewReader(reader *kafka.Reader) *ReaderImpl {
 	}
 }
 
-func (r *ReaderImpl) Start(ctx context.Context) {
+func (r *ReaderImpl) Start(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if r.started {
-		log.Println("Reader is already started, no need to start again.")
-		return
+		return errors.New("reader is already started")
 	}
 
 	r.messageChan = make(chan *ResMessage, 1)
@@ -58,6 +58,8 @@ func (r *ReaderImpl) Start(ctx context.Context) {
 		defer r.wg.Done()
 		r.consumeMessages(r.cancelCtx, r.messageChan, r.errorChan)
 	}()
+
+	return nil
 }
 
 func (r *ReaderImpl) consumeMessages(ctx context.Context, msgCh chan<- *ResMessage, errCh chan<- error) {
@@ -118,13 +120,13 @@ func (r *ReaderImpl) Read(ctx context.Context) (*ResMessage, error) {
 	}
 }
 
-func (r *ReaderImpl) Stop() {
+func (r *ReaderImpl) Stop() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if !r.started {
 		log.Printf("Reader is already stopped or was not started.")
-		return
+		return errors.New("reader is already stopped or was not started")
 	}
 
 	log.Printf("Stopping reader...")
@@ -140,6 +142,8 @@ func (r *ReaderImpl) Stop() {
 
 	r.started = false
 	log.Printf("Reader has been stopped.")
+
+	return nil
 }
 
 func (r *ReaderImpl) parseMessage(data []byte) (*ResMessage, error) {

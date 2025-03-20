@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
@@ -12,9 +13,9 @@ import (
 )
 
 type Reader interface {
-	Start(ctx context.Context)
+	Start(ctx context.Context) error
 	Read(ctx context.Context) (*createOrderPublisher.CmdMessage, error)
-	Stop()
+	Stop() error
 }
 
 type ReaderImpl struct {
@@ -36,13 +37,13 @@ func NewReader(reader *kafka.Reader) *ReaderImpl {
 	}
 }
 
-func (r *ReaderImpl) Start(ctx context.Context) {
+func (r *ReaderImpl) Start(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if r.started {
 		log.Println("Command reader is already started, no need to start again.")
-		return
+		return errors.New("command reader is already started")
 	}
 
 	r.commandChan = make(chan *createOrderPublisher.CmdMessage, 1)
@@ -59,15 +60,16 @@ func (r *ReaderImpl) Start(ctx context.Context) {
 		defer r.wg.Done()
 		r.readCommands(r.cancelCtx)
 	}()
+
+	return nil
 }
 
-func (r *ReaderImpl) Stop() {
+func (r *ReaderImpl) Stop() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if !r.started {
-		log.Printf("Command reader is already stopped or was not started.")
-		return
+		return errors.New("command reader is already stopped or was not started")
 	}
 
 	log.Printf("Stopping command reader...")
@@ -83,6 +85,8 @@ func (r *ReaderImpl) Stop() {
 
 	r.started = false
 	log.Printf("Command reader has been stopped.")
+
+	return nil
 }
 
 func (r *ReaderImpl) readCommands(ctx context.Context) {
