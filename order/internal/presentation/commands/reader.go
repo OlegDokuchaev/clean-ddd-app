@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
+	"sync"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -17,60 +18,96 @@ type Reader interface {
 }
 
 type ReaderImpl struct {
-	reader       *kafka.Reader
-	commandChan  chan *createOrderPublisher.CmdMessage
-	errorChan    chan error
-	shutdownChan chan struct{}
+	reader      *kafka.Reader
+	commandChan chan *createOrderPublisher.CmdMessage
+	errorChan   chan error
+
+	cancelCtx  context.Context
+	cancelFunc context.CancelFunc
+
+	wg      sync.WaitGroup
+	mu      sync.Mutex
+	started bool
 }
 
 func NewReader(reader *kafka.Reader) *ReaderImpl {
 	return &ReaderImpl{
-		reader:       reader,
-		commandChan:  make(chan *createOrderPublisher.CmdMessage, 1),
-		errorChan:    make(chan error, 1),
-		shutdownChan: make(chan struct{}),
+		reader: reader,
 	}
 }
 
 func (r *ReaderImpl) Start(ctx context.Context) {
-	go r.readCommands(ctx)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.started {
+		log.Println("Command reader is already started, no need to start again.")
+		return
+	}
+
+	r.commandChan = make(chan *createOrderPublisher.CmdMessage, 1)
+	r.errorChan = make(chan error, 1)
+
+	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
+
+	r.started = true
+	log.Println("Starting command reader...")
+
+	r.wg.Add(1)
+
+	go func() {
+		defer r.wg.Done()
+		r.readCommands(r.cancelCtx)
+	}()
 }
 
 func (r *ReaderImpl) Stop() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if !r.started {
+		log.Printf("Command reader is already stopped or was not started.")
+		return
+	}
+
 	log.Printf("Stopping command reader...")
-	close(r.shutdownChan)
+
+	if r.cancelFunc != nil {
+		r.cancelFunc()
+	}
+
+	r.wg.Wait()
+
+	close(r.commandChan)
+	close(r.errorChan)
+
+	r.started = false
+	log.Printf("Command reader has been stopped.")
 }
 
 func (r *ReaderImpl) readCommands(ctx context.Context) {
-	defer close(r.commandChan)
-	defer close(r.errorChan)
+	defer func() {
+		log.Printf("Command reader goroutine completed")
+	}()
 
 	for {
 		select {
 		case <-ctx.Done():
 			log.Printf("Context canceled, stopping command reader")
 			return
-		case <-r.shutdownChan:
-			log.Printf("Shutdown requested, stopping command reader")
-			return
 		default:
 			msg, err := r.reader.ReadMessage(ctx)
-			if err != nil {
-				if ctx.Err() != nil {
-					return
-				}
 
-				// Check if shutdown was requested before reporting error
+			if ctx.Err() != nil {
+				log.Printf("Context is done, stopping command reader")
+				return
+			}
+
+			if err != nil {
 				select {
-				case <-r.shutdownChan:
-					return
+				case r.errorChan <- fmt.Errorf("error reading message: %w", err):
 				default:
-					// Only report error if we're not shutting down
-					select {
-					case r.errorChan <- fmt.Errorf("error reading message: %w", err):
-					default:
-						log.Printf("Error channel full, dropping error: %v", err)
-					}
+					log.Printf("Error channel full, dropping error: %v", err)
 				}
 				continue
 			}
@@ -78,14 +115,9 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 			cmdMsg, err := parseCommandMessage(msg.Value)
 			if err != nil {
 				select {
-				case <-r.shutdownChan:
-					return
+				case r.errorChan <- fmt.Errorf("error parsing message: %w", err):
 				default:
-					select {
-					case r.errorChan <- fmt.Errorf("error parsing message: %w", err):
-					default:
-						log.Printf("Error channel full, dropping error: %v", err)
-					}
+					log.Printf("Error channel full, dropping error: %v", err)
 				}
 				continue
 			}
@@ -94,8 +126,6 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 			case r.commandChan <- cmdMsg:
 				log.Printf("Command received: %s, type: %s", cmdMsg.ID, cmdMsg.Name)
 			case <-ctx.Done():
-				return
-			case <-r.shutdownChan:
 				return
 			}
 		}

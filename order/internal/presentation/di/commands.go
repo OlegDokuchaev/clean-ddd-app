@@ -41,13 +41,13 @@ func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, read
 		OnStop: func(ctx context.Context) error {
 			log.Println("Stopping command components...")
 
-			// First stop the reader to prevent it from trying to read from closed connections
-			log.Println("Stopping command reader...")
-			reader.Stop()
-
-			// Then stop the processor
+			// Stop the processor
 			log.Println("Stopping command processor...")
 			processor.Stop()
+
+			// Stop the reader
+			log.Println("Stopping command reader...")
+			reader.Stop()
 
 			log.Println("All command components successfully stopped")
 			return nil

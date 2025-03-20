@@ -59,14 +59,14 @@ func runProcessor(in struct {
 		OnStop: func(ctx context.Context) error {
 			log.Println("Stopping saga components...")
 
-			// First stop all readers to prevent them from trying to read from closed connections
+			// Stop the processor
+			log.Println("Stopping saga processor...")
+			in.Processor.Stop()
+
+			// Stop all readers
 			log.Println("Stopping saga readers...")
 			in.WarehouseReader.Stop()
 			in.CourierReader.Stop()
-
-			// Then stop the processor
-			log.Println("Stopping saga processor...")
-			in.Processor.Stop()
 
 			log.Println("All saga components successfully stopped")
 			return nil
