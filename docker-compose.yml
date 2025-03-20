@@ -79,6 +79,12 @@ services:
       - .env
     ports:
       - "9092:9092"
+      - "29092:29092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   order_service:
     container_name: "clean_app_order_service"
@@ -91,7 +97,7 @@ services:
       order_db:
         condition: service_healthy
       message_bus_kafka:
-        condition: service_started
+        condition: service_healthy
     env_file:
       - ./order/.env
     environment:
