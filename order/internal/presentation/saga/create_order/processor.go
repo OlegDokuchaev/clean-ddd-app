@@ -2,6 +2,7 @@ package create_order
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"log"
 	"sync"
 )
@@ -10,8 +11,13 @@ type Processor struct {
 	handler         Handler
 	warehouseReader Reader
 	courierReader   Reader
-	wg              sync.WaitGroup
-	shutdownChan    chan struct{}
+
+	cancelCtx  context.Context
+	cancelFunc context.CancelFunc
+
+	wg      sync.WaitGroup
+	mu      sync.Mutex
+	started bool
 }
 
 func NewProcessor(handler Handler, warehouseReader Reader, courierReader Reader) *Processor {
@@ -19,54 +25,64 @@ func NewProcessor(handler Handler, warehouseReader Reader, courierReader Reader)
 		handler:         handler,
 		warehouseReader: warehouseReader,
 		courierReader:   courierReader,
-		shutdownChan:    make(chan struct{}),
 	}
 }
 
-func (p *Processor) Start(ctx context.Context) {
+func (p *Processor) Start(ctx context.Context) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.started {
+		return errors.New("processor is already running, no need to start again.")
+	}
+
+	p.cancelCtx, p.cancelFunc = context.WithCancel(ctx)
+	p.started = true
+
 	p.wg.Add(2)
-	go p.processMessages(ctx, "warehouse", p.warehouseReader)
-	go p.processMessages(ctx, "courier", p.courierReader)
+	go p.processMessages(p.cancelCtx, "warehouse", p.warehouseReader)
+	go p.processMessages(p.cancelCtx, "courier", p.courierReader)
+
+	return nil
 }
 
 func (p *Processor) processMessages(ctx context.Context, source string, receiver Reader) {
 	defer p.wg.Done()
 
-	processorCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	go func() {
-		select {
-		case <-p.shutdownChan:
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
-
 	for {
 		select {
-		case <-processorCtx.Done():
+		case <-ctx.Done():
 			log.Printf("%s processor stopping: context done", source)
 			return
 		default:
-			msg, err := receiver.Read(processorCtx)
+			msg, err := receiver.Read(ctx)
 			if err != nil {
-				if processorCtx.Err() != nil {
+				if ctx.Err() != nil {
 					return
 				}
 				log.Printf("Error receiving message from %s: %v", source, err)
 				continue
 			}
 
-			if err := p.handler.Handle(processorCtx, msg); err != nil {
+			if err := p.handler.Handle(ctx, msg); err != nil {
 				log.Printf("Error handling %s message: %v", source, err)
 			}
 		}
 	}
 }
 
-func (p *Processor) Stop() {
-	close(p.shutdownChan)
+func (p *Processor) Stop() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if !p.started {
+		return errors.New("processor is not running or already stopped")
+	}
+
+	p.cancelFunc()
+
 	p.wg.Wait()
-	log.Println("Processor gracefully stopped")
+	p.started = false
+
+	return nil
 }

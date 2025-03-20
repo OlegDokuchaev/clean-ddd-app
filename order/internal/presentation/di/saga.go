@@ -51,7 +51,9 @@ func runProcessor(in struct {
 
 			in.WarehouseReader.Start(ctx)
 			in.CourierReader.Start(ctx)
-			in.Processor.Start(ctx)
+			if err := in.Processor.Start(ctx); err != nil {
+				return err
+			}
 
 			log.Println("Saga components successfully started")
 			return nil
@@ -59,17 +61,14 @@ func runProcessor(in struct {
 		OnStop: func(ctx context.Context) error {
 			log.Println("Stopping saga components...")
 
-			// Stop the processor
-			log.Println("Stopping saga processor...")
-			in.Processor.Stop()
-
-			// Stop all readers
-			log.Println("Stopping saga readers...")
+			err := in.Processor.Stop()
 			in.WarehouseReader.Stop()
 			in.CourierReader.Stop()
 
-			log.Println("All saga components successfully stopped")
-			return nil
+			if err == nil {
+				log.Println("All saga components successfully stopped")
+			}
+			return err
 		},
 	})
 }

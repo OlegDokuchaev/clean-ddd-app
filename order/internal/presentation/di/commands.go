@@ -33,23 +33,24 @@ func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, read
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			log.Println("Starting command processor and reader...")
+
 			reader.Start(ctx)
-			processor.Start(ctx)
+			if err := processor.Start(ctx); err != nil {
+				return err
+			}
+
 			log.Println("Command components successfully started")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
 			log.Println("Stopping command components...")
 
-			// Stop the processor
-			log.Println("Stopping command processor...")
-			processor.Stop()
-
-			// Stop the reader
-			log.Println("Stopping command reader...")
+			err := processor.Stop()
 			reader.Stop()
 
-			log.Println("All command components successfully stopped")
+			if err == nil {
+				log.Println("All saga components successfully stopped")
+			}
 			return nil
 		},
 	})
