@@ -3,13 +3,17 @@ package saga
 import (
 	"context"
 	"errors"
+	createOrder "order/internal/application/order/saga/create_order"
+	orderDomain "order/internal/domain/order"
+	orderMock "order/internal/mocks/order"
+	createOrderMock "order/internal/mocks/order/saga/create_order"
+	"testing"
+
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	createOrder "order/internal/application/order/saga/create_order"
-	createOrderMock "order/internal/mocks/order/saga/create_order"
-	"testing"
 )
 
 type CreateOrderSagaTestSuite struct {
@@ -25,7 +29,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
 	tests := []struct {
 		name        string
 		event       createOrder.ItemsReserved
-		setup       func(publisher *createOrderMock.PublisherMock)
+		setup       func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock)
 		expectedErr error
 	}{
 		{
@@ -33,7 +37,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
 			event: createOrder.ItemsReserved{
 				OrderID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
+			setup: func(publisher *createOrderMock.PublisherMock, _ *orderMock.RepositoryMock) {
 				publisher.On("PublishAssignCourierCmd", s.ctx, mock.Anything).
 					Return(nil).Once()
 			},
@@ -44,7 +48,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
 			event: createOrder.ItemsReserved{
 				OrderID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
+			setup: func(publisher *createOrderMock.PublisherMock, _ *orderMock.RepositoryMock) {
 				publisher.On("PublishAssignCourierCmd", s.ctx, mock.Anything).
 					Return(errors.New("publisher error")).Once()
 			},
@@ -57,8 +61,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
 		s.Run(tc.name, func() {
 			s.T().Parallel()
 			publisher := new(createOrderMock.PublisherMock)
-			uc := createOrder.New(publisher)
-			tc.setup(publisher)
+			repository := new(orderMock.RepositoryMock)
+			uc := createOrder.New(publisher, repository)
+			tc.setup(publisher, repository)
 
 			err := uc.HandleItemsReserved(s.ctx, tc.event)
 
@@ -70,6 +75,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
 			}
 
 			publisher.AssertExpectations(s.T())
+			repository.AssertExpectations(s.T())
 		})
 	}
 }
@@ -78,7 +84,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
 	tests := []struct {
 		name        string
 		event       createOrder.ItemsReservationFailed
-		setup       func(publisher *createOrderMock.PublisherMock)
+		setup       func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock)
 		expectedErr error
 	}{
 		{
@@ -86,7 +92,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
 			event: createOrder.ItemsReservationFailed{
 				OrderID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
+			setup: func(publisher *createOrderMock.PublisherMock, _ *orderMock.RepositoryMock) {
 				publisher.On("PublishCancelOutOfStockCmd", s.ctx, mock.Anything).
 					Return(nil).Once()
 			},
@@ -97,7 +103,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
 			event: createOrder.ItemsReservationFailed{
 				OrderID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
+			setup: func(publisher *createOrderMock.PublisherMock, _ *orderMock.RepositoryMock) {
 				publisher.On("PublishCancelOutOfStockCmd", s.ctx, mock.Anything).
 					Return(errors.New("publisher error")).Once()
 			},
@@ -110,8 +116,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
 		s.Run(tc.name, func() {
 			s.T().Parallel()
 			publisher := new(createOrderMock.PublisherMock)
-			uc := createOrder.New(publisher)
-			tc.setup(publisher)
+			repository := new(orderMock.RepositoryMock)
+			uc := createOrder.New(publisher, repository)
+			tc.setup(publisher, repository)
 
 			err := uc.HandleItemsReservationFailed(s.ctx, tc.event)
 
@@ -123,6 +130,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
 			}
 
 			publisher.AssertExpectations(s.T())
+			repository.AssertExpectations(s.T())
 		})
 	}
 }
@@ -131,7 +139,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 	tests := []struct {
 		name        string
 		event       createOrder.CourierAssignmentFailed
-		setup       func(publisher *createOrderMock.PublisherMock)
+		order       *orderDomain.Order
+		repoErr     error
+		setup       func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock, order *orderDomain.Order)
 		expectedErr error
 	}{
 		{
@@ -139,32 +149,67 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 			event: createOrder.CourierAssignmentFailed{
 				OrderID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
-				publisher.On("PublishReleaseItemsCmd", s.ctx, mock.Anything).
-					Return(nil).Once()
+			order: &orderDomain.Order{
+				ID: uuid.New(),
+				Items: []orderDomain.Item{
+					{
+						ProductID: uuid.New(),
+						Price:     decimal.NewFromInt(100),
+						Count:     2,
+					},
+				},
+			},
+			repoErr: nil,
+			setup: func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock, order *orderDomain.Order) {
+				publisher.On("PublishReleaseItemsCmd", s.ctx, mock.Anything).Return(nil).Once()
+				repository.On("GetByID", s.ctx, mock.Anything).Return(order, nil).Once()
 			},
 			expectedErr: nil,
+		},
+		{
+			name: "Failure: repository error",
+			event: createOrder.CourierAssignmentFailed{
+				OrderID: uuid.New(),
+			},
+			order:   nil,
+			repoErr: errors.New("repository error"),
+			setup: func(_ *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock, _ *orderDomain.Order) {
+				repository.On("GetByID", s.ctx, mock.Anything).
+					Return((*orderDomain.Order)(nil), errors.New("repository error")).Once()
+			},
+			expectedErr: errors.New("repository error"),
 		},
 		{
 			name: "Failure: publisher error",
 			event: createOrder.CourierAssignmentFailed{
 				OrderID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
+			order: &orderDomain.Order{
+				ID: uuid.New(),
+				Items: []orderDomain.Item{
+					{
+						ProductID: uuid.New(),
+						Price:     decimal.NewFromInt(100),
+						Count:     2,
+					},
+				},
+			},
+			repoErr: nil,
+			setup: func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock, order *orderDomain.Order) {
 				publisher.On("PublishReleaseItemsCmd", s.ctx, mock.Anything).
 					Return(errors.New("publisher error")).Once()
+				repository.On("GetByID", s.ctx, mock.Anything).Return(order, nil).Once()
 			},
 			expectedErr: errors.New("publisher error"),
 		},
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		s.Run(tc.name, func() {
-			s.T().Parallel()
 			publisher := new(createOrderMock.PublisherMock)
-			uc := createOrder.New(publisher)
-			tc.setup(publisher)
+			repository := new(orderMock.RepositoryMock)
+			tc.setup(publisher, repository, tc.order)
+			uc := createOrder.New(publisher, repository)
 
 			err := uc.HandleCourierAssignmentFailed(s.ctx, tc.event)
 
@@ -176,6 +221,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 			}
 
 			publisher.AssertExpectations(s.T())
+			repository.AssertExpectations(s.T())
 		})
 	}
 }
@@ -184,7 +230,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
 	tests := []struct {
 		name        string
 		event       createOrder.ItemsReleased
-		setup       func(publisher *createOrderMock.PublisherMock)
+		setup       func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock)
 		expectedErr error
 	}{
 		{
@@ -192,7 +238,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
 			event: createOrder.ItemsReleased{
 				OrderID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
+			setup: func(publisher *createOrderMock.PublisherMock, _ *orderMock.RepositoryMock) {
 				publisher.On("PublishCancelCourierNotFoundCmd", s.ctx, mock.Anything).
 					Return(nil).Once()
 			},
@@ -203,7 +249,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
 			event: createOrder.ItemsReleased{
 				OrderID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
+			setup: func(publisher *createOrderMock.PublisherMock, _ *orderMock.RepositoryMock) {
 				publisher.On("PublishCancelCourierNotFoundCmd", s.ctx, mock.Anything).
 					Return(errors.New("publisher error")).Once()
 			},
@@ -216,8 +262,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
 		s.Run(tc.name, func() {
 			s.T().Parallel()
 			publisher := new(createOrderMock.PublisherMock)
-			uc := createOrder.New(publisher)
-			tc.setup(publisher)
+			repository := new(orderMock.RepositoryMock)
+			uc := createOrder.New(publisher, repository)
+			tc.setup(publisher, repository)
 
 			err := uc.HandleItemsReleased(s.ctx, tc.event)
 
@@ -229,6 +276,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
 			}
 
 			publisher.AssertExpectations(s.T())
+			repository.AssertExpectations(s.T())
 		})
 	}
 }
@@ -237,7 +285,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
 	tests := []struct {
 		name        string
 		event       createOrder.CourierAssigned
-		setup       func(publisher *createOrderMock.PublisherMock)
+		setup       func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock)
 		expectedErr error
 	}{
 		{
@@ -246,7 +294,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
 				OrderID:   uuid.New(),
 				CourierID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
+			setup: func(publisher *createOrderMock.PublisherMock, _ *orderMock.RepositoryMock) {
 				publisher.On("PublishBeginDeliveryCmd", s.ctx, mock.Anything).
 					Return(nil).Once()
 			},
@@ -258,7 +306,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
 				OrderID:   uuid.New(),
 				CourierID: uuid.New(),
 			},
-			setup: func(publisher *createOrderMock.PublisherMock) {
+			setup: func(publisher *createOrderMock.PublisherMock, _ *orderMock.RepositoryMock) {
 				publisher.On("PublishBeginDeliveryCmd", s.ctx, mock.Anything).
 					Return(errors.New("publisher error")).Once()
 			},
@@ -271,8 +319,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
 		s.Run(tc.name, func() {
 			s.T().Parallel()
 			publisher := new(createOrderMock.PublisherMock)
-			uc := createOrder.New(publisher)
-			tc.setup(publisher)
+			repository := new(orderMock.RepositoryMock)
+			uc := createOrder.New(publisher, repository)
+			tc.setup(publisher, repository)
 
 			err := uc.HandleCourierAssigned(s.ctx, tc.event)
 
@@ -284,6 +333,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
 			}
 
 			publisher.AssertExpectations(s.T())
+			repository.AssertExpectations(s.T())
 		})
 	}
 }

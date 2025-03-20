@@ -2,17 +2,16 @@ package create_order
 
 import (
 	"github.com/google/uuid"
-	orderDomain "order/internal/domain/order"
 )
 
 type ReserveItemsCmd struct {
 	OrderID uuid.UUID
-	Items   []orderDomain.Item
+	Items   []OrderItem
 }
 
 type ReleaseItemsCmd struct {
 	OrderID uuid.UUID
-	Items   []orderDomain.Item
+	Items   []OrderItem
 }
 
 type CancelOutOfStockCmd struct {
@@ -30,4 +29,9 @@ type BeginDeliveryCmd struct {
 
 type CancelCourierNotFoundCmd struct {
 	OrderID uuid.UUID
+}
+
+type OrderItem struct {
+	ProductID uuid.UUID
+	Count     int
 }

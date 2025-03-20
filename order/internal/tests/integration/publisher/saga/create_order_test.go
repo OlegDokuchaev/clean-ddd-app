@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	createOrder "order/internal/application/order/saga/create_order"
-	orderDomain "order/internal/domain/order"
 	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
 	"order/internal/tests/testutils"
 	"testing"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -104,10 +102,9 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd() {
 			name: "Success",
 			cmd: createOrder.ReserveItemsCmd{
 				OrderID: uuid.New(),
-				Items: []orderDomain.Item{
+				Items: []createOrder.OrderItem{
 					{
 						ProductID: uuid.New(),
-						Price:     decimal.NewFromInt(100),
 						Count:     1,
 					},
 				},
@@ -163,10 +160,9 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd() {
 			name: "Success",
 			cmd: createOrder.ReleaseItemsCmd{
 				OrderID: uuid.New(),
-				Items: []orderDomain.Item{
+				Items: []createOrder.OrderItem{
 					{
 						ProductID: uuid.New(),
-						Price:     decimal.NewFromInt(100),
 						Count:     1,
 					},
 				},

@@ -2,15 +2,18 @@ package create_order
 
 import (
 	"context"
+	orderDomain "order/internal/domain/order"
 )
 
 type SagaImpl struct {
-	publisher Publisher
+	publisher  Publisher
+	repository orderDomain.Repository
 }
 
-func New(publisher Publisher) Saga {
+func New(publisher Publisher, repository orderDomain.Repository) Saga {
 	return &SagaImpl{
-		publisher: publisher,
+		publisher:  publisher,
+		repository: repository,
 	}
 }
 
@@ -29,8 +32,16 @@ func (s *SagaImpl) HandleItemsReservationFailed(ctx context.Context, event Items
 }
 
 func (s *SagaImpl) HandleCourierAssignmentFailed(ctx context.Context, event CourierAssignmentFailed) error {
+	order, err := s.repository.GetByID(ctx, event.OrderID)
+	if err != nil {
+		return err
+	}
+
+	orderItems := domainItemsToOrderItems(order.Items)
+
 	cmd := ReleaseItemsCmd{
 		OrderID: event.OrderID,
+		Items:   orderItems,
 	}
 	return s.publisher.PublishReleaseItemsCmd(ctx, cmd)
 }

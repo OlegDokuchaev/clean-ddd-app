@@ -14,9 +14,11 @@ func NewManager(publisher Publisher) Manager {
 }
 
 func (m *ManagerImpl) Create(ctx context.Context, order *orderDomain.Order) {
+	orderItems := domainItemsToOrderItems(order.Items)
+
 	cmd := ReserveItemsCmd{
 		OrderID: order.ID,
-		Items:   order.Items,
+		Items:   orderItems,
 	}
 	_ = m.publisher.PublishReserveItemsCmd(ctx, cmd)
 }
