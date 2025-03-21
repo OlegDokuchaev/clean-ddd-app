@@ -3,8 +3,10 @@ package item
 import (
 	"context"
 	"errors"
-	"github.com/shopspring/decimal"
+	"fmt"
 	"testing"
+
+	"github.com/shopspring/decimal"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -14,6 +16,7 @@ import (
 	itemApplication "warehouse/internal/application/item"
 	itemDomain "warehouse/internal/domain/item"
 	productDomain "warehouse/internal/domain/product"
+	itemRepository "warehouse/internal/infrastructure/repository/item"
 	"warehouse/internal/mocks"
 )
 
@@ -32,6 +35,18 @@ func (s *ItemUseCaseTestSuite) createTestItem(count int) *itemDomain.Item {
 	item, err := itemDomain.Create(product, count)
 	require.NoError(s.T(), err)
 	return item
+}
+
+func (s *ItemUseCaseTestSuite) createTestItems(counts ...int) []*itemDomain.Item {
+	items := make([]*itemDomain.Item, len(counts))
+	for i, count := range counts {
+		product, _, err := productDomain.Create(fmt.Sprintf("test-product-%d", i), decimal.NewFromInt(int64(10+i)))
+		require.NoError(s.T(), err)
+		item, err := itemDomain.Create(product, count)
+		require.NoError(s.T(), err)
+		items[i] = item
+	}
+	return items
 }
 
 func (s *ItemUseCaseTestSuite) TestCreate() {
@@ -121,46 +136,90 @@ func (s *ItemUseCaseTestSuite) TestReserve() {
 		{
 			name: "Success",
 			setup: func(uow *mocks.UoWMock) itemApplication.ReserveDto {
-				item := s.createTestItem(4)
+				items := s.createTestItems(5, 10)
 
-				uow.ItemMock.On("GetByID", s.ctx, item.ID).Return(item, nil).Once()
-				uow.ItemMock.On("Update", s.ctx, item).Return(nil).Once()
+				uow.ItemMock.On("GetAllByProductIDs", s.ctx, items[0].Product.ID, items[1].Product.ID).
+					Return(items, nil).Once()
+				uow.ItemMock.On("Update", s.ctx, mock.Anything).Return(nil).Twice()
 
-				return itemApplication.ReserveDto{ItemID: item.ID, Count: 3}
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+
+				return itemApplication.ReserveDto{
+					Items: []itemApplication.ItemDto{
+						{ProductID: items[0].Product.ID, Count: 4},
+						{ProductID: items[1].Product.ID, Count: 9},
+					},
+				}
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "Failure: Item not found",
+			name: "Failure: Items not found",
 			setup: func(uow *mocks.UoWMock) itemApplication.ReserveDto {
-				itemID := uuid.New()
-				uow.ItemMock.On("GetByID", s.ctx, itemID).
-					Return((*itemDomain.Item)(nil), errors.New("item not found")).Once()
-				return itemApplication.ReserveDto{ItemID: itemID, Count: 3}
+				uow.ItemMock.On("GetAllByProductIDs", s.ctx, mock.Anything, mock.Anything).
+					Return([]*itemDomain.Item{}, itemRepository.ErrItemsNotFound).Once()
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+
+				return itemApplication.ReserveDto{
+					Items: []itemApplication.ItemDto{
+						{ProductID: uuid.New(), Count: 2},
+						{ProductID: uuid.New(), Count: 3},
+					},
+				}
 			},
-			expectedErr: errors.New("item not found"),
+			expectedErr: itemRepository.ErrItemsNotFound,
 		},
 		{
 			name: "Failure: Reserve item error",
 			setup: func(uow *mocks.UoWMock) itemApplication.ReserveDto {
-				item := s.createTestItem(1)
-				uow.ItemMock.On("GetByID", s.ctx, item.ID).Return(item, nil).Once()
-				return itemApplication.ReserveDto{ItemID: item.ID, Count: 999}
+				items := s.createTestItems(1, 10)
+
+				uow.ItemMock.On("GetAllByProductIDs", s.ctx, items[0].Product.ID, items[1].Product.ID).
+					Return(items, nil).Once()
+
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+
+				return itemApplication.ReserveDto{
+					Items: []itemApplication.ItemDto{
+						{ProductID: items[0].Product.ID, Count: 4},
+						{ProductID: items[1].Product.ID, Count: 9},
+					},
+				}
 			},
 			expectedErr: itemDomain.ErrInvalidItemCount,
 		},
 		{
-			name: "Failure: Item repository update error",
+			name: "Failure: Update item error",
 			setup: func(uow *mocks.UoWMock) itemApplication.ReserveDto {
-				item := s.createTestItem(2)
+				items := s.createTestItems(5, 10)
 
-				uow.ItemMock.On("GetByID", s.ctx, item.ID).Return(item, nil).Once()
-				uow.ItemMock.On("Update", s.ctx, item).
+				uow.ItemMock.On("GetAllByProductIDs", s.ctx, items[0].Product.ID, items[1].Product.ID).
+					Return(items, nil).Once()
+				uow.ItemMock.On("Update", s.ctx, mock.Anything).
 					Return(errors.New("update error")).Once()
 
-				return itemApplication.ReserveDto{ItemID: item.ID, Count: 1}
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+
+				return itemApplication.ReserveDto{
+					Items: []itemApplication.ItemDto{
+						{ProductID: items[0].Product.ID, Count: 4},
+						{ProductID: items[1].Product.ID, Count: 4},
+					},
+				}
 			},
 			expectedErr: errors.New("update error"),
+		},
+		{
+			name: "Failure: UoW transaction error",
+			setup: func(uow *mocks.UoWMock) itemApplication.ReserveDto {
+				uow.On("Transaction", s.ctx, mock.Anything).Return(errors.New("transaction error")).Once()
+				return itemApplication.ReserveDto{
+					Items: []itemApplication.ItemDto{
+						{ProductID: uuid.New(), Count: 1},
+					},
+				}
+			},
+			expectedErr: errors.New("transaction error"),
 		},
 	}
 
@@ -195,46 +254,73 @@ func (s *ItemUseCaseTestSuite) TestRelease() {
 		{
 			name: "Success",
 			setup: func(uow *mocks.UoWMock) itemApplication.ReleaseDto {
-				item := s.createTestItem(1)
+				items := s.createTestItems(5, 10)
 
-				uow.ItemMock.On("GetByID", s.ctx, item.ID).Return(item, nil).Once()
-				uow.ItemMock.On("Update", s.ctx, item).Return(nil).Once()
+				uow.ItemMock.On("GetAllByProductIDs", s.ctx, items[0].Product.ID, items[1].Product.ID).
+					Return(items, nil).Once()
+				uow.ItemMock.On("Update", s.ctx, mock.Anything).Return(nil).Twice()
 
-				return itemApplication.ReleaseDto{ItemID: item.ID, Count: 2}
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+
+				return itemApplication.ReleaseDto{
+					Items: []itemApplication.ItemDto{
+						{ProductID: items[0].Product.ID, Count: 4},
+						{ProductID: items[1].Product.ID, Count: 9},
+					},
+				}
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "Failure: item not found",
+			name: "Failure: Items not found",
 			setup: func(uow *mocks.UoWMock) itemApplication.ReleaseDto {
-				itemID := uuid.New()
-				uow.ItemMock.On("GetByID", s.ctx, itemID).
-					Return((*itemDomain.Item)(nil), errors.New("not found")).Once()
-				return itemApplication.ReleaseDto{ItemID: itemID, Count: 1}
+				items := s.createTestItems(5, 10)
+
+				uow.ItemMock.On("GetAllByProductIDs", s.ctx, items[0].Product.ID, items[1].Product.ID).
+					Return(items, itemRepository.ErrItemNotFound).Once()
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+
+				return itemApplication.ReleaseDto{
+					Items: []itemApplication.ItemDto{
+						{ProductID: items[0].Product.ID, Count: 4},
+						{ProductID: items[1].Product.ID, Count: 9},
+					},
+				}
 			},
-			expectedErr: errors.New("not found"),
+			expectedErr: itemRepository.ErrItemNotFound,
 		},
 		{
-			name: "Failure: Release item error",
+			name: "Failure: Update items error",
 			setup: func(uow *mocks.UoWMock) itemApplication.ReleaseDto {
-				item := s.createTestItem(1)
-				uow.ItemMock.On("GetByID", s.ctx, item.ID).Return(item, nil).Once()
-				return itemApplication.ReleaseDto{ItemID: item.ID, Count: -1}
-			},
-			expectedErr: itemDomain.ErrInvalidItemCount,
-		},
-		{
-			name: "Failure: Item repository update error",
-			setup: func(uow *mocks.UoWMock) itemApplication.ReleaseDto {
-				item := s.createTestItem(1)
+				items := s.createTestItems(1, 10)
 
-				uow.ItemMock.On("GetByID", s.ctx, item.ID).Return(item, nil).Once()
-				uow.ItemMock.On("Update", s.ctx, item).
-					Return(errors.New("update error")).Once()
+				uow.ItemMock.On("GetAllByProductIDs", s.ctx, items[0].Product.ID, items[1].Product.ID).
+					Return(items, nil).Once()
+				uow.ItemMock.On("Update", s.ctx, mock.Anything).Return(errors.New("update error")).Once()
 
-				return itemApplication.ReleaseDto{ItemID: item.ID, Count: 2}
+				uow.On("Transaction", s.ctx, mock.Anything).Once()
+
+				return itemApplication.ReleaseDto{
+					Items: []itemApplication.ItemDto{
+						{ProductID: items[0].Product.ID, Count: 4},
+						{ProductID: items[1].Product.ID, Count: 9},
+					},
+				}
 			},
 			expectedErr: errors.New("update error"),
+		},
+		{
+			name: "Failure: UoW transaction error",
+			setup: func(uow *mocks.UoWMock) itemApplication.ReleaseDto {
+				uow.On("Transaction", s.ctx, mock.Anything).
+					Return(errors.New("transaction error")).Once()
+				return itemApplication.ReleaseDto{
+					Items: []itemApplication.ItemDto{
+						{ProductID: uuid.New(), Count: 1},
+					},
+				}
+			},
+			expectedErr: errors.New("transaction error"),
 		},
 	}
 
