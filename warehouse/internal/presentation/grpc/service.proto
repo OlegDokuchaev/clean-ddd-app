@@ -11,8 +11,6 @@ import "google/protobuf/empty.proto";
 // ItemService provides operations for managing items in the warehouse.
 //
 service ItemService {
-  rpc CreateItem(CreateItemRequest) returns (CreateItemResponse);
-
   rpc ReserveItem(ReserveItemRequest) returns (google.protobuf.Empty);
 
   rpc ReleaseItem(ReleaseItemRequest) returns (google.protobuf.Empty);
@@ -31,23 +29,12 @@ service ProductService {
 // Message definitions for ItemService
 //
 
-message CreateItemRequest {
-  string product_id = 1;
-  int32 count = 2;
-}
-
-message CreateItemResponse {
-  string item_id = 1;
-}
-
 message ReserveItemRequest {
-  string item_id = 1;
-  int32 count = 2;
+  repeated ItemInfo items = 2;
 }
 
 message ReleaseItemRequest {
-  string item_id = 1;
-  int32 count = 2;
+  repeated ItemInfo items = 2;
 }
 
 message GetAllItemsResponse {
@@ -59,6 +46,11 @@ message Item {
   int32 count = 2;
   Product product = 3;
   string version = 4;
+}
+
+message ItemInfo {
+  string product_id = 1;
+  int32 count = 2;
 }
 
 //
@@ -80,4 +72,3 @@ message Product {
   double price = 3;
   google.protobuf.Timestamp created = 4;
 }
-

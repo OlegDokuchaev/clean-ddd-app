@@ -21,23 +21,6 @@ func NewItemServiceHandler(usecase itemApplication.UseCase) *ItemServiceHandler 
 	}
 }
 
-func (h *ItemServiceHandler) CreateItem(
-	ctx context.Context,
-	req *warehousev1.CreateItemRequest,
-) (*warehousev1.CreateItemResponse, error) {
-	data, err := request.ToCreateItemDto(req)
-	if err != nil {
-		return nil, err
-	}
-
-	itemID, err := h.usecase.Create(ctx, data)
-	if err != nil {
-		return nil, response.ParseError(err)
-	}
-
-	return response.ToCreateItemResponse(itemID), nil
-}
-
 func (h *ItemServiceHandler) ReserveItem(
 	ctx context.Context,
 	req *warehousev1.ReserveItemRequest,

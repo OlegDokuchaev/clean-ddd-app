@@ -6,6 +6,30 @@ import (
 	warehousev1 "warehouse/internal/presentation/grpc"
 )
 
+func toItemInfoDto(req *warehousev1.ItemInfo) (itemApplication.ItemDto, error) {
+	productID, err := parseUUID(req.ProductId)
+	if err != nil {
+		return itemApplication.ItemDto{}, err
+	}
+
+	return itemApplication.ItemDto{
+		ProductID: productID,
+		Count:     int(req.Count),
+	}, nil
+}
+
+func toItemsInfoDto(req []*warehousev1.ItemInfo) ([]itemApplication.ItemDto, error) {
+	var items []itemApplication.ItemDto
+	for _, item := range req {
+		itemInfo, err := toItemInfoDto(item)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, itemInfo)
+	}
+	return items, nil
+}
+
 func ToCreateProductDto(req *warehousev1.CreateProductRequest) (productApplication.CreateDto, error) {
 	return productApplication.CreateDto{
 		Name:  req.Name,
@@ -13,30 +37,14 @@ func ToCreateProductDto(req *warehousev1.CreateProductRequest) (productApplicati
 	}, nil
 }
 
-func ToCreateItemDto(req *warehousev1.CreateItemRequest) (itemApplication.CreateDto, error) {
-	var data itemApplication.CreateDto
-
-	productID, err := parseUUID(req.ProductId)
-	if err != nil {
-		return data, err
-	}
-
-	data.ProductID = productID
-	data.Count = int(req.Count)
-
-	return data, nil
-}
-
 func ToReserveItemDto(req *warehousev1.ReserveItemRequest) (itemApplication.ReserveDto, error) {
 	var data itemApplication.ReserveDto
 
-	itemID, err := parseUUID(req.ItemId)
+	items, err := toItemsInfoDto(req.Items)
 	if err != nil {
 		return data, err
 	}
-
-	data.ItemID = itemID
-	data.Count = int(req.Count)
+	data.Items = items
 
 	return data, nil
 }
@@ -44,13 +52,11 @@ func ToReserveItemDto(req *warehousev1.ReserveItemRequest) (itemApplication.Rese
 func ToReleaseItemDto(req *warehousev1.ReleaseItemRequest) (itemApplication.ReleaseDto, error) {
 	var data itemApplication.ReleaseDto
 
-	itemID, err := parseUUID(req.ItemId)
+	items, err := toItemsInfoDto(req.Items)
 	if err != nil {
 		return data, err
 	}
-
-	data.ItemID = itemID
-	data.Count = int(req.Count)
+	data.Items = items
 
 	return data, nil
 }

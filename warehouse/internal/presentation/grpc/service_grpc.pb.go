@@ -20,7 +20,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ItemService_CreateItem_FullMethodName  = "/warehouse.v1.ItemService/CreateItem"
 	ItemService_ReserveItem_FullMethodName = "/warehouse.v1.ItemService/ReserveItem"
 	ItemService_ReleaseItem_FullMethodName = "/warehouse.v1.ItemService/ReleaseItem"
 	ItemService_GetAllItems_FullMethodName = "/warehouse.v1.ItemService/GetAllItems"
@@ -32,7 +31,6 @@ const (
 //
 // ItemService provides operations for managing items in the warehouse.
 type ItemServiceClient interface {
-	CreateItem(ctx context.Context, in *CreateItemRequest, opts ...grpc.CallOption) (*CreateItemResponse, error)
 	ReserveItem(ctx context.Context, in *ReserveItemRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ReleaseItem(ctx context.Context, in *ReleaseItemRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetAllItems(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAllItemsResponse, error)
@@ -44,16 +42,6 @@ type itemServiceClient struct {
 
 func NewItemServiceClient(cc grpc.ClientConnInterface) ItemServiceClient {
 	return &itemServiceClient{cc}
-}
-
-func (c *itemServiceClient) CreateItem(ctx context.Context, in *CreateItemRequest, opts ...grpc.CallOption) (*CreateItemResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateItemResponse)
-	err := c.cc.Invoke(ctx, ItemService_CreateItem_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *itemServiceClient) ReserveItem(ctx context.Context, in *ReserveItemRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
@@ -92,7 +80,6 @@ func (c *itemServiceClient) GetAllItems(ctx context.Context, in *emptypb.Empty, 
 //
 // ItemService provides operations for managing items in the warehouse.
 type ItemServiceServer interface {
-	CreateItem(context.Context, *CreateItemRequest) (*CreateItemResponse, error)
 	ReserveItem(context.Context, *ReserveItemRequest) (*emptypb.Empty, error)
 	ReleaseItem(context.Context, *ReleaseItemRequest) (*emptypb.Empty, error)
 	GetAllItems(context.Context, *emptypb.Empty) (*GetAllItemsResponse, error)
@@ -106,9 +93,6 @@ type ItemServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedItemServiceServer struct{}
 
-func (UnimplementedItemServiceServer) CreateItem(context.Context, *CreateItemRequest) (*CreateItemResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateItem not implemented")
-}
 func (UnimplementedItemServiceServer) ReserveItem(context.Context, *ReserveItemRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReserveItem not implemented")
 }
@@ -137,24 +121,6 @@ func RegisterItemServiceServer(s grpc.ServiceRegistrar, srv ItemServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ItemService_ServiceDesc, srv)
-}
-
-func _ItemService_CreateItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateItemRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ItemServiceServer).CreateItem(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ItemService_CreateItem_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemServiceServer).CreateItem(ctx, req.(*CreateItemRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _ItemService_ReserveItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -218,10 +184,6 @@ var ItemService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "warehouse.v1.ItemService",
 	HandlerType: (*ItemServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "CreateItem",
-			Handler:    _ItemService_CreateItem_Handler,
-		},
 		{
 			MethodName: "ReserveItem",
 			Handler:    _ItemService_ReserveItem_Handler,
