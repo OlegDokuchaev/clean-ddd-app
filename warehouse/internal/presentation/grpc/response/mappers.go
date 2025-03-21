@@ -1,11 +1,12 @@
 package response
 
 import (
-	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	itemDomain "warehouse/internal/domain/item"
 	productDomain "warehouse/internal/domain/product"
 	warehousev1 "warehouse/internal/presentation/grpc"
+
+	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func toProductResponse(product *productDomain.Product) *warehousev1.Product {
@@ -36,12 +37,6 @@ func toItemsResponse(items []*itemDomain.Item) []*warehousev1.Item {
 func ToCreateProductResponse(productID uuid.UUID) *warehousev1.CreateProductResponse {
 	return &warehousev1.CreateProductResponse{
 		ProductId: productID.String(),
-	}
-}
-
-func ToCreateItemResponse(itemID uuid.UUID) *warehousev1.CreateItemResponse {
-	return &warehousev1.CreateItemResponse{
-		ItemId: itemID.String(),
 	}
 }
 
