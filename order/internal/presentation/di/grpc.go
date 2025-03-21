@@ -13,11 +13,16 @@ import (
 )
 
 var GRPCModule = fx.Provide(
+	// Configuration
 	orderv1.NewConfig,
+
+	// Handlers
 	fx.Annotate(
 		handler.NewOrderServiceHandler,
 		fx.As(new(orderv1.OrderServiceServer)),
 	),
+
+	// GRPC server
 	newGRPCServer,
 )
 
