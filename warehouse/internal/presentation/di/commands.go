@@ -21,14 +21,14 @@ var CommandConsumerModule = fx.Options(
 		// Readers
 		fx.Annotate(
 			commands.NewReader,
-			fx.ParamTags(`name:"warehouseCommandReader"`),
+			fx.ParamTags(`name:"warehouseCmdReader"`),
 			fx.As(new(commands.Reader)),
 		),
 
 		// Writers
 		fx.Annotate(
 			commands.NewWriter,
-			fx.ParamTags(`name:"warehouseCommandResWriter"`),
+			fx.ParamTags(`name:"warehouseCmdResWriter"`),
 			fx.As(new(commands.Writer)),
 		),
 
