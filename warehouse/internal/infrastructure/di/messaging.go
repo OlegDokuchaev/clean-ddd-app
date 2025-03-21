@@ -3,9 +3,10 @@ package di
 import (
 	"context"
 	"fmt"
-	"github.com/segmentio/kafka-go"
 	"log"
 	"warehouse/internal/infrastructure/messaging"
+
+	"github.com/segmentio/kafka-go"
 
 	"go.uber.org/fx"
 )
@@ -21,10 +22,20 @@ var MessagingModule = fx.Options(
 			fx.ResultTags(`name:"warehouseCmdReader"`),
 		),
 
+		fx.Annotate(
+			messaging.NewProductEventReader,
+			fx.ResultTags(`name:"productEventReader"`),
+		),
+
 		// Message writers
 		fx.Annotate(
 			messaging.NewWarehouseCmdResWriter,
 			fx.ResultTags(`name:"warehouseCmdResWriter"`),
+		),
+
+		fx.Annotate(
+			messaging.NewProductEventWriter,
+			fx.ResultTags(`name:"productEventWriter"`),
 		),
 	),
 
@@ -39,9 +50,11 @@ func setupMessagingLifecycle(in struct {
 
 	// Readers
 	WarehouseCmdReader *kafka.Reader `name:"warehouseCmdReader"`
+	ProductEventReader *kafka.Reader `name:"productEventReader"`
 
 	// Writers
 	WarehouseCmdResWriter *kafka.Writer `name:"warehouseCmdResWriter"`
+	ProductEventWriter    *kafka.Writer `name:"productEventWriter"`
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
@@ -58,8 +71,16 @@ func setupMessagingLifecycle(in struct {
 				hasErrors = true
 			}
 
+			if err := closeReader("product event reader", in.ProductEventReader); err != nil {
+				hasErrors = true
+			}
+
 			// Close writers
 			if err := closeWriter("warehouse command result writer", in.WarehouseCmdResWriter); err != nil {
+				hasErrors = true
+			}
+
+			if err := closeWriter("product event writer", in.ProductEventWriter); err != nil {
 				hasErrors = true
 			}
 
