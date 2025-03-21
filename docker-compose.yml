@@ -112,6 +112,26 @@ services:
       - "50051:50051"
     restart: always
 
+  warehouse_service:
+    container_name: "clean_app_warehouse_service"
+    build:
+      context: ./warehouse
+      dockerfile: Dockerfile
+    volumes:
+      - ./warehouse:/warehouse
+    depends_on:
+      warehouse_db:
+        condition: service_healthy
+      message_bus_kafka:
+        condition: service_healthy
+    env_file:
+      - ./warehouse/.env
+    environment:
+      - DEV_MODE=air
+    ports:
+      - "50052:50051"
+    restart: always
+
 volumes:
   postgres_data_order:
   postgres_data_warehouse:
