@@ -29,7 +29,7 @@ var EventsModule = fx.Options(
 		// Processors
 		fx.Annotate(
 			events.NewProcessor,
-			fx.ParamTags(`name:"productReader"`),
+			fx.ParamTags(``, `name:"productReader"`),
 		),
 	),
 
