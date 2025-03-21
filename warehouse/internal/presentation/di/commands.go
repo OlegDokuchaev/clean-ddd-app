@@ -2,6 +2,8 @@ package di
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"warehouse/internal/presentation/commands"
 
@@ -56,11 +58,16 @@ func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, read
 		OnStop: func(ctx context.Context) error {
 			log.Println("Shutting down command processor and reader...")
 
+			var errs []error
 			if err := processor.Stop(); err != nil {
-				return err
+				errs = append(errs, fmt.Errorf("processor stop error: %w", err))
 			}
 			if err := reader.Stop(); err != nil {
-				return err
+				errs = append(errs, fmt.Errorf("reader stop error: %w", err))
+			}
+
+			if len(errs) > 0 {
+				return errors.Join(errs...)
 			}
 
 			log.Println("Command components successfully stopped")
