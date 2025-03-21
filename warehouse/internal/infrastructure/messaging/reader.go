@@ -9,3 +9,11 @@ func NewWarehouseCmdReader(config *Config) *kafka.Reader {
 		Topic:   config.WarehouseCmdTopic,
 	})
 }
+
+func NewProductEventReader(config *Config) *kafka.Reader {
+	return kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{config.Address},
+		GroupID: config.ProductEventConsumerGroupID,
+		Topic:   config.ProductEventTopic,
+	})
+}
