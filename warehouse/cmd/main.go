@@ -23,6 +23,7 @@ func main() {
 		infraDI.PublisherModule,
 		infraDI.OutboxProcessorModule,
 		infraDI.UowModule,
+
 		// Application modules
 		appDI.UseCaseModule,
 
