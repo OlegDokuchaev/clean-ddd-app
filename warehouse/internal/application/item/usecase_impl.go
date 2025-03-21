@@ -4,6 +4,7 @@ import (
 	"context"
 	itemDomain "warehouse/internal/domain/item"
 	"warehouse/internal/domain/uow"
+	itemRepository "warehouse/internal/infrastructure/repository/item"
 
 	"github.com/google/uuid"
 )
@@ -36,35 +37,75 @@ func (u *UseCaseImpl) Create(ctx context.Context, data CreateDto) (uuid.UUID, er
 }
 
 func (u *UseCaseImpl) Reserve(ctx context.Context, data ReserveDto) error {
-	item, err := u.uow.Item().GetByID(ctx, data.ItemID)
+	productIDs := make([]uuid.UUID, 0, len(data.Items))
+	for _, itemDto := range data.Items {
+		productIDs = append(productIDs, itemDto.ProductID)
+	}
+
+	items, err := u.uow.Item().GetAllByProductIDs(ctx, productIDs...)
 	if err != nil {
 		return err
 	}
 
-	if err = item.Reserve(data.Count); err != nil {
-		return err
-	}
-	if err = u.uow.Item().Update(ctx, item); err != nil {
-		return err
+	reserveMap := make(map[uuid.UUID]int, len(data.Items))
+	for _, itemDto := range data.Items {
+		reserveMap[itemDto.ProductID] = itemDto.Count
 	}
 
-	return nil
+	return u.uow.Transaction(ctx, func(tx uow.UoW) error {
+		for _, item := range items {
+			count, exists := reserveMap[item.Product.ID]
+			if !exists {
+				return itemRepository.ErrItemsNotFound
+			}
+
+			if err := item.Reserve(count); err != nil {
+				return err
+			}
+
+			if err := tx.Item().Update(ctx, item); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func (u *UseCaseImpl) Release(ctx context.Context, data ReleaseDto) error {
-	item, err := u.uow.Item().GetByID(ctx, data.ItemID)
+	productIDs := make([]uuid.UUID, 0, len(data.Items))
+	for _, itemDto := range data.Items {
+		productIDs = append(productIDs, itemDto.ProductID)
+	}
+
+	items, err := u.uow.Item().GetAllByProductIDs(ctx, productIDs...)
 	if err != nil {
 		return err
 	}
 
-	if err = item.Release(data.Count); err != nil {
-		return err
-	}
-	if err = u.uow.Item().Update(ctx, item); err != nil {
-		return err
+	releaseMap := make(map[uuid.UUID]int, len(data.Items))
+	for _, itemDto := range data.Items {
+		releaseMap[itemDto.ProductID] = itemDto.Count
 	}
 
-	return nil
+	return u.uow.Transaction(ctx, func(tx uow.UoW) error {
+		for _, item := range items {
+			count, exists := releaseMap[item.Product.ID]
+			if !exists {
+				return itemRepository.ErrItemsNotFound
+			}
+
+			if err := item.Release(count); err != nil {
+				return err
+			}
+
+			if err := tx.Item().Update(ctx, item); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func (u *UseCaseImpl) GetAll(ctx context.Context) ([]*itemDomain.Item, error) {

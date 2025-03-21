@@ -10,11 +10,14 @@ type CreateDto struct {
 }
 
 type ReserveDto struct {
-	ItemID uuid.UUID
-	Count  int
+	Items []ItemDto
 }
 
 type ReleaseDto struct {
-	ItemID uuid.UUID
-	Count  int
+	Items []ItemDto
+}
+
+type ItemDto struct {
+	ProductID uuid.UUID
+	Count     int
 }
