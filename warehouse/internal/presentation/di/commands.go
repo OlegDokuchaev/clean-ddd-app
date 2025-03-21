@@ -1,0 +1,70 @@
+package di
+
+import (
+	"context"
+	"log"
+	"warehouse/internal/presentation/commands"
+
+	"go.uber.org/fx"
+)
+
+var CommandConsumerModule = fx.Options(
+	fx.Provide(
+		// Handlers
+		fx.Annotate(
+			commands.NewHandler,
+			fx.As(new(commands.Handler)),
+		),
+
+		// Readers
+		fx.Annotate(
+			commands.NewReader,
+			fx.ParamTags(`name:"warehouseCommandReader"`),
+			fx.As(new(commands.Reader)),
+		),
+
+		// Writers
+		fx.Annotate(
+			commands.NewWriter,
+			fx.ParamTags(`name:"warehouseCommandResWriter"`),
+			fx.As(new(commands.Writer)),
+		),
+
+		// Processor
+		commands.NewProcessor,
+	),
+
+	// Lifecycle
+	fx.Invoke(setupCommandsLifecycle),
+)
+
+func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, reader commands.Reader) {
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			log.Println("Starting command processor and reader...")
+
+			if err := reader.Start(ctx); err != nil {
+				return err
+			}
+			if err := processor.Start(ctx); err != nil {
+				return err
+			}
+
+			log.Println("Command components successfully started")
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			log.Println("Shutting down command processor and reader...")
+
+			if err := processor.Stop(); err != nil {
+				return err
+			}
+			if err := reader.Stop(); err != nil {
+				return err
+			}
+
+			log.Println("Command components successfully stopped")
+			return nil
+		},
+	})
+}
