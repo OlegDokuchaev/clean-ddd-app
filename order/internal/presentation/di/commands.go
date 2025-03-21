@@ -12,22 +12,31 @@ import (
 
 var CommandConsumerModule = fx.Options(
 	fx.Provide(
+		// Handlers
 		fx.Annotate(
 			commands.NewHandler,
 			fx.As(new(commands.Handler)),
 		),
+
+		// Readers
 		fx.Annotate(
 			commands.NewReader,
 			fx.ParamTags(`name:"orderCommandReader"`),
 			fx.As(new(commands.Reader)),
 		),
+
+		// Writers
 		fx.Annotate(
 			commands.NewWriter,
 			fx.ParamTags(`name:"orderCommandResWriter"`),
 			fx.As(new(commands.Writer)),
 		),
+
+		// Processor
 		commands.NewProcessor,
 	),
+
+	// Lifecycle
 	fx.Invoke(setupCommandsLifecycle),
 )
 
