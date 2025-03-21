@@ -59,9 +59,9 @@ func setupMessagingLifecycle(in struct {
 	Lifecycle fx.Lifecycle
 
 	// Readers
-	OrderCommandReader     *kafka.Reader `name:"orderCommandReader"`
-	WarehouseCommandReader *kafka.Reader `name:"warehouseCommandResultReader"`
-	CourierCommandReader   *kafka.Reader `name:"courierCommandResultReader"`
+	OrderCommandReader        *kafka.Reader `name:"orderCommandReader"`
+	WarehouseCommandResReader *kafka.Reader `name:"warehouseCommandResultReader"`
+	CourierCommandResReader   *kafka.Reader `name:"courierCommandResultReader"`
 
 	// Writers
 	OrderCommandWriter     *kafka.Writer `name:"orderCommandWriter"`
@@ -83,10 +83,10 @@ func setupMessagingLifecycle(in struct {
 			if err := closeReader("order command reader", in.OrderCommandReader); err != nil {
 				hasErrors = true
 			}
-			if err := closeReader("warehouse command reader", in.WarehouseCommandReader); err != nil {
+			if err := closeReader("warehouse command result reader", in.WarehouseCommandResReader); err != nil {
 				hasErrors = true
 			}
-			if err := closeReader("courier command reader", in.CourierCommandReader); err != nil {
+			if err := closeReader("courier command result reader", in.CourierCommandResReader); err != nil {
 				hasErrors = true
 			}
 
@@ -112,8 +112,6 @@ func setupMessagingLifecycle(in struct {
 		},
 	})
 }
-
-// Helper functions for closing resources
 
 func closeReader(name string, reader *kafka.Reader) error {
 	if reader == nil {
