@@ -2,13 +2,19 @@ package messaging
 
 import (
 	"fmt"
+
 	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	Brokers  string `envconfig:"KAFKA_BROKERS" required:"true"`
-	RetryMax int    `envconfig:"KAFKA_RETRY_MAX" required:"true"`
-	Timeout  int    `envconfig:"KAFKA_TIMEOUT" required:"true"`
+	Address string `envconfig:"KAFKA_ADDRESS" required:"true"`
+
+	WarehouseCmdTopic           string `envconfig:"KAFKA_WAREHOUSE_COMMAND_TOPIC" required:"true"`
+	WarehouseCmdResTopic        string `envconfig:"KAFKA_WAREHOUSE_COMMAND_RESULT_TOPIC" required:"true"`
+	WarehouseCmdConsumerGroupID string `envconfig:"KAFKA_WAREHOUSE_COMMAND_CONSUMER_GROUP_ID" required:"true"`
+
+	ProductEventTopic           string `envconfig:"KAFKA_PRODUCT_EVENT_TOPIC" required:"true"`
+	ProductEventConsumerGroupID string `envconfig:"KAFKA_PRODUCT_EVENT_CONSUMER_GROUP_ID" required:"true"`
 }
 
 func NewConfig() (*Config, error) {
