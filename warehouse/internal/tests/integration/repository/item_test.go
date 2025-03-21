@@ -365,6 +365,74 @@ func (s *ItemRepositoryTestSuite) TestGetAllByIDs() {
 	}
 }
 
+func (s *ItemRepositoryTestSuite) TestGetAllByProductIDs() {
+	tests := []struct {
+		name          string
+		setup         func(productRepo productDomain.Repository, itemRepo itemDomain.Repository) []uuid.UUID
+		expectedError error
+	}{
+		{
+			name: "Success: One product",
+			setup: func(productRepo productDomain.Repository, itemRepo itemDomain.Repository) []uuid.UUID {
+				item := s.createTestItemInDb(productRepo, itemRepo)
+				return []uuid.UUID{item.Product.ID}
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Success: Multiple products",
+			setup: func(productRepo productDomain.Repository, itemRepo itemDomain.Repository) []uuid.UUID {
+				var productIDs []uuid.UUID
+				for i := 0; i < 3; i++ {
+					item := s.createTestItemInDb(productRepo, itemRepo)
+					productIDs = append(productIDs, item.Product.ID)
+				}
+				return productIDs
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Success: No products",
+			setup: func(_ productDomain.Repository, _ itemDomain.Repository) []uuid.UUID {
+				return []uuid.UUID{}
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Failure: Products not found",
+			setup: func(_ productDomain.Repository, _ itemDomain.Repository) []uuid.UUID {
+				return []uuid.UUID{uuid.New()}
+			},
+			expectedError: itemRepository.ErrItemsNotFound,
+		},
+	}
+
+	productRepo := s.getProductRepo()
+	itemRepo := s.getItemRepo()
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			productIDs := tc.setup(productRepo, itemRepo)
+
+			items, err := itemRepo.GetAllByProductIDs(s.ctx, productIDs...)
+
+			if tc.expectedError != nil {
+				require.Error(s.T(), err)
+				require.Equal(s.T(), tc.expectedError, err)
+			} else {
+				require.NoError(s.T(), err)
+				if len(productIDs) > 0 {
+					require.Len(s.T(), items, len(productIDs))
+					for _, item := range items {
+						require.Contains(s.T(), productIDs, item.Product.ID)
+					}
+				} else {
+					require.Empty(s.T(), items)
+				}
+			}
+		})
+	}
+}
+
 func TestItemRepository(t *testing.T) {
 	suite.Run(t, new(ItemRepositoryTestSuite))
 }
