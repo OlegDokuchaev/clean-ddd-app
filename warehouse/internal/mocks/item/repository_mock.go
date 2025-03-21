@@ -2,9 +2,10 @@ package item
 
 import (
 	"context"
+	itemDomain "warehouse/internal/domain/item"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
-	itemDomain "warehouse/internal/domain/item"
 )
 
 type RepositoryMock struct {
@@ -39,6 +40,17 @@ func (r *RepositoryMock) GetAllByIDs(ctx context.Context, itemIDs ...uuid.UUID) 
 
 func (r *RepositoryMock) GetAll(ctx context.Context) ([]*itemDomain.Item, error) {
 	args := r.Called(ctx)
+	return args.Get(0).([]*itemDomain.Item), args.Error(1)
+}
+
+func (r *RepositoryMock) GetAllByProductIDs(ctx context.Context, productIDs ...uuid.UUID) ([]*itemDomain.Item, error) {
+	argsForCalled := make([]interface{}, 0, len(productIDs)+1)
+	argsForCalled = append(argsForCalled, ctx)
+	for _, id := range productIDs {
+		argsForCalled = append(argsForCalled, id)
+	}
+
+	args := r.Called(argsForCalled...)
 	return args.Get(0).([]*itemDomain.Item), args.Error(1)
 }
 

@@ -2,6 +2,7 @@ package item
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 )
 
@@ -11,4 +12,5 @@ type Repository interface {
 	GetByID(ctx context.Context, itemID uuid.UUID) (*Item, error)
 	GetAll(ctx context.Context) ([]*Item, error)
 	GetAllByIDs(ctx context.Context, itemIDs ...uuid.UUID) ([]*Item, error)
+	GetAllByProductIDs(ctx context.Context, productIDs ...uuid.UUID) ([]*Item, error)
 }
