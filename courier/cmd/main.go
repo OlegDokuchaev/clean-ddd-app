@@ -32,11 +32,11 @@ func main() {
 		fx.Invoke(func(lc fx.Lifecycle) {
 			lc.Append(fx.Hook{
 				OnStart: func(context.Context) error {
-					log.Println("Starting Warehouse service...")
+					log.Println("Starting Courier service...")
 					return nil
 				},
 				OnStop: func(ctx context.Context) error {
-					log.Println("Shutting down Warehouse service...")
+					log.Println("Shutting down Courier service...")
 					return nil
 				},
 			})
