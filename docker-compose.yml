@@ -152,6 +152,25 @@ services:
       - "50053:50051"
     restart: always
 
+  customer_service:
+    container_name: "clean_app_customer_service"
+    build:
+      context: ./customer
+      dockerfile: Dockerfile
+    volumes:
+      - ./customer:/customer
+    depends_on:
+      customer_db:
+        condition: service_healthy
+    env_file:
+      - ./customer/.env
+    environment:
+      - DEV_MODE=air
+    ports:
+      - "50054:50051"
+    restart: always
+
+
 volumes:
   postgres_data_order:
   postgres_data_warehouse:
