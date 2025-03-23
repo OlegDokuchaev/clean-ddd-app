@@ -52,22 +52,3 @@ func ToCreateDto(req *orderv1.CreateOrderRequest) (orderUsecase.CreateDto, error
 
 	return data, nil
 }
-
-func ToBeginDeliveryDto(req *orderv1.BeginDeliveryRequest) (orderUsecase.BeginDeliveryDto, error) {
-	var data orderUsecase.BeginDeliveryDto
-
-	orderID, err := ParseUUID(req.OrderId)
-	if err != nil {
-		return data, err
-	}
-
-	courierID, err := ParseUUID(req.CourierId)
-	if err != nil {
-		return data, err
-	}
-
-	data.OrderID = orderID
-	data.CourierID = courierID
-
-	return data, nil
-}

@@ -52,45 +52,6 @@ func (h *OrderServiceHandler) CancelOrderByCustomer(ctx context.Context, req *or
 	return response.ToEmptyResponse(), nil
 }
 
-func (h *OrderServiceHandler) CancelOrderOutOfStock(ctx context.Context, req *orderv1.CancelOrderOutOfStockRequest) (*emptypb.Empty, error) {
-	orderID, err := request.ParseUUID(req.OrderId)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = h.usecase.CancelOutOfStock(ctx, orderID); err != nil {
-		return nil, response.ParseError(err)
-	}
-
-	return response.ToEmptyResponse(), nil
-}
-
-func (h *OrderServiceHandler) CancelOrderCourierNotFound(ctx context.Context, req *orderv1.CancelOrderCourierNotFoundRequest) (*emptypb.Empty, error) {
-	orderID, err := request.ParseUUID(req.OrderId)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = h.usecase.CancelCourierNotFound(ctx, orderID); err != nil {
-		return nil, response.ParseError(err)
-	}
-
-	return response.ToEmptyResponse(), nil
-}
-
-func (h *OrderServiceHandler) BeginDelivery(ctx context.Context, req *orderv1.BeginDeliveryRequest) (*emptypb.Empty, error) {
-	data, err := request.ToBeginDeliveryDto(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = h.usecase.BeginDelivery(ctx, data); err != nil {
-		return nil, response.ParseError(err)
-	}
-
-	return response.ToEmptyResponse(), nil
-}
-
 func (h *OrderServiceHandler) CompleteDelivery(ctx context.Context, req *orderv1.CompleteDeliveryRequest) (*emptypb.Empty, error) {
 	orderID, err := request.ParseUUID(req.OrderId)
 	if err != nil {

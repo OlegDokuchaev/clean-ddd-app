@@ -16,12 +16,6 @@ service OrderService {
 
   rpc CancelOrderByCustomer(CancelOrderByCustomerRequest) returns (google.protobuf.Empty);
 
-  rpc CancelOrderOutOfStock(CancelOrderOutOfStockRequest) returns (google.protobuf.Empty);
-
-  rpc CancelOrderCourierNotFound(CancelOrderCourierNotFoundRequest) returns (google.protobuf.Empty);
-
-  rpc BeginDelivery(BeginDeliveryRequest) returns (google.protobuf.Empty);
-
   rpc CompleteDelivery(CompleteDeliveryRequest) returns (google.protobuf.Empty);
 
   rpc GetOrdersByCustomer(GetOrdersByCustomerRequest) returns (GetOrdersByCustomerResponse);
@@ -45,19 +39,6 @@ message CreateOrderResponse {
 
 message CancelOrderByCustomerRequest {
   string order_id = 1;
-}
-
-message CancelOrderOutOfStockRequest {
-  string order_id = 1;
-}
-
-message CancelOrderCourierNotFoundRequest {
-  string order_id = 1;
-}
-
-message BeginDeliveryRequest {
-  string order_id = 1;
-  string courier_id = 2;
 }
 
 message CompleteDeliveryRequest {

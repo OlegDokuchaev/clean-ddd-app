@@ -20,14 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OrderService_CreateOrder_FullMethodName                = "/order.v1.OrderService/CreateOrder"
-	OrderService_CancelOrderByCustomer_FullMethodName      = "/order.v1.OrderService/CancelOrderByCustomer"
-	OrderService_CancelOrderOutOfStock_FullMethodName      = "/order.v1.OrderService/CancelOrderOutOfStock"
-	OrderService_CancelOrderCourierNotFound_FullMethodName = "/order.v1.OrderService/CancelOrderCourierNotFound"
-	OrderService_BeginDelivery_FullMethodName              = "/order.v1.OrderService/BeginDelivery"
-	OrderService_CompleteDelivery_FullMethodName           = "/order.v1.OrderService/CompleteDelivery"
-	OrderService_GetOrdersByCustomer_FullMethodName        = "/order.v1.OrderService/GetOrdersByCustomer"
-	OrderService_GetCurrentOrdersByCourier_FullMethodName  = "/order.v1.OrderService/GetCurrentOrdersByCourier"
+	OrderService_CreateOrder_FullMethodName               = "/order.v1.OrderService/CreateOrder"
+	OrderService_CancelOrderByCustomer_FullMethodName     = "/order.v1.OrderService/CancelOrderByCustomer"
+	OrderService_CompleteDelivery_FullMethodName          = "/order.v1.OrderService/CompleteDelivery"
+	OrderService_GetOrdersByCustomer_FullMethodName       = "/order.v1.OrderService/GetOrdersByCustomer"
+	OrderService_GetCurrentOrdersByCourier_FullMethodName = "/order.v1.OrderService/GetCurrentOrdersByCourier"
 )
 
 // OrderServiceClient is the client API for OrderService service.
@@ -39,9 +36,6 @@ const (
 type OrderServiceClient interface {
 	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*CreateOrderResponse, error)
 	CancelOrderByCustomer(ctx context.Context, in *CancelOrderByCustomerRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	CancelOrderOutOfStock(ctx context.Context, in *CancelOrderOutOfStockRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	CancelOrderCourierNotFound(ctx context.Context, in *CancelOrderCourierNotFoundRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	BeginDelivery(ctx context.Context, in *BeginDeliveryRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	CompleteDelivery(ctx context.Context, in *CompleteDeliveryRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetOrdersByCustomer(ctx context.Context, in *GetOrdersByCustomerRequest, opts ...grpc.CallOption) (*GetOrdersByCustomerResponse, error)
 	GetCurrentOrdersByCourier(ctx context.Context, in *GetCurrentOrdersByCourierRequest, opts ...grpc.CallOption) (*GetCurrentOrdersByCourierResponse, error)
@@ -69,36 +63,6 @@ func (c *orderServiceClient) CancelOrderByCustomer(ctx context.Context, in *Canc
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, OrderService_CancelOrderByCustomer_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *orderServiceClient) CancelOrderOutOfStock(ctx context.Context, in *CancelOrderOutOfStockRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, OrderService_CancelOrderOutOfStock_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *orderServiceClient) CancelOrderCourierNotFound(ctx context.Context, in *CancelOrderCourierNotFoundRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, OrderService_CancelOrderCourierNotFound_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *orderServiceClient) BeginDelivery(ctx context.Context, in *BeginDeliveryRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, OrderService_BeginDelivery_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -144,9 +108,6 @@ func (c *orderServiceClient) GetCurrentOrdersByCourier(ctx context.Context, in *
 type OrderServiceServer interface {
 	CreateOrder(context.Context, *CreateOrderRequest) (*CreateOrderResponse, error)
 	CancelOrderByCustomer(context.Context, *CancelOrderByCustomerRequest) (*emptypb.Empty, error)
-	CancelOrderOutOfStock(context.Context, *CancelOrderOutOfStockRequest) (*emptypb.Empty, error)
-	CancelOrderCourierNotFound(context.Context, *CancelOrderCourierNotFoundRequest) (*emptypb.Empty, error)
-	BeginDelivery(context.Context, *BeginDeliveryRequest) (*emptypb.Empty, error)
 	CompleteDelivery(context.Context, *CompleteDeliveryRequest) (*emptypb.Empty, error)
 	GetOrdersByCustomer(context.Context, *GetOrdersByCustomerRequest) (*GetOrdersByCustomerResponse, error)
 	GetCurrentOrdersByCourier(context.Context, *GetCurrentOrdersByCourierRequest) (*GetCurrentOrdersByCourierResponse, error)
@@ -165,15 +126,6 @@ func (UnimplementedOrderServiceServer) CreateOrder(context.Context, *CreateOrder
 }
 func (UnimplementedOrderServiceServer) CancelOrderByCustomer(context.Context, *CancelOrderByCustomerRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelOrderByCustomer not implemented")
-}
-func (UnimplementedOrderServiceServer) CancelOrderOutOfStock(context.Context, *CancelOrderOutOfStockRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CancelOrderOutOfStock not implemented")
-}
-func (UnimplementedOrderServiceServer) CancelOrderCourierNotFound(context.Context, *CancelOrderCourierNotFoundRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CancelOrderCourierNotFound not implemented")
-}
-func (UnimplementedOrderServiceServer) BeginDelivery(context.Context, *BeginDeliveryRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BeginDelivery not implemented")
 }
 func (UnimplementedOrderServiceServer) CompleteDelivery(context.Context, *CompleteDeliveryRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CompleteDelivery not implemented")
@@ -237,60 +189,6 @@ func _OrderService_CancelOrderByCustomer_Handler(srv interface{}, ctx context.Co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OrderServiceServer).CancelOrderByCustomer(ctx, req.(*CancelOrderByCustomerRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _OrderService_CancelOrderOutOfStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CancelOrderOutOfStockRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrderServiceServer).CancelOrderOutOfStock(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OrderService_CancelOrderOutOfStock_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderServiceServer).CancelOrderOutOfStock(ctx, req.(*CancelOrderOutOfStockRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _OrderService_CancelOrderCourierNotFound_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CancelOrderCourierNotFoundRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrderServiceServer).CancelOrderCourierNotFound(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OrderService_CancelOrderCourierNotFound_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderServiceServer).CancelOrderCourierNotFound(ctx, req.(*CancelOrderCourierNotFoundRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _OrderService_BeginDelivery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BeginDeliveryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrderServiceServer).BeginDelivery(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OrderService_BeginDelivery_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderServiceServer).BeginDelivery(ctx, req.(*BeginDeliveryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -363,18 +261,6 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelOrderByCustomer",
 			Handler:    _OrderService_CancelOrderByCustomer_Handler,
-		},
-		{
-			MethodName: "CancelOrderOutOfStock",
-			Handler:    _OrderService_CancelOrderOutOfStock_Handler,
-		},
-		{
-			MethodName: "CancelOrderCourierNotFound",
-			Handler:    _OrderService_CancelOrderCourierNotFound_Handler,
-		},
-		{
-			MethodName: "BeginDelivery",
-			Handler:    _OrderService_BeginDelivery_Handler,
 		},
 		{
 			MethodName: "CompleteDelivery",
