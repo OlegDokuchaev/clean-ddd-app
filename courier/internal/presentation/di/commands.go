@@ -10,7 +10,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var CommandsModule = fx.Options(
+var CommandConsumerModule = fx.Options(
 	fx.Provide(
 		// Handlers
 		fx.Annotate(
