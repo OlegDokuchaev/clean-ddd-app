@@ -132,6 +132,26 @@ services:
       - "50052:50051"
     restart: always
 
+  courier_service:
+    container_name: "clean_app_courier_service"
+    build:
+      context: ./courier
+      dockerfile: Dockerfile
+    volumes:
+      - ./courier:/courier
+    depends_on:
+      courier_db:
+        condition: service_healthy
+      message_bus_kafka:
+        condition: service_healthy
+    env_file:
+      - ./courier/.env
+    environment:
+      - DEV_MODE=air
+    ports:
+      - "50053:50051"
+    restart: always
+
 volumes:
   postgres_data_order:
   postgres_data_warehouse:
