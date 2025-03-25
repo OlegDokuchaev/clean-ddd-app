@@ -20,6 +20,7 @@ func main() {
 		infraDI.MessagingModule,
 		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
+		infraDI.TokenManagerModule,
 
 		// Application modules
 		appDI.UseCaseModule,
