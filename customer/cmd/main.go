@@ -19,6 +19,7 @@ func main() {
 		// Infrastructure modules
 		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
+		infraDI.TokenManagerModule,
 
 		// Application modules
 		appDI.UseCaseModule,
