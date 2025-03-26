@@ -20,15 +20,10 @@ func NewHandler(usecase courierApplication.UseCase) *HandlerImpl {
 }
 
 func (h *HandlerImpl) Handle(ctx context.Context, cmdMsg *CmdMessage) (*ResMessage, error) {
-	payloadBytes, err := json.Marshal(cmdMsg.Payload)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
 	switch cmdMsg.Name {
 	case AssignCourierCmdName:
 		var cmd AssignCourierCmd
-		if err = json.Unmarshal(payloadBytes, &cmd); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &cmd); err != nil {
 			return nil, fmt.Errorf("failed to parse ReserveItemsCmd: %w", err)
 		}
 		return h.onAssignOrder(ctx, cmd), nil
