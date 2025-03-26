@@ -20,43 +20,38 @@ func NewHandler(saga createOrder.Saga) *HandlerImpl {
 }
 
 func (h *HandlerImpl) Handle(ctx context.Context, cmdMsg *ResMessage) error {
-	payloadBytes, err := json.Marshal(cmdMsg.Payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
 	switch cmdMsg.Name {
 	case ItemsReservedName:
 		var res createOrder.ItemsReserved
-		if err = json.Unmarshal(payloadBytes, &res); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &res); err != nil {
 			return fmt.Errorf("failed to parse ItemsReserved: %w", err)
 		}
 		return h.onItemsReserved(ctx, res)
 
 	case ItemsReservationFailedName:
 		var res createOrder.ItemsReservationFailed
-		if err = json.Unmarshal(payloadBytes, &res); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &res); err != nil {
 			return fmt.Errorf("failed to parse ItemsReservationFailed: %w", err)
 		}
 		return h.onItemsReservationFailed(ctx, res)
 
 	case ItemsReleasedName:
 		var res createOrder.ItemsReleased
-		if err = json.Unmarshal(payloadBytes, &res); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &res); err != nil {
 			return fmt.Errorf("failed to parse ItemsReleased: %w", err)
 		}
 		return h.onItemsReleased(ctx, res)
 
 	case CourierAssignedName:
 		var res createOrder.CourierAssigned
-		if err = json.Unmarshal(payloadBytes, &res); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &res); err != nil {
 			return fmt.Errorf("failed to parse CourierAssigned: %w", err)
 		}
 		return h.onCourierAssigned(ctx, res)
 
 	case CourierAssignmentFailedName:
 		var res createOrder.CourierAssignmentFailed
-		if err = json.Unmarshal(payloadBytes, &res); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &res); err != nil {
 			return fmt.Errorf("failed to parse CourierAssignmentFailed: %w", err)
 		}
 		return h.onCourierAssignmentFailed(ctx, res)
