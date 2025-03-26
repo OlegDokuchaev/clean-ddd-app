@@ -67,10 +67,9 @@ func (s *OutboxTestSuite) createTestPublisher() outboxDomain.Publisher {
 
 func (s *OutboxTestSuite) TestPublish() {
 	tests := []struct {
-		name            string
-		message         *outboxDomain.Message
-		expectedError   error
-		validateMessage func(message *outboxDomain.Message, kafkaMsg kafka.Message)
+		name          string
+		message       *outboxDomain.Message
+		expectedError error
 	}{
 		{
 			name: "Success",
@@ -84,12 +83,6 @@ func (s *OutboxTestSuite) TestPublish() {
 				return msg
 			}(),
 			expectedError: nil,
-			validateMessage: func(message *outboxDomain.Message, kafkaMsg kafka.Message) {
-				var payload outboxDomain.Message
-				err := json.Unmarshal(kafkaMsg.Value, &payload)
-				require.NoError(s.T(), err)
-				require.EqualValues(s.T(), *message, payload)
-			},
 		},
 		{
 			name: "Failure: Invalid message name",
@@ -98,8 +91,7 @@ func (s *OutboxTestSuite) TestPublish() {
 				Name:    "unknown.event",
 				Payload: []byte(`{"test": "data"}`),
 			},
-			validateMessage: func(message *outboxDomain.Message, kafkaMsg kafka.Message) {},
-			expectedError:   outboxPublisher.ErrInvalidOutboxMessage,
+			expectedError: outboxPublisher.ErrInvalidOutboxMessage,
 		},
 	}
 
@@ -119,7 +111,16 @@ func (s *OutboxTestSuite) TestPublish() {
 
 				kafkaMsg, err := s.productReader.ReadMessage(ctx)
 				require.NoError(s.T(), err)
-				tt.validateMessage(tt.message, kafkaMsg)
+
+				var kafkaMsgValue outboxPublisher.KafkaMessageValue
+				err = json.Unmarshal(kafkaMsg.Value, &kafkaMsgValue)
+				require.NoError(s.T(), err)
+
+				require.Equal(s.T(), tt.message.ID, kafkaMsgValue.ID)
+				require.Equal(s.T(), tt.message.Name, kafkaMsgValue.Name)
+
+				payload, err := kafkaMsgValue.Payload.MarshalJSON()
+				require.Equal(s.T(), tt.message.Payload, payload)
 			}
 		})
 	}
