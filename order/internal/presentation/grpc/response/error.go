@@ -9,16 +9,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var orderErrorMap = []struct {
+	target error
+	code   codes.Code
+}{
+	{orderDomain.ErrInvalidItems, codes.FailedPrecondition},
+	{orderDomain.ErrInvalidAddress, codes.FailedPrecondition},
+	{orderDomain.ErrUnsupportedStatusTransition, codes.FailedPrecondition},
+
+	{orderRepository.ErrOrderNotFound, codes.NotFound},
+
+	{orderRepository.ErrOrderAlreadyExists, codes.AlreadyExists},
+}
+
 func ParseError(err error) error {
-	switch {
-	case errors.Is(err, orderDomain.ErrInvalidItems):
-	case errors.Is(err, orderDomain.ErrInvalidAddress):
-	case errors.Is(err, orderDomain.ErrUnsupportedStatusTransition):
-		return status.Error(codes.FailedPrecondition, err.Error())
-	case errors.Is(err, orderRepository.ErrOrderNotFound):
-		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, orderRepository.ErrOrderAlreadyExists):
-		return status.Error(codes.AlreadyExists, err.Error())
+	for _, e := range orderErrorMap {
+		if errors.Is(err, e.target) {
+			return status.Error(e.code, err.Error())
+		}
 	}
 	return ErrInternalError
 }
