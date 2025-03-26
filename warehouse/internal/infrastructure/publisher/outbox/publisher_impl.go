@@ -3,7 +3,6 @@ package outbox
 import (
 	"context"
 	"encoding/json"
-	"time"
 	outboxDomain "warehouse/internal/domain/outbox"
 	productDomain "warehouse/internal/domain/product"
 
@@ -37,7 +36,12 @@ func (p *PublisherImpl) getWriterByMessage(message *outboxDomain.Message) (*kafk
 }
 
 func encodeMessage(message *outboxDomain.Message) ([]byte, error) {
-	buf, err := json.Marshal(message)
+	value := KafkaMessageValue{
+		ID:      message.ID,
+		Name:    message.Name,
+		Payload: json.RawMessage(message.Payload),
+	}
+	buf, err := json.Marshal(value)
 	if err != nil {
 		return nil, parseError(err)
 	}
@@ -52,7 +56,6 @@ func publishMessage(ctx context.Context, writer *kafka.Writer, message *outboxDo
 
 	kafkaMsg := kafka.Message{
 		Value: value,
-		Time:  time.Now(),
 	}
 	err = writer.WriteMessages(ctx, kafkaMsg)
 	return parseError(err)
