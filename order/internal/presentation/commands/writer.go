@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"order/internal/presentation/saga/create_order"
+	createOrderConsumer "order/internal/presentation/saga/create_order"
 
 	"github.com/segmentio/kafka-go"
 )
 
 type Writer interface {
-	Write(ctx context.Context, res *create_order.ResMessage) error
+	Write(ctx context.Context, res *createOrderConsumer.ResMessage) error
 	Close() error
 }
 
@@ -23,7 +23,7 @@ func NewWriter(writer *kafka.Writer) *WriterImpl {
 	return &WriterImpl{writer: writer}
 }
 
-func (w *WriterImpl) Write(ctx context.Context, res *create_order.ResMessage) error {
+func (w *WriterImpl) Write(ctx context.Context, res *createOrderConsumer.ResMessage) error {
 	if res == nil {
 		return nil // Если ответ не требуется, просто выходим
 	}
