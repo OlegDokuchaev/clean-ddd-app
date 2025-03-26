@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	itemApplication "warehouse/internal/application/item"
 
 	"github.com/google/uuid"
@@ -12,13 +13,12 @@ const (
 )
 
 type (
-	CmdMessageName    string
-	CmdMessagePayload interface{}
+	CmdMessageName string
 
 	CmdMessage struct {
 		ID      uuid.UUID
 		Name    CmdMessageName
-		Payload CmdMessagePayload
+		Payload json.RawMessage
 	}
 )
 
