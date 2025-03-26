@@ -1,17 +1,17 @@
 package events
 
 import (
+	"encoding/json"
 	"github.com/google/uuid"
 )
 
 type (
-	EventName    string
-	EventPayload interface{}
+	EventName string
 
 	Event struct {
 		ID      uuid.UUID
 		Name    EventName
-		Payload EventPayload
+		Payload json.RawMessage
 	}
 )
 
