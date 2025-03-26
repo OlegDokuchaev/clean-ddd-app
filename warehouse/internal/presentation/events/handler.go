@@ -20,15 +20,10 @@ func NewHandler(itemUseCase item.UseCase) *HandlerImpl {
 }
 
 func (h *HandlerImpl) Handle(ctx context.Context, event *Event) error {
-	payloadBytes, err := json.Marshal(event.Payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal event payload: %w", err)
-	}
-
 	switch event.Name {
 	case ProductCreatedName:
 		var eventPayload ProductCreatedEvent
-		if err = json.Unmarshal(payloadBytes, &eventPayload); err != nil {
+		if err := json.Unmarshal(event.Payload, &eventPayload); err != nil {
 			return fmt.Errorf("failed to parse ProductCreatedEvent: %w", err)
 		}
 		return h.onProductCreated(ctx, eventPayload)
