@@ -11,27 +11,31 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var parseErrorMap = []struct {
+	target error
+	code   codes.Code
+}{
+	{courierDomain.ErrInvalidCourierName, codes.FailedPrecondition},
+	{courierDomain.ErrInvalidCourierPhone, codes.FailedPrecondition},
+	{courierDomain.ErrInvalidCourierPassword, codes.FailedPrecondition},
+	{courierRepository.ErrCourierPhoneAlreadyExists, codes.FailedPrecondition},
+	{courierApplication.ErrAvailableCourierNotFound, codes.FailedPrecondition},
+	{auth.ErrInvalidSigningMethod, codes.FailedPrecondition},
+	{auth.ErrInvalidToken, codes.FailedPrecondition},
+	{auth.ErrTokenExpired, codes.FailedPrecondition},
+
+	{courierRepository.ErrCourierNotFound, codes.NotFound},
+
+	{courierRepository.ErrCourierAlreadyExists, codes.AlreadyExists},
+}
+
 func ParseError(err error) error {
-	switch {
-	case errors.Is(err, courierDomain.ErrInvalidCourierName):
-	case errors.Is(err, courierDomain.ErrInvalidCourierPhone):
-	case errors.Is(err, courierDomain.ErrInvalidCourierPassword):
-	case errors.Is(err, courierRepository.ErrCourierPhoneAlreadyExists):
-	case errors.Is(err, courierApplication.ErrAvailableCourierNotFound):
-	case errors.Is(err, auth.ErrInvalidSigningMethod):
-	case errors.Is(err, auth.ErrInvalidToken):
-	case errors.Is(err, auth.ErrTokenExpired):
-		return status.Error(codes.FailedPrecondition, err.Error())
-
-	case errors.Is(err, courierRepository.ErrCourierNotFound):
-		return status.Error(codes.NotFound, err.Error())
-
-	case errors.Is(err, courierRepository.ErrCourierAlreadyExists):
-		return status.Error(codes.AlreadyExists, err.Error())
+	for _, e := range parseErrorMap {
+		if errors.Is(err, e.target) {
+			return status.Error(e.code, err.Error())
+		}
 	}
 	return ErrInternalError
 }
 
-var (
-	ErrInternalError = status.Error(codes.Internal, "internal error")
-)
+var ErrInternalError = status.Error(codes.Internal, "internal error")
