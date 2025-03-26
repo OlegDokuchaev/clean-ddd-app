@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
 	"sync"
 
 	"github.com/segmentio/kafka-go"
@@ -14,13 +13,13 @@ import (
 
 type Reader interface {
 	Start(ctx context.Context) error
-	Read(ctx context.Context) (*createOrderPublisher.CmdMessage, error)
+	Read(ctx context.Context) (*CmdMessage, error)
 	Stop() error
 }
 
 type ReaderImpl struct {
 	reader      *kafka.Reader
-	commandChan chan *createOrderPublisher.CmdMessage
+	commandChan chan *CmdMessage
 	errorChan   chan error
 
 	cancelCtx  context.Context
@@ -46,7 +45,7 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 		return errors.New("command reader is already started")
 	}
 
-	r.commandChan = make(chan *createOrderPublisher.CmdMessage, 1)
+	r.commandChan = make(chan *CmdMessage, 1)
 	r.errorChan = make(chan error, 1)
 
 	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
@@ -136,7 +135,7 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 	}
 }
 
-func (r *ReaderImpl) Read(ctx context.Context) (*createOrderPublisher.CmdMessage, error) {
+func (r *ReaderImpl) Read(ctx context.Context) (*CmdMessage, error) {
 	select {
 	case cmd, ok := <-r.commandChan:
 		if !ok {
@@ -155,8 +154,8 @@ func (r *ReaderImpl) Read(ctx context.Context) (*createOrderPublisher.CmdMessage
 
 var _ Reader = (*ReaderImpl)(nil)
 
-func parseCommandMessage(data []byte) (*createOrderPublisher.CmdMessage, error) {
-	var msg createOrderPublisher.CmdMessage
+func parseCommandMessage(data []byte) (*CmdMessage, error) {
+	var msg CmdMessage
 	if err := json.Unmarshal(data, &msg); err != nil {
 		return nil, fmt.Errorf("error deserializing message: %w", err)
 	}
