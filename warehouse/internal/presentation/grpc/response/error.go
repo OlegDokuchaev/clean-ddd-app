@@ -13,25 +13,34 @@ import (
 	productRepository "warehouse/internal/infrastructure/repository/product"
 )
 
+var domainErrorMap = []struct {
+	target error
+	code   codes.Code
+}{
+	// FailedPrecondition
+	{productDomain.ErrInvalidProductPrice, codes.FailedPrecondition},
+	{productDomain.ErrInvalidProductName, codes.FailedPrecondition},
+	{itemDomain.ErrInvalidItemCount, codes.FailedPrecondition},
+	{outboxDomain.ErrInvalidOutboxPayload, codes.FailedPrecondition},
+	{outboxPublisher.ErrInvalidOutboxMessage, codes.FailedPrecondition},
+
+	// NotFound
+	{productRepository.ErrProductNotFound, codes.NotFound},
+	{itemRepository.ErrItemNotFound, codes.NotFound},
+	{itemRepository.ErrItemsNotFound, codes.NotFound},
+	{outboxRepository.ErrOutboxMessageNotFound, codes.NotFound},
+
+	// AlreadyExists
+	{productRepository.ErrProductAlreadyExists, codes.AlreadyExists},
+	{itemRepository.ErrItemAlreadyExists, codes.AlreadyExists},
+	{outboxRepository.ErrOutboxMessageAlreadyExists, codes.AlreadyExists},
+}
+
 func ParseError(err error) error {
-	switch {
-	case errors.Is(err, productDomain.ErrInvalidProductPrice):
-	case errors.Is(err, productDomain.ErrInvalidProductName):
-	case errors.Is(err, itemDomain.ErrInvalidItemCount):
-	case errors.Is(err, outboxDomain.ErrInvalidOutboxPayload):
-	case errors.Is(err, outboxPublisher.ErrInvalidOutboxMessage):
-		return status.Error(codes.FailedPrecondition, err.Error())
-
-	case errors.Is(err, productRepository.ErrProductNotFound):
-	case errors.Is(err, itemRepository.ErrItemNotFound):
-	case errors.Is(err, itemRepository.ErrItemsNotFound):
-	case errors.Is(err, outboxRepository.ErrOutboxMessageNotFound):
-		return status.Error(codes.NotFound, err.Error())
-
-	case errors.Is(err, productRepository.ErrProductAlreadyExists):
-	case errors.Is(err, itemRepository.ErrItemAlreadyExists):
-	case errors.Is(err, outboxRepository.ErrOutboxMessageAlreadyExists):
-		return status.Error(codes.AlreadyExists, err.Error())
+	for _, e := range domainErrorMap {
+		if errors.Is(err, e.target) {
+			return status.Error(e.code, err.Error())
+		}
 	}
 	return ErrInternalError
 }
