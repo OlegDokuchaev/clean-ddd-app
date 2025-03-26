@@ -12,7 +12,7 @@ func Create(event domain.Event) (*Message, error) {
 	}
 	return &Message{
 		ID:      event.ID(),
-		Type:    event.Name(),
+		Name:    event.Name(),
 		Payload: payload,
 	}, nil
 }

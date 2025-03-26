@@ -92,10 +92,10 @@ func (s *OutboxTestSuite) TestPublish() {
 			},
 		},
 		{
-			name: "Failure: Invalid message type",
+			name: "Failure: Invalid message name",
 			message: &outboxDomain.Message{
 				ID:      uuid.New(),
-				Type:    "unknown.event",
+				Name:    "unknown.event",
 				Payload: []byte(`{"test": "data"}`),
 			},
 			validateMessage: func(message *outboxDomain.Message, kafkaMsg kafka.Message) {},

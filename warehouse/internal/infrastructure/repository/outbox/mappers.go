@@ -8,7 +8,7 @@ import (
 func ToDomain(model *tables.OutboxMessage) *outboxDomain.Message {
 	return &outboxDomain.Message{
 		ID:      model.ID,
-		Type:    model.Type,
+		Name:    model.Name,
 		Payload: model.Payload,
 	}
 }
@@ -24,7 +24,7 @@ func ToDomains(models []*tables.OutboxMessage) []*outboxDomain.Message {
 func ToModel(domain *outboxDomain.Message) *tables.OutboxMessage {
 	return &tables.OutboxMessage{
 		ID:      domain.ID,
-		Type:    domain.Type,
+		Name:    domain.Name,
 		Payload: domain.Payload,
 	}
 }

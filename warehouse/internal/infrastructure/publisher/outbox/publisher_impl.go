@@ -27,7 +27,7 @@ func (p *PublisherImpl) Publish(ctx context.Context, message *outboxDomain.Messa
 }
 
 func (p *PublisherImpl) getWriterByMessage(message *outboxDomain.Message) (*kafka.Writer, error) {
-	switch message.Type {
+	switch message.Name {
 	case productDomain.CreatedEventName:
 		return p.productWriter, nil
 

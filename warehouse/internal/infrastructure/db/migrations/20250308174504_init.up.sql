@@ -16,7 +16,7 @@ CREATE TABLE items (
 
 CREATE TABLE outbox_messages (
     id UUID PRIMARY KEY,
-    type TEXT NOT NULL,
+    name TEXT NOT NULL,
     payload BYTEA NOT NULL
 );
 

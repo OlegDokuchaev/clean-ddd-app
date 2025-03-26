@@ -4,6 +4,6 @@ import "github.com/google/uuid"
 
 type OutboxMessage struct {
 	ID      uuid.UUID `gorm:"primaryKey"`
-	Type    string
+	Name    string
 	Payload []byte
 }

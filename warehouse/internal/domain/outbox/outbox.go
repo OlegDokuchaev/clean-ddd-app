@@ -4,6 +4,6 @@ import "github.com/google/uuid"
 
 type Message struct {
 	ID      uuid.UUID
-	Type    string
+	Name    string
 	Payload []byte
 }
