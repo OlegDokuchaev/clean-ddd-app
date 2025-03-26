@@ -1,6 +1,9 @@
 package create_order
 
-import "github.com/google/uuid"
+import (
+	"encoding/json"
+	"github.com/google/uuid"
+)
 
 const (
 	ItemsReservedName           ResMessageName = "warehouse.items_reserved"
@@ -11,12 +14,11 @@ const (
 )
 
 type (
-	ResMessageName    string
-	ResMessagePayload interface{}
+	ResMessageName string
 
 	ResMessage struct {
 		ID      uuid.UUID
 		Name    ResMessageName
-		Payload ResMessagePayload
+		Payload json.RawMessage
 	}
 )
