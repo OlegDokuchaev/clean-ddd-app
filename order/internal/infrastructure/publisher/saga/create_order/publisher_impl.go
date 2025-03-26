@@ -3,10 +3,8 @@ package create_order
 import (
 	"context"
 	"encoding/json"
-	createOrder "order/internal/application/order/saga/create_order"
-	"time"
-
 	"github.com/segmentio/kafka-go"
+	createOrder "order/internal/application/order/saga/create_order"
 )
 
 type PublisherImpl struct {
@@ -69,7 +67,6 @@ func publishMessage(ctx context.Context, writer *kafka.Writer, msg CmdMessage) e
 
 	kafkaMsg := kafka.Message{
 		Value: value,
-		Time:  time.Now(),
 	}
 	err = writer.WriteMessages(ctx, kafkaMsg)
 	return parseError(err)
