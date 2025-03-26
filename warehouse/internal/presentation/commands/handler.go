@@ -20,22 +20,17 @@ func NewHandler(usecase itemApplication.UseCase) *HandlerImpl {
 }
 
 func (h *HandlerImpl) Handle(ctx context.Context, cmdMsg *CmdMessage) (*ResMessage, error) {
-	payloadBytes, err := json.Marshal(cmdMsg.Payload)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
 	switch cmdMsg.Name {
 	case ReserveItemsCmdName:
 		var cmd ReserveItemsCmd
-		if err = json.Unmarshal(payloadBytes, &cmd); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &cmd); err != nil {
 			return nil, fmt.Errorf("failed to parse ReserveItemsCmd: %w", err)
 		}
 		return h.onReserveItems(ctx, cmd), nil
 
 	case ReleaseItemsCmdName:
 		var cmd ReleaseItemsCmd
-		if err = json.Unmarshal(payloadBytes, &cmd); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &cmd); err != nil {
 			return nil, fmt.Errorf("failed to parse ReleaseItemsCmd: %w", err)
 		}
 		return h.onReleaseItems(ctx, cmd), nil
