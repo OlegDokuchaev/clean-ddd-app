@@ -18,7 +18,7 @@ func (i *Item) Reserve(count int) error {
 	}
 
 	finalCount := i.Count - count
-	if finalCount <= 0 {
+	if finalCount < 0 {
 		return ErrInvalidItemCount
 	}
 	i.Count = finalCount

@@ -6,7 +6,7 @@ import (
 )
 
 func Create(product *productDomain.Product, count int) (*Item, error) {
-	if count <= 0 {
+	if count < 0 {
 		return nil, ErrInvalidItemCount
 	}
 	return &Item{
