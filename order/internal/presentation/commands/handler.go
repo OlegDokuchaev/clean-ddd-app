@@ -6,12 +6,11 @@ import (
 	"fmt"
 	createOrder "order/internal/application/order/saga/create_order"
 	orderUsecase "order/internal/application/order/usecase"
-	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
-	"order/internal/presentation/saga/create_order"
+	createOrderConsumer "order/internal/presentation/saga/create_order"
 )
 
 type Handler interface {
-	Handle(ctx context.Context, cmdMsg *createOrderPublisher.CmdMessage) (*create_order.ResMessage, error)
+	Handle(ctx context.Context, cmdMsg *CmdMessage) (*createOrderConsumer.ResMessage, error)
 }
 
 type HandlerImpl struct {
@@ -22,30 +21,25 @@ func NewHandler(usecase orderUsecase.UseCase) *HandlerImpl {
 	return &HandlerImpl{usecase: usecase}
 }
 
-func (h *HandlerImpl) Handle(ctx context.Context, cmdMsg *createOrderPublisher.CmdMessage) (*create_order.ResMessage, error) {
-	payloadBytes, err := json.Marshal(cmdMsg.Payload)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
+func (h *HandlerImpl) Handle(ctx context.Context, cmdMsg *CmdMessage) (*createOrderConsumer.ResMessage, error) {
 	switch cmdMsg.Name {
-	case createOrderPublisher.CancelOutOfStockCmdName:
+	case CancelOutOfStockCmdName:
 		var cmd createOrder.CancelOutOfStockCmd
-		if err = json.Unmarshal(payloadBytes, &cmd); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &cmd); err != nil {
 			return nil, fmt.Errorf("failed to parse CancelOutOfStockCmd: %w", err)
 		}
 		return h.onCancelOutOfStock(ctx, cmd), nil
 
-	case createOrderPublisher.CancelCourierNotFoundCmdName:
+	case CancelCourierNotFoundCmdName:
 		var cmd createOrder.CancelCourierNotFoundCmd
-		if err = json.Unmarshal(payloadBytes, &cmd); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &cmd); err != nil {
 			return nil, fmt.Errorf("failed to parse CancelCourierNotFoundCmd: %w", err)
 		}
 		return h.onCancelCourierNotFoundCmd(ctx, cmd), nil
 
-	case createOrderPublisher.BeginDeliveryCmdName:
+	case BeginDeliveryCmdName:
 		var cmd createOrder.BeginDeliveryCmd
-		if err = json.Unmarshal(payloadBytes, &cmd); err != nil {
+		if err := json.Unmarshal(cmdMsg.Payload, &cmd); err != nil {
 			return nil, fmt.Errorf("failed to parse BeginDeliveryCmd: %w", err)
 		}
 		return h.onBeginDelivery(ctx, cmd), nil
@@ -54,17 +48,26 @@ func (h *HandlerImpl) Handle(ctx context.Context, cmdMsg *createOrderPublisher.C
 	return nil, fmt.Errorf("unknown command: %s", cmdMsg.Name)
 }
 
-func (h *HandlerImpl) onCancelOutOfStock(ctx context.Context, cmd createOrder.CancelOutOfStockCmd) *create_order.ResMessage {
+func (h *HandlerImpl) onCancelOutOfStock(
+	ctx context.Context,
+	cmd createOrder.CancelOutOfStockCmd,
+) *createOrderConsumer.ResMessage {
 	_ = h.usecase.CancelOutOfStock(ctx, cmd.OrderID)
 	return nil
 }
 
-func (h *HandlerImpl) onCancelCourierNotFoundCmd(ctx context.Context, cmd createOrder.CancelCourierNotFoundCmd) *create_order.ResMessage {
+func (h *HandlerImpl) onCancelCourierNotFoundCmd(
+	ctx context.Context,
+	cmd createOrder.CancelCourierNotFoundCmd,
+) *createOrderConsumer.ResMessage {
 	_ = h.usecase.CancelCourierNotFound(ctx, cmd.OrderID)
 	return nil
 }
 
-func (h *HandlerImpl) onBeginDelivery(ctx context.Context, cmd createOrder.BeginDeliveryCmd) *create_order.ResMessage {
+func (h *HandlerImpl) onBeginDelivery(
+	ctx context.Context,
+	cmd createOrder.BeginDeliveryCmd,
+) *createOrderConsumer.ResMessage {
 	data := orderUsecase.BeginDeliveryDto{
 		OrderID:   cmd.OrderID,
 		CourierID: cmd.CourierID,
