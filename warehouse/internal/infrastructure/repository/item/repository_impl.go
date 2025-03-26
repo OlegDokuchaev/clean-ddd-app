@@ -57,18 +57,6 @@ func (r *RepositoryImpl) GetAll(ctx context.Context) ([]*itemDomain.Item, error)
 	return ToDomains(models), nil
 }
 
-func (r *RepositoryImpl) GetAllByIDs(ctx context.Context, itemIDs ...uuid.UUID) ([]*itemDomain.Item, error) {
-	var models []*tables.Item
-	res := r.db.WithContext(ctx).Preload("Product").Find(&models, "id IN (?)", itemIDs)
-	if res.Error != nil {
-		return nil, ParseError(res.Error)
-	}
-	if res.RowsAffected != int64(len(itemIDs)) {
-		return nil, ErrItemsNotFound
-	}
-	return ToDomains(models), nil
-}
-
 func (r *RepositoryImpl) GetAllByProductIDs(ctx context.Context, productIDs ...uuid.UUID) ([]*itemDomain.Item, error) {
 	var models []*tables.Item
 	res := r.db.WithContext(ctx).Preload("Product").Find(&models, "product_id IN (?)", productIDs)
