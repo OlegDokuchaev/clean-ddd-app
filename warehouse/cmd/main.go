@@ -9,6 +9,7 @@ import (
 	"time"
 	appDI "warehouse/internal/application/di"
 	infraDI "warehouse/internal/infrastructure/di"
+	"warehouse/internal/infrastructure/logger"
 	presentationDI "warehouse/internal/presentation/di"
 
 	"go.uber.org/fx"
@@ -17,6 +18,7 @@ import (
 func main() {
 	app := fx.New(
 		// Infrastructure modules
+		infraDI.LoggerModule,
 		infraDI.MessagingModule,
 		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
@@ -33,14 +35,14 @@ func main() {
 		presentationDI.EventsModule,
 
 		// Add logging for application startup and shutdown
-		fx.Invoke(func(lc fx.Lifecycle) {
+		fx.Invoke(func(lc fx.Lifecycle, logger logger.Logger) {
 			lc.Append(fx.Hook{
 				OnStart: func(context.Context) error {
-					log.Println("Starting Warehouse service...")
+					logger.Println("Starting Warehouse service...")
 					return nil
 				},
 				OnStop: func(ctx context.Context) error {
-					log.Println("Shutting down Warehouse service...")
+					logger.Println("Shutting down Warehouse service...")
 					return nil
 				},
 			})
