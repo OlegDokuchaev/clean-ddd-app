@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
+	"warehouse/internal/infrastructure/logger"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -28,11 +28,14 @@ type ReaderImpl struct {
 	wg      sync.WaitGroup
 	mu      sync.Mutex
 	started bool
+
+	logger logger.Logger
 }
 
-func NewReader(reader *kafka.Reader) *ReaderImpl {
+func NewReader(reader *kafka.Reader, logger logger.Logger) *ReaderImpl {
 	return &ReaderImpl{
 		reader: reader,
+		logger: logger,
 	}
 }
 
@@ -50,7 +53,7 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
 
 	r.started = true
-	log.Println("Starting event reader...")
+	r.logger.Println("Starting event reader...")
 
 	r.wg.Add(1)
 
@@ -70,7 +73,7 @@ func (r *ReaderImpl) Stop() error {
 		return errors.New("event reader is already stopped or was not started")
 	}
 
-	log.Printf("Stopping event reader...")
+	r.logger.Printf("Stopping event reader...")
 
 	if r.cancelFunc != nil {
 		r.cancelFunc()
@@ -82,20 +85,20 @@ func (r *ReaderImpl) Stop() error {
 	close(r.errorChan)
 
 	r.started = false
-	log.Printf("Event reader has been stopped.")
+	r.logger.Printf("Event reader has been stopped.")
 
 	return nil
 }
 
 func (r *ReaderImpl) readEvents(ctx context.Context) {
 	defer func() {
-		log.Printf("Event reader goroutine completed")
+		r.logger.Printf("Event reader goroutine completed")
 	}()
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("Context canceled, stopping event reader")
+			r.logger.Printf("Context canceled, stopping event reader")
 			return
 		default:
 			msg, err := r.reader.ReadMessage(ctx)
@@ -123,7 +126,7 @@ func (r *ReaderImpl) readEvents(ctx context.Context) {
 
 			select {
 			case r.eventChan <- event:
-				log.Printf("Event received: %s, type: %s", event.ID, event.Name)
+				r.logger.Printf("Event received: %s, type: %s", event.ID, event.Name)
 			case <-ctx.Done():
 			}
 		}
