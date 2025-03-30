@@ -4,6 +4,7 @@ import (
 	"context"
 	appDI "courier/internal/application/di"
 	infraDI "courier/internal/infrastructure/di"
+	"courier/internal/infrastructure/logger"
 	presentationDI "courier/internal/presentation/di"
 	"log"
 	"os"
@@ -17,6 +18,7 @@ import (
 func main() {
 	app := fx.New(
 		// Infrastructure modules
+		infraDI.LoggerModule,
 		infraDI.MessagingModule,
 		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
@@ -30,14 +32,14 @@ func main() {
 		presentationDI.CommandConsumerModule,
 
 		// Add logging for application startup and shutdown
-		fx.Invoke(func(lc fx.Lifecycle) {
+		fx.Invoke(func(lc fx.Lifecycle, logger logger.Logger) {
 			lc.Append(fx.Hook{
 				OnStart: func(context.Context) error {
-					log.Println("Starting Courier service...")
+					logger.Println("Starting Courier service...")
 					return nil
 				},
 				OnStop: func(ctx context.Context) error {
-					log.Println("Shutting down Courier service...")
+					logger.Println("Shutting down Courier service...")
 					return nil
 				},
 			})
