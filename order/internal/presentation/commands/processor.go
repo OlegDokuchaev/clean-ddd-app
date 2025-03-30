@@ -3,7 +3,7 @@ package commands
 import (
 	"context"
 	"errors"
-	"log"
+	"order/internal/infrastructure/logger"
 	"sync"
 )
 
@@ -18,13 +18,16 @@ type Processor struct {
 	wg      sync.WaitGroup
 	mu      sync.Mutex
 	started bool
+
+	logger logger.Logger
 }
 
-func NewProcessor(handler Handler, reader Reader, writer Writer) *Processor {
+func NewProcessor(handler Handler, reader Reader, writer Writer, logger logger.Logger) *Processor {
 	return &Processor{
 		handler: handler,
 		reader:  reader,
 		writer:  writer,
+		logger:  logger,
 	}
 }
 
@@ -51,7 +54,7 @@ func (p *Processor) processCommands(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("%s processor stopping: context done", ctx)
+			p.logger.Printf("%s processor stopping: context done", ctx)
 			return
 		default:
 			cmd, err := p.reader.Read(ctx)
@@ -59,23 +62,23 @@ func (p *Processor) processCommands(ctx context.Context) {
 				if ctx.Err() != nil {
 					return
 				}
-				log.Printf("Error reading command: %v", err)
+				p.logger.Printf("Error reading command: %v", err)
 				continue
 			}
 
 			res, err := p.handler.Handle(ctx, cmd)
 			if err != nil {
-				log.Printf("Error handling command %s: %v", cmd.ID, err)
+				p.logger.Printf("Error handling command %s: %v", cmd.ID, err)
 				continue
 			}
 
 			if res != nil {
 				if err := p.writer.Write(ctx, res); err != nil {
-					log.Printf("Error sending response: %v", err)
+					p.logger.Printf("Error sending response: %v", err)
 				}
 			}
 
-			log.Printf("Command %s successfully processed", cmd.ID)
+			p.logger.Printf("Command %s successfully processed", cmd.ID)
 		}
 	}
 }
