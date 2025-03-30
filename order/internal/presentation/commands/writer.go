@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"order/internal/infrastructure/logger"
 	createOrderConsumer "order/internal/presentation/saga/create_order"
 
 	"github.com/segmentio/kafka-go"
@@ -12,15 +12,18 @@ import (
 
 type Writer interface {
 	Write(ctx context.Context, res *createOrderConsumer.ResMessage) error
-	Close() error
 }
 
 type WriterImpl struct {
 	writer *kafka.Writer
+	logger logger.Logger
 }
 
-func NewWriter(writer *kafka.Writer) *WriterImpl {
-	return &WriterImpl{writer: writer}
+func NewWriter(writer *kafka.Writer, logger logger.Logger) *WriterImpl {
+	return &WriterImpl{
+		writer: writer,
+		logger: logger,
+	}
 }
 
 func (w *WriterImpl) Write(ctx context.Context, res *createOrderConsumer.ResMessage) error {
@@ -40,12 +43,8 @@ func (w *WriterImpl) Write(ctx context.Context, res *createOrderConsumer.ResMess
 		return fmt.Errorf("error sending message: %w", err)
 	}
 
-	log.Printf("Response sent: %s, type: %s", res.ID, res.Name)
+	w.logger.Printf("Response sent: %s, type: %s", res.ID, res.Name)
 	return nil
-}
-
-func (w *WriterImpl) Close() error {
-	return w.writer.Close()
 }
 
 var _ Writer = (*WriterImpl)(nil)
