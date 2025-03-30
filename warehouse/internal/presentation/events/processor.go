@@ -3,8 +3,8 @@ package events
 import (
 	"context"
 	"errors"
-	"log"
 	"sync"
+	"warehouse/internal/infrastructure/logger"
 )
 
 type Processor struct {
@@ -17,12 +17,15 @@ type Processor struct {
 	wg      sync.WaitGroup
 	mu      sync.Mutex
 	started bool
+
+	logger logger.Logger
 }
 
-func NewProcessor(handler Handler, productReader Reader) *Processor {
+func NewProcessor(handler Handler, productReader Reader, logger logger.Logger) *Processor {
 	return &Processor{
 		handler:       handler,
 		productReader: productReader,
+		logger:        logger,
 	}
 }
 
@@ -49,7 +52,7 @@ func (p *Processor) processEvents(ctx context.Context, source string, reader Rea
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("%s processor stopping: context done", source)
+			p.logger.Printf("%s processor stopping: context done", source)
 			return
 		default:
 			event, err := reader.Read(ctx)
@@ -57,17 +60,17 @@ func (p *Processor) processEvents(ctx context.Context, source string, reader Rea
 				if ctx.Err() != nil {
 					return
 				}
-				log.Printf("Error reading event from %s: %v", source, err)
+				p.logger.Printf("Error reading event from %s: %v", source, err)
 				continue
 			}
 
 			err = p.handler.Handle(ctx, event)
 			if err != nil {
-				log.Printf("Error handling event %s from %s: %v", event.ID, source, err)
+				p.logger.Printf("Error handling event %s from %s: %v", event.ID, source, err)
 				continue
 			}
 
-			log.Printf("Event %s successfully processed from %s", event.ID, source)
+			p.logger.Printf("Event %s successfully processed from %s", event.ID, source)
 		}
 	}
 }
