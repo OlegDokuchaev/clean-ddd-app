@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"order/internal/infrastructure/logger"
 	"order/internal/presentation/saga/create_order"
 
 	"go.uber.org/fx"
@@ -42,14 +42,16 @@ var SagaConsumerModule = fx.Options(
 func runProcessor(in struct {
 	fx.In
 
-	Lifecycle       fx.Lifecycle
+	Lifecycle fx.Lifecycle
+	Logger    logger.Logger
+
 	Processor       *create_order.Processor
 	WarehouseReader create_order.Reader `name:"warehouseReader"`
 	CourierReader   create_order.Reader `name:"courierReader"`
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			log.Println("Starting saga readers and processor...")
+			in.Logger.Println("Starting saga readers and processor...")
 
 			if err := in.WarehouseReader.Start(ctx); err != nil {
 				return err
@@ -61,11 +63,11 @@ func runProcessor(in struct {
 				return err
 			}
 
-			log.Println("Saga components successfully started")
+			in.Logger.Println("Saga components successfully started")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			log.Println("Stopping saga components...")
+			in.Logger.Println("Stopping saga components...")
 
 			var errs []error
 			if err := in.Processor.Stop(); err != nil {
@@ -82,7 +84,7 @@ func runProcessor(in struct {
 				return errors.Join(errs...)
 			}
 
-			log.Println("All saga components successfully stopped")
+			in.Logger.Println("All saga components successfully stopped")
 			return nil
 		},
 	})
