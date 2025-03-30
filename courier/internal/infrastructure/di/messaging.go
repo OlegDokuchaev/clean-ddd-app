@@ -2,9 +2,9 @@ package di
 
 import (
 	"context"
+	"courier/internal/infrastructure/logger"
 	"courier/internal/infrastructure/messaging"
 	"errors"
-	"log"
 
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/fx"
@@ -36,6 +36,7 @@ func setupMessagingLifecycle(in struct {
 	fx.In
 
 	Lifecycle fx.Lifecycle
+	Logger    logger.Logger
 
 	// Readers
 	CourierCmdReader *kafka.Reader `name:"courierCmdReader"`
@@ -45,21 +46,21 @@ func setupMessagingLifecycle(in struct {
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			log.Println("Kafka resources ready for use")
+			in.Logger.Println("Kafka resources ready for use")
 			return nil
 		},
 
 		OnStop: func(ctx context.Context) error {
-			log.Println("Closing Kafka resources...")
+			in.Logger.Println("Closing Kafka resources...")
 			var errs []error
 
 			// Close readers
-			if err := closeReader("courier command reader", in.CourierCmdReader); err != nil {
+			if err := closeReader("courier command reader", in.CourierCmdReader, in.Logger); err != nil {
 				errs = append(errs, err)
 			}
 
 			// Close writers
-			if err := closeWriter("courier command result writer", in.CourierCmdResWriter); err != nil {
+			if err := closeWriter("courier command result writer", in.CourierCmdResWriter, in.Logger); err != nil {
 				errs = append(errs, err)
 			}
 
@@ -67,32 +68,32 @@ func setupMessagingLifecycle(in struct {
 				return errors.Join(errs...)
 			}
 
-			log.Println("All Kafka resources successfully closed")
+			in.Logger.Println("All Kafka resources successfully closed")
 			return nil
 		},
 	})
 }
 
-func closeReader(name string, reader *kafka.Reader) error {
+func closeReader(name string, reader *kafka.Reader, logger logger.Logger) error {
 	if reader == nil {
 		return nil
 	}
 
 	if err := reader.Close(); err != nil {
-		log.Printf("Error closing %s: %v", name, err)
+		logger.Printf("Error closing %s: %v", name, err)
 		return err
 	}
 
 	return nil
 }
 
-func closeWriter(name string, writer *kafka.Writer) error {
+func closeWriter(name string, writer *kafka.Writer, logger logger.Logger) error {
 	if writer == nil {
 		return nil
 	}
 
 	if err := writer.Close(); err != nil {
-		log.Printf("Error closing %s: %v", name, err)
+		logger.Printf("Error closing %s: %v", name, err)
 		return err
 	}
 
