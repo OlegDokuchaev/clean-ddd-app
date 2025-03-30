@@ -3,10 +3,10 @@ package outbox
 import (
 	"context"
 	"errors"
-	"log"
 	"sync"
 	"time"
 	"warehouse/internal/domain/outbox"
+	"warehouse/internal/infrastructure/logger"
 )
 
 const DefaultPollDelay = 1 * time.Second
@@ -22,13 +22,16 @@ type Processor struct {
 	wg      sync.WaitGroup
 	mu      sync.Mutex
 	started bool
+
+	logger logger.Logger
 }
 
-func NewProcessor(repository outbox.Repository, publisher outbox.Publisher) *Processor {
+func NewProcessor(repository outbox.Repository, publisher outbox.Publisher, logger logger.Logger) *Processor {
 	return &Processor{
 		repository: repository,
 		publisher:  publisher,
 		pollDelay:  DefaultPollDelay,
+		logger:     logger,
 	}
 }
 
@@ -72,11 +75,11 @@ func (p *Processor) processOutbox(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Outbox processor stopping due to context cancellation.")
+			p.logger.Println("Outbox processor stopping due to context cancellation.")
 			return
 		default:
 			if err := p.processBatch(ctx); err != nil {
-				log.Printf("Error processing outbox batch: %v", err)
+				p.logger.Printf("Error processing outbox batch: %v", err)
 			}
 			time.Sleep(p.pollDelay)
 		}
