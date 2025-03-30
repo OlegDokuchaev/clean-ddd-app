@@ -3,7 +3,7 @@ package di
 import (
 	"context"
 	"fmt"
-	"log"
+	"order/internal/infrastructure/logger"
 	"order/internal/infrastructure/messaging"
 
 	"github.com/segmentio/kafka-go"
@@ -57,6 +57,7 @@ func setupMessagingLifecycle(in struct {
 	fx.In
 
 	Lifecycle fx.Lifecycle
+	Logger    logger.Logger
 
 	// Readers
 	OrderCommandReader        *kafka.Reader `name:"orderCommandReader"`
@@ -71,68 +72,68 @@ func setupMessagingLifecycle(in struct {
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			log.Println("Kafka resources ready for use")
+			in.Logger.Println("Kafka resources ready for use")
 			return nil
 		},
 
 		OnStop: func(ctx context.Context) error {
-			log.Println("Closing Kafka resources...")
+			in.Logger.Println("Closing Kafka resources...")
 			var hasErrors bool
 
 			// Close readers
-			if err := closeReader("order command reader", in.OrderCommandReader); err != nil {
+			if err := closeReader("order command reader", in.OrderCommandReader, in.Logger); err != nil {
 				hasErrors = true
 			}
-			if err := closeReader("warehouse command result reader", in.WarehouseCommandResReader); err != nil {
+			if err := closeReader("warehouse command result reader", in.WarehouseCommandResReader, in.Logger); err != nil {
 				hasErrors = true
 			}
-			if err := closeReader("courier command result reader", in.CourierCommandResReader); err != nil {
+			if err := closeReader("courier command result reader", in.CourierCommandResReader, in.Logger); err != nil {
 				hasErrors = true
 			}
 
 			// Close writers
-			if err := closeWriter("order command writer", in.OrderCommandWriter); err != nil {
+			if err := closeWriter("order command writer", in.OrderCommandWriter, in.Logger); err != nil {
 				hasErrors = true
 			}
-			if err := closeWriter("warehouse command writer", in.WarehouseCommandWriter); err != nil {
+			if err := closeWriter("warehouse command writer", in.WarehouseCommandWriter, in.Logger); err != nil {
 				hasErrors = true
 			}
-			if err := closeWriter("courier command writer", in.CourierCommandWriter); err != nil {
+			if err := closeWriter("courier command writer", in.CourierCommandWriter, in.Logger); err != nil {
 				hasErrors = true
 			}
-			if err := closeWriter("order command response writer", in.OrderCommandResWriter); err != nil {
+			if err := closeWriter("order command response writer", in.OrderCommandResWriter, in.Logger); err != nil {
 				hasErrors = true
 			}
 
 			if hasErrors {
 				return fmt.Errorf("errors occurred while closing Kafka resources")
 			}
-			log.Println("All Kafka resources successfully closed")
+			in.Logger.Println("All Kafka resources successfully closed")
 			return nil
 		},
 	})
 }
 
-func closeReader(name string, reader *kafka.Reader) error {
+func closeReader(name string, reader *kafka.Reader, logger logger.Logger) error {
 	if reader == nil {
 		return nil
 	}
 
 	if err := reader.Close(); err != nil {
-		log.Printf("Error closing %s: %v", name, err)
+		logger.Printf("Error closing %s: %v", name, err)
 		return err
 	}
 
 	return nil
 }
 
-func closeWriter(name string, writer *kafka.Writer) error {
+func closeWriter(name string, writer *kafka.Writer, logger logger.Logger) error {
 	if writer == nil {
 		return nil
 	}
 
 	if err := writer.Close(); err != nil {
-		log.Printf("Error closing %s: %v", name, err)
+		logger.Printf("Error closing %s: %v", name, err)
 		return err
 	}
 
