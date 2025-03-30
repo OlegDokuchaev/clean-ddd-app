@@ -3,7 +3,7 @@ package di
 import (
 	"context"
 	"fmt"
-	"log"
+	"warehouse/internal/infrastructure/logger"
 	"warehouse/internal/infrastructure/messaging"
 
 	"github.com/segmentio/kafka-go"
@@ -47,6 +47,7 @@ func setupMessagingLifecycle(in struct {
 	fx.In
 
 	Lifecycle fx.Lifecycle
+	Logger    logger.Logger
 
 	// Readers
 	WarehouseCmdReader *kafka.Reader `name:"warehouseCmdReader"`
@@ -58,61 +59,61 @@ func setupMessagingLifecycle(in struct {
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			log.Println("Kafka resources ready for use")
+			in.Logger.Println("Kafka resources ready for use")
 			return nil
 		},
 
 		OnStop: func(ctx context.Context) error {
-			log.Println("Closing Kafka resources...")
+			in.Logger.Println("Closing Kafka resources...")
 			var hasErrors bool
 
 			// Close readers
-			if err := closeReader("warehouse command reader", in.WarehouseCmdReader); err != nil {
+			if err := closeReader("warehouse command reader", in.WarehouseCmdReader, in.Logger); err != nil {
 				hasErrors = true
 			}
 
-			if err := closeReader("product event reader", in.ProductEventReader); err != nil {
+			if err := closeReader("product event reader", in.ProductEventReader, in.Logger); err != nil {
 				hasErrors = true
 			}
 
 			// Close writers
-			if err := closeWriter("warehouse command result writer", in.WarehouseCmdResWriter); err != nil {
+			if err := closeWriter("warehouse command result writer", in.WarehouseCmdResWriter, in.Logger); err != nil {
 				hasErrors = true
 			}
 
-			if err := closeWriter("product event writer", in.ProductEventWriter); err != nil {
+			if err := closeWriter("product event writer", in.ProductEventWriter, in.Logger); err != nil {
 				hasErrors = true
 			}
 
 			if hasErrors {
 				return fmt.Errorf("errors occurred while closing Kafka resources")
 			}
-			log.Println("All Kafka resources successfully closed")
+			in.Logger.Println("All Kafka resources successfully closed")
 			return nil
 		},
 	})
 }
 
-func closeReader(name string, reader *kafka.Reader) error {
+func closeReader(name string, reader *kafka.Reader, logger logger.Logger) error {
 	if reader == nil {
 		return nil
 	}
 
 	if err := reader.Close(); err != nil {
-		log.Printf("Error closing %s: %v", name, err)
+		logger.Printf("Error closing %s: %v", name, err)
 		return err
 	}
 
 	return nil
 }
 
-func closeWriter(name string, writer *kafka.Writer) error {
+func closeWriter(name string, writer *kafka.Writer, logger logger.Logger) error {
 	if writer == nil {
 		return nil
 	}
 
 	if err := writer.Close(); err != nil {
-		log.Printf("Error closing %s: %v", name, err)
+		logger.Printf("Error closing %s: %v", name, err)
 		return err
 	}
 
