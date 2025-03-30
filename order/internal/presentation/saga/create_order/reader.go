@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"order/internal/infrastructure/logger"
 	"sync"
 
 	"github.com/segmentio/kafka-go"
@@ -28,11 +28,14 @@ type ReaderImpl struct {
 	wg      sync.WaitGroup
 	mu      sync.Mutex
 	started bool
+
+	logger logger.Logger
 }
 
-func NewReader(reader *kafka.Reader) *ReaderImpl {
+func NewReader(reader *kafka.Reader, logger logger.Logger) *ReaderImpl {
 	return &ReaderImpl{
 		reader: reader,
+		logger: logger,
 	}
 }
 
@@ -50,7 +53,7 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
 
 	r.started = true
-	log.Println("Starting reader...")
+	r.logger.Println("Starting reader...")
 
 	r.wg.Add(1)
 
@@ -66,12 +69,12 @@ func (r *ReaderImpl) consumeMessages(ctx context.Context, msgCh chan<- *ResMessa
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("Context canceled, stopping consumer")
+			r.logger.Printf("Context canceled, stopping consumer")
 			return
 		default:
 			msg, err := r.reader.ReadMessage(ctx)
 			if ctx.Err() != nil {
-				log.Printf("Context is done, stopping consumer")
+				r.logger.Printf("Context is done, stopping consumer")
 				return
 			}
 
@@ -79,7 +82,7 @@ func (r *ReaderImpl) consumeMessages(ctx context.Context, msgCh chan<- *ResMessa
 				select {
 				case errCh <- fmt.Errorf("error reading message: %w", err):
 				default:
-					log.Printf("Error channel is full, dropping error: %v", err)
+					r.logger.Printf("Error channel is full, dropping error: %v", err)
 				}
 				continue
 			}
@@ -89,7 +92,7 @@ func (r *ReaderImpl) consumeMessages(ctx context.Context, msgCh chan<- *ResMessa
 				select {
 				case errCh <- fmt.Errorf("error parsing message: %w", err):
 				default:
-					log.Printf("Error channel is full, dropping error: %v", err)
+					r.logger.Printf("Error channel is full, dropping error: %v", err)
 				}
 				continue
 			}
@@ -125,11 +128,11 @@ func (r *ReaderImpl) Stop() error {
 	defer r.mu.Unlock()
 
 	if !r.started {
-		log.Printf("Reader is already stopped or was not started.")
+		r.logger.Printf("Reader is already stopped or was not started.")
 		return errors.New("reader is already stopped or was not started")
 	}
 
-	log.Printf("Stopping reader...")
+	r.logger.Printf("Stopping reader...")
 
 	if r.cancelFunc != nil {
 		r.cancelFunc()
@@ -141,7 +144,7 @@ func (r *ReaderImpl) Stop() error {
 	close(r.errorChan)
 
 	r.started = false
-	log.Printf("Reader has been stopped.")
+	r.logger.Printf("Reader has been stopped.")
 
 	return nil
 }
