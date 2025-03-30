@@ -4,6 +4,7 @@ import (
 	"context"
 	appDI "customer/internal/application/di"
 	infraDI "customer/internal/infrastructure/di"
+	"customer/internal/infrastructure/logger"
 	presentationDI "customer/internal/presentation/di"
 	"log"
 	"os"
@@ -17,6 +18,7 @@ import (
 func main() {
 	app := fx.New(
 		// Infrastructure modules
+		infraDI.LoggerModule,
 		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
 		infraDI.TokenManagerModule,
@@ -28,14 +30,14 @@ func main() {
 		presentationDI.GRPCModule,
 
 		// Add logging for application startup and shutdown
-		fx.Invoke(func(lc fx.Lifecycle) {
+		fx.Invoke(func(lc fx.Lifecycle, logger logger.Logger) {
 			lc.Append(fx.Hook{
 				OnStart: func(context.Context) error {
-					log.Println("Starting Customer service...")
+					logger.Println("Starting Customer service...")
 					return nil
 				},
 				OnStop: func(ctx context.Context) error {
-					log.Println("Shutting down Customer service...")
+					logger.Println("Shutting down Customer service...")
 					return nil
 				},
 			})
