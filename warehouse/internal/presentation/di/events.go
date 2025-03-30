@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"warehouse/internal/infrastructure/logger"
 	"warehouse/internal/presentation/events"
 
 	"go.uber.org/fx"
@@ -41,13 +41,14 @@ func setupEventsLifecycle(in struct {
 	fx.In
 
 	Lifecycle fx.Lifecycle
+	Logger    logger.Logger
 
 	Processor     *events.Processor
 	ProductReader events.Reader `name:"productReader"`
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			log.Println("Starting product event processor...")
+			in.Logger.Println("Starting product event processor...")
 
 			if err := in.ProductReader.Start(ctx); err != nil {
 				return err
@@ -56,11 +57,11 @@ func setupEventsLifecycle(in struct {
 				return err
 			}
 
-			log.Println("Product event processor started successfully")
+			in.Logger.Println("Product event processor started successfully")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			log.Println("Stopping product event processor...")
+			in.Logger.Println("Stopping product event processor...")
 
 			var errs []error
 			if err := in.Processor.Stop(); err != nil {
@@ -74,7 +75,7 @@ func setupEventsLifecycle(in struct {
 				return errors.Join(errs...)
 			}
 
-			log.Println("Product event processor stopped successfully")
+			in.Logger.Println("Product event processor stopped successfully")
 			return nil
 		},
 	})
