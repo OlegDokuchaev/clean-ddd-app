@@ -3,9 +3,9 @@ package di
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 
+	"warehouse/internal/infrastructure/logger"
 	warehousev1 "warehouse/internal/presentation/grpc"
 	"warehouse/internal/presentation/grpc/handlers"
 
@@ -49,7 +49,7 @@ func newGRPCServer(
 	return server
 }
 
-func setupGRPCLifecycle(lc fx.Lifecycle, cfg *warehousev1.Config, server *grpc.Server) {
+func setupGRPCLifecycle(lc fx.Lifecycle, cfg *warehousev1.Config, server *grpc.Server, logger logger.Logger) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			address := fmt.Sprintf(":%s", cfg.Port)
@@ -60,17 +60,17 @@ func setupGRPCLifecycle(lc fx.Lifecycle, cfg *warehousev1.Config, server *grpc.S
 
 			go func() {
 				if err := server.Serve(listener); err != nil {
-					log.Printf("error starting gRPC server: %v", err)
+					logger.Printf("error starting gRPC server: %v", err)
 				}
 			}()
 
-			log.Printf("gRPC server started on port: %s", cfg.Port)
+			logger.Printf("gRPC server started on port: %s", cfg.Port)
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			log.Println("gRPC server stopping...")
+			logger.Println("gRPC server stopping...")
 			server.GracefulStop()
-			log.Println("gRPC server stopped")
+			logger.Println("gRPC server stopped")
 			return nil
 		},
 	})
