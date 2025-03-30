@@ -92,6 +92,49 @@ services:
       timeout: 5s
       retries: 5
 
+  elasticsearch:
+    container_name: "clean_app_elasticsearch"
+    image: elasticsearch:8.12.2
+    volumes:
+      - ./configs/elasticsearch/config.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    environment:
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+      discovery.type: single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  logstash:
+    container_name: "clean_app_logstash"
+    image: logstash:8.12.2
+    volumes:
+      - ./configs/logstash/config.yml:/usr/share/logstash/config/config.yml:ro
+      - ./configs/logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5001:5000"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  kibana:
+    container_name: "clean_app_kibana"
+    image: kibana:8.12.2
+    ports:
+      - "5601:5601"
+    volumes:
+      - ./configs/kibana/config.yml:/usr/share/kibana/config/kibana.yml:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
   order_service:
     container_name: "clean_app_order_service"
     build:
@@ -104,6 +147,8 @@ services:
         condition: service_healthy
       message_bus_kafka:
         condition: service_healthy
+      logstash:
+        condition: service_started
     env_file:
       - ./order/.env
     environment:
@@ -124,6 +169,8 @@ services:
         condition: service_healthy
       message_bus_kafka:
         condition: service_healthy
+      logstash:
+        condition: service_started
     env_file:
       - ./warehouse/.env
     environment:
@@ -144,6 +191,8 @@ services:
         condition: service_healthy
       message_bus_kafka:
         condition: service_healthy
+      logstash:
+        condition: service_started
     env_file:
       - ./courier/.env
     environment:
@@ -162,6 +211,8 @@ services:
     depends_on:
       customer_db:
         condition: service_healthy
+      logstash:
+        condition: service_started
     env_file:
       - ./customer/.env
     environment:
@@ -176,3 +227,4 @@ volumes:
   postgres_data_warehouse:
   postgres_data_courier:
   postgres_data_customer:
+  elasticsearch_data:
