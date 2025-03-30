@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"order/internal/infrastructure/logger"
 	"order/internal/presentation/commands"
 
 	"go.uber.org/fx"
@@ -40,10 +40,10 @@ var CommandConsumerModule = fx.Options(
 	fx.Invoke(setupCommandsLifecycle),
 )
 
-func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, reader commands.Reader) {
+func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, reader commands.Reader, logger logger.Logger) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			log.Println("Starting command processor and reader...")
+			logger.Println("Starting command processor and reader...")
 
 			if err := reader.Start(ctx); err != nil {
 				return err
@@ -52,11 +52,11 @@ func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, read
 				return err
 			}
 
-			log.Println("Command components successfully started")
+			logger.Println("Command components successfully started")
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			log.Println("Stopping command components...")
+			logger.Println("Stopping command components...")
 
 			var errs []error
 			if err := processor.Stop(); err != nil {
@@ -70,7 +70,7 @@ func setupCommandsLifecycle(lc fx.Lifecycle, processor *commands.Processor, read
 				return errors.Join(errs...)
 			}
 
-			log.Println("All command components successfully stopped")
+			logger.Println("All command components successfully stopped")
 			return nil
 		},
 	})
