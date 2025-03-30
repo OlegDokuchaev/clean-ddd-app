@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
+	"warehouse/internal/infrastructure/logger"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -28,11 +28,14 @@ type ReaderImpl struct {
 	wg      sync.WaitGroup
 	mu      sync.Mutex
 	started bool
+
+	logger logger.Logger
 }
 
-func NewReader(reader *kafka.Reader) *ReaderImpl {
+func NewReader(reader *kafka.Reader, logger logger.Logger) *ReaderImpl {
 	return &ReaderImpl{
 		reader: reader,
+		logger: logger,
 	}
 }
 
@@ -41,7 +44,7 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 	defer r.mu.Unlock()
 
 	if r.started {
-		log.Println("Command reader is already started, no need to start again.")
+		r.logger.Println("Command reader is already started, no need to start again.")
 		return errors.New("command reader is already started")
 	}
 
@@ -51,7 +54,7 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
 
 	r.started = true
-	log.Println("Starting command reader...")
+	r.logger.Println("Starting command reader...")
 
 	r.wg.Add(1)
 
@@ -71,7 +74,7 @@ func (r *ReaderImpl) Stop() error {
 		return errors.New("command reader is already stopped or was not started")
 	}
 
-	log.Printf("Stopping command reader...")
+	r.logger.Printf("Stopping command reader...")
 
 	if r.cancelFunc != nil {
 		r.cancelFunc()
@@ -83,26 +86,26 @@ func (r *ReaderImpl) Stop() error {
 	close(r.errorChan)
 
 	r.started = false
-	log.Printf("Command reader has been stopped.")
+	r.logger.Printf("Command reader has been stopped.")
 
 	return nil
 }
 
 func (r *ReaderImpl) readCommands(ctx context.Context) {
 	defer func() {
-		log.Printf("Command reader goroutine completed")
+		r.logger.Printf("Command reader goroutine completed")
 	}()
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("Context canceled, stopping command reader")
+			r.logger.Printf("Context canceled, stopping command reader")
 			return
 		default:
 			msg, err := r.reader.ReadMessage(ctx)
 
 			if ctx.Err() != nil {
-				log.Printf("Context is done, stopping command reader")
+				r.logger.Printf("Context is done, stopping command reader")
 				return
 			}
 
@@ -110,7 +113,7 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 				select {
 				case r.errorChan <- fmt.Errorf("error reading message: %w", err):
 				default:
-					log.Printf("Error channel full, dropping error: %v", err)
+					r.logger.Printf("Error channel full, dropping error: %v", err)
 				}
 				continue
 			}
@@ -120,14 +123,14 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 				select {
 				case r.errorChan <- fmt.Errorf("error parsing message: %w", err):
 				default:
-					log.Printf("Error channel full, dropping error: %v", err)
+					r.logger.Printf("Error channel full, dropping error: %v", err)
 				}
 				continue
 			}
 
 			select {
 			case r.commandChan <- cmdMsg:
-				log.Printf("Command received: %s, type: %s", cmdMsg.ID, cmdMsg.Name)
+				r.logger.Printf("Command received: %s, type: %s", cmdMsg.ID, cmdMsg.Name)
 			case <-ctx.Done():
 				return
 			}
