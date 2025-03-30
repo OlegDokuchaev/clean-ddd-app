@@ -4,22 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"warehouse/internal/infrastructure/logger"
 
 	"github.com/segmentio/kafka-go"
 )
 
 type Writer interface {
 	Write(ctx context.Context, res *ResMessage) error
-	Close() error
 }
 
 type WriterImpl struct {
 	writer *kafka.Writer
+	logger logger.Logger
 }
 
-func NewWriter(writer *kafka.Writer) *WriterImpl {
-	return &WriterImpl{writer: writer}
+func NewWriter(writer *kafka.Writer, logger logger.Logger) *WriterImpl {
+	return &WriterImpl{
+		writer: writer,
+		logger: logger,
+	}
 }
 
 func (w *WriterImpl) Write(ctx context.Context, res *ResMessage) error {
@@ -39,12 +42,8 @@ func (w *WriterImpl) Write(ctx context.Context, res *ResMessage) error {
 		return fmt.Errorf("error sending message: %w", err)
 	}
 
-	log.Printf("Response sent: %s, type: %s", res.ID, res.Name)
+	w.logger.Printf("Response sent: %s, type: %s", res.ID, res.Name)
 	return nil
-}
-
-func (w *WriterImpl) Close() error {
-	return w.writer.Close()
 }
 
 var _ Writer = (*WriterImpl)(nil)
