@@ -2,9 +2,10 @@ package create_order
 
 import (
 	"context"
-	"github.com/pkg/errors"
-	"log"
+	"order/internal/infrastructure/logger"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 type Processor struct {
@@ -18,13 +19,16 @@ type Processor struct {
 	wg      sync.WaitGroup
 	mu      sync.Mutex
 	started bool
+
+	logger logger.Logger
 }
 
-func NewProcessor(handler Handler, warehouseReader Reader, courierReader Reader) *Processor {
+func NewProcessor(handler Handler, warehouseReader Reader, courierReader Reader, logger logger.Logger) *Processor {
 	return &Processor{
 		handler:         handler,
 		warehouseReader: warehouseReader,
 		courierReader:   courierReader,
+		logger:          logger,
 	}
 }
 
@@ -52,7 +56,7 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("%s processor stopping: context done", source)
+			p.logger.Printf("%s processor stopping: context done", source)
 			return
 		default:
 			msg, err := receiver.Read(ctx)
@@ -60,12 +64,12 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 				if ctx.Err() != nil {
 					return
 				}
-				log.Printf("Error receiving message from %s: %v", source, err)
+				p.logger.Printf("Error receiving message from %s: %v", source, err)
 				continue
 			}
 
 			if err := p.handler.Handle(ctx, msg); err != nil {
-				log.Printf("Error handling %s message: %v", source, err)
+				p.logger.Printf("Error handling %s message: %v", source, err)
 			}
 		}
 	}
