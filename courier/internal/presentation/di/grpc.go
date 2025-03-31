@@ -33,8 +33,12 @@ var GRPCModule = fx.Options(
 	fx.Invoke(setupGRPCLifecycle),
 )
 
-func newGRPCServer(courierAuthHandler courierv1.CourierAuthServiceServer) *grpc.Server {
-	server := grpc.NewServer()
+func newGRPCServer(courierAuthHandler courierv1.CourierAuthServiceServer, logger logger.Logger) *grpc.Server {
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(courierv1.LoggingInterceptor(logger)),
+		grpc.StreamInterceptor(courierv1.StreamLoggingInterceptor(logger)),
+	)
+
 	courierv1.RegisterCourierAuthServiceServer(server, courierAuthHandler)
 	reflection.Register(server)
 	return server
