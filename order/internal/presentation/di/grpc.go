@@ -33,8 +33,12 @@ var GRPCModule = fx.Options(
 	fx.Invoke(setupGRPCLifecycle),
 )
 
-func newGRPCServer(orderHandler orderv1.OrderServiceServer) *grpc.Server {
-	server := grpc.NewServer()
+func newGRPCServer(orderHandler orderv1.OrderServiceServer, logger logger.Logger) *grpc.Server {
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(orderv1.LoggingInterceptor(logger)),
+		grpc.StreamInterceptor(orderv1.StreamLoggingInterceptor(logger)),
+	)
+
 	orderv1.RegisterOrderServiceServer(server, orderHandler)
 	reflection.Register(server)
 	return server
