@@ -41,8 +41,13 @@ var GRPCModule = fx.Options(
 func newGRPCServer(
 	itemHandler warehousev1.ItemServiceServer,
 	productHandler warehousev1.ProductServiceServer,
+	logger logger.Logger,
 ) *grpc.Server {
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(warehousev1.LoggingInterceptor(logger)),
+		grpc.StreamInterceptor(warehousev1.StreamLoggingInterceptor(logger)),
+	)
+
 	warehousev1.RegisterItemServiceServer(server, itemHandler)
 	warehousev1.RegisterProductServiceServer(server, productHandler)
 	reflection.Register(server)
