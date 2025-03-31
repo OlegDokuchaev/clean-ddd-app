@@ -33,8 +33,12 @@ var GRPCModule = fx.Options(
 	fx.Invoke(setupGRPCLifecycle),
 )
 
-func newGRPCServer(customerAuthHandler customerv1.CustomerAuthServiceServer) *grpc.Server {
-	server := grpc.NewServer()
+func newGRPCServer(customerAuthHandler customerv1.CustomerAuthServiceServer, logger logger.Logger) *grpc.Server {
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(customerv1.LoggingInterceptor(logger)),
+		grpc.StreamInterceptor(customerv1.StreamLoggingInterceptor(logger)),
+	)
+
 	customerv1.RegisterCustomerAuthServiceServer(server, customerAuthHandler)
 	reflection.Register(server)
 	return server
