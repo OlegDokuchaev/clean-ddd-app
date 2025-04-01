@@ -54,6 +54,7 @@ func (r *ReaderImpl) log(level logger.Level, action, message string, extraFields
 
 func (r *ReaderImpl) sendError(err error, action string) {
 	r.log(logger.Error, action, err.Error(), nil)
+
 	select {
 	case r.errorChan <- fmt.Errorf("error reading message: %w", err):
 	default:
@@ -113,16 +114,13 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 			return
 
 		default:
-			// Read message from Kafka
+			// Read message
 			msg, err := r.reader.ReadMessage(ctx)
 			if ctx.Err() != nil {
-				r.log(logger.Info, "stop", "Context is done, stopping command reader", map[string]any{
-					"reason": ctx.Err().Error(),
-				})
-				return
+				continue
 			}
 			if err != nil {
-				r.sendError(err, "read_kafka")
+				r.sendError(err, "read_message")
 				continue
 			}
 
@@ -149,7 +147,7 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 					"command_id": cmdMsg.ID,
 				})
 			case <-ctx.Done():
-				return
+				continue
 			}
 		}
 	}

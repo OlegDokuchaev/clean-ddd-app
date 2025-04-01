@@ -39,6 +39,29 @@ func NewReader(reader *kafka.Reader, logger logger.Logger) *ReaderImpl {
 	}
 }
 
+func (r *ReaderImpl) log(level logger.Level, action, message string, extraFields map[string]any) {
+	fields := map[string]any{
+		"component": "event_reader",
+		"action":    action,
+		"topic":     r.reader.Config().Topic,
+	}
+	for k, v := range extraFields {
+		fields[k] = v
+	}
+
+	r.logger.Log(level, message, fields)
+}
+
+func (r *ReaderImpl) sendError(err error, action string) {
+	r.log(logger.Error, action, err.Error(), nil)
+
+	select {
+	case r.errorChan <- fmt.Errorf("error reading message: %w", err):
+	default:
+		r.log(logger.Error, "channel_full", "Error channel full", map[string]any{"error": err.Error()})
+	}
+}
+
 func (r *ReaderImpl) Start(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -51,10 +74,9 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 	r.errorChan = make(chan error, 1)
 
 	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
-
 	r.started = true
-	r.logger.Println("Starting event reader...")
 
+	r.log(logger.Info, "start", "Starting event reader", nil)
 	r.wg.Add(1)
 
 	go func() {
@@ -73,61 +95,61 @@ func (r *ReaderImpl) Stop() error {
 		return errors.New("event reader is already stopped or was not started")
 	}
 
-	r.logger.Printf("Stopping event reader...")
-
-	if r.cancelFunc != nil {
-		r.cancelFunc()
-	}
-
+	r.log(logger.Info, "stop_request", "Stopping event reader", nil)
+	r.cancelFunc()
 	r.wg.Wait()
-
 	close(r.eventChan)
 	close(r.errorChan)
-
 	r.started = false
-	r.logger.Printf("Event reader has been stopped.")
 
+	r.log(logger.Info, "stopped", "Event reader stopped", nil)
 	return nil
 }
 
 func (r *ReaderImpl) readEvents(ctx context.Context) {
-	defer func() {
-		r.logger.Printf("Event reader goroutine completed")
-	}()
+	defer r.log(logger.Info, "goroutine_completed", "Event reader goroutine completed", nil)
 
 	for {
 		select {
 		case <-ctx.Done():
-			r.logger.Printf("Context canceled, stopping event reader")
+			r.log(logger.Info, "stop", "Event reader stopping", map[string]any{"reason": ctx.Err().Error()})
 			return
-		default:
-			msg, err := r.reader.ReadMessage(ctx)
 
+		default:
+			// Read message
+			msg, err := r.reader.ReadMessage(ctx)
 			if ctx.Err() != nil {
 				continue
 			}
-
 			if err != nil {
-				select {
-				case r.errorChan <- fmt.Errorf("error reading message: %w", err):
-				case <-ctx.Done():
-				}
+				r.sendError(err, "read_message")
 				continue
 			}
 
+			// Parse the event
 			event, err := parseEvent(msg.Value)
 			if err != nil {
-				select {
-				case r.errorChan <- fmt.Errorf("error parsing message: %w", err):
-				case <-ctx.Done():
-				}
+				r.log(logger.Error, "parse_error", "Failed to parse event", map[string]any{
+					"error":    err.Error(),
+					"raw_data": msg.Value,
+				})
+				r.sendError(err, "parse_error")
 				continue
 			}
+			r.log(logger.Info, "event_parsed", "Event parsed successfully", map[string]any{
+				"event":     event,
+				"partition": msg.Partition,
+				"offset":    msg.Offset,
+			})
 
+			// Send the command to the command channel
 			select {
 			case r.eventChan <- event:
-				r.logger.Printf("Event received: %s, type: %s", event.ID, event.Name)
+				r.log(logger.Info, "event_queued", "Event queued for processing", map[string]any{
+					"event_id": event.ID,
+				})
 			case <-ctx.Done():
+				continue
 			}
 		}
 	}
