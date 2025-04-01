@@ -39,12 +39,33 @@ func NewReader(reader *kafka.Reader, logger logger.Logger) *ReaderImpl {
 	}
 }
 
+func (r *ReaderImpl) log(level logger.Level, action, message string, extraFields map[string]any) {
+	fields := map[string]any{
+		"component": "command_reader",
+		"action":    action,
+		"topic":     r.reader.Config().Topic,
+	}
+	for k, v := range extraFields {
+		fields[k] = v
+	}
+
+	r.logger.Log(level, message, fields)
+}
+
+func (r *ReaderImpl) sendError(err error, action string) {
+	r.log(logger.Error, action, err.Error(), nil)
+	select {
+	case r.errorChan <- fmt.Errorf("error reading message: %w", err):
+	default:
+		r.log(logger.Error, "channel_full", "Error channel full", map[string]any{"error": err.Error()})
+	}
+}
+
 func (r *ReaderImpl) Start(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if r.started {
-		r.logger.Println("Command reader is already started, no need to start again.")
 		return errors.New("command reader is already started")
 	}
 
@@ -52,17 +73,14 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 	r.errorChan = make(chan error, 1)
 
 	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
-
 	r.started = true
-	r.logger.Println("Starting command reader...")
 
+	r.log(logger.Info, "start", "Starting command reader", nil)
 	r.wg.Add(1)
-
 	go func() {
 		defer r.wg.Done()
 		r.readCommands(r.cancelCtx)
 	}()
-
 	return nil
 }
 
@@ -74,63 +92,62 @@ func (r *ReaderImpl) Stop() error {
 		return errors.New("command reader is already stopped or was not started")
 	}
 
-	r.logger.Printf("Stopping command reader...")
-
-	if r.cancelFunc != nil {
-		r.cancelFunc()
-	}
-
+	r.log(logger.Info, "stop_request", "Stopping command reader", nil)
+	r.cancelFunc()
 	r.wg.Wait()
-
 	close(r.commandChan)
 	close(r.errorChan)
-
 	r.started = false
-	r.logger.Printf("Command reader has been stopped.")
 
+	r.log(logger.Info, "stopped", "Command reader stopped", nil)
 	return nil
 }
 
 func (r *ReaderImpl) readCommands(ctx context.Context) {
-	defer func() {
-		r.logger.Printf("Command reader goroutine completed")
-	}()
+	defer r.log(logger.Info, "goroutine_completed", "Command reader goroutine completed", nil)
 
 	for {
 		select {
 		case <-ctx.Done():
-			r.logger.Printf("Context canceled, stopping command reader")
+			r.log(logger.Info, "stop", "Command reader stopping", map[string]any{"reason": ctx.Err().Error()})
 			return
-		default:
-			msg, err := r.reader.ReadMessage(ctx)
 
+		default:
+			// Read message from Kafka
+			msg, err := r.reader.ReadMessage(ctx)
 			if ctx.Err() != nil {
-				r.logger.Printf("Context is done, stopping command reader")
+				r.log(logger.Info, "stop", "Context is done, stopping command reader", map[string]any{
+					"reason": ctx.Err().Error(),
+				})
 				return
 			}
-
 			if err != nil {
-				select {
-				case r.errorChan <- fmt.Errorf("error reading message: %w", err):
-				default:
-					r.logger.Printf("Error channel full, dropping error: %v", err)
-				}
+				r.sendError(err, "read_kafka")
 				continue
 			}
 
+			// Parse the command message
 			cmdMsg, err := parseCommandMessage(msg.Value)
 			if err != nil {
-				select {
-				case r.errorChan <- fmt.Errorf("error parsing message: %w", err):
-				default:
-					r.logger.Printf("Error channel full, dropping error: %v", err)
-				}
+				r.log(logger.Error, "parse_error", "Failed to parse command message", map[string]any{
+					"error":    err.Error(),
+					"raw_data": msg.Value,
+				})
+				r.sendError(err, "parse_error")
 				continue
 			}
+			r.log(logger.Info, "command_parsed", "Command parsed successfully", map[string]any{
+				"command":   cmdMsg,
+				"partition": msg.Partition,
+				"offset":    msg.Offset,
+			})
 
+			// Send the command to the command channel
 			select {
 			case r.commandChan <- cmdMsg:
-				r.logger.Printf("Command received: %s, type: %s", cmdMsg.ID, cmdMsg.Name)
+				r.log(logger.Info, "command_queued", "Command queued for processing", map[string]any{
+					"command_id": cmdMsg.ID,
+				})
 			case <-ctx.Done():
 				return
 			}
