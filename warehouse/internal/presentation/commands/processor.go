@@ -69,13 +69,14 @@ func (p *Processor) processCommands(ctx context.Context) {
 		case <-ctx.Done():
 			p.log(logger.Info, "stop", "Command processor stopping", map[string]any{"reason": ctx.Err().Error()})
 			return
+
 		default:
 			// Read the command
 			cmd, err := p.reader.Read(ctx)
+			if ctx.Err() != nil {
+				continue
+			}
 			if err != nil {
-				if ctx.Err() != nil {
-					return
-				}
 				p.log(logger.Error, "read", "Error reading command", map[string]any{"error": err.Error()})
 				continue
 			}
