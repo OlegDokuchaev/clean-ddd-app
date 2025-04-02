@@ -5,6 +5,7 @@ import (
 	"errors"
 	"order/internal/infrastructure/logger"
 	"sync"
+	"time"
 )
 
 type Processor struct {
@@ -31,6 +32,18 @@ func NewProcessor(handler Handler, reader Reader, writer Writer, logger logger.L
 	}
 }
 
+func (p *Processor) log(level logger.Level, action, message string, extraFields map[string]any) {
+	fields := map[string]any{
+		"component": "command_processor",
+		"action":    action,
+	}
+	for k, v := range extraFields {
+		fields[k] = v
+	}
+
+	p.logger.Log(level, message, fields)
+}
+
 func (p *Processor) Start(ctx context.Context) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -42,9 +55,9 @@ func (p *Processor) Start(ctx context.Context) error {
 	p.cancelCtx, p.cancelFunc = context.WithCancel(ctx)
 	p.started = true
 
+	p.log(logger.Info, "start", "Starting command processor", nil)
 	p.wg.Add(1)
 	go p.processCommands(p.cancelCtx)
-
 	return nil
 }
 
@@ -54,31 +67,50 @@ func (p *Processor) processCommands(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			p.logger.Printf("%s processor stopping: context done", ctx)
+			p.log(logger.Info, "stop", "Command processor stopping", map[string]any{"reason": ctx.Err().Error()})
 			return
+
 		default:
+			// Read the command
 			cmd, err := p.reader.Read(ctx)
+			if ctx.Err() != nil {
+				continue
+			}
 			if err != nil {
-				if ctx.Err() != nil {
-					return
-				}
-				p.logger.Printf("Error reading command: %v", err)
+				p.log(logger.Error, "read", "Error reading command", map[string]any{"error": err.Error()})
 				continue
 			}
 
+			// Handle the command
+			startTime := time.Now()
 			res, err := p.handler.Handle(ctx, cmd)
+			duration := time.Since(startTime)
+
 			if err != nil {
-				p.logger.Printf("Error handling command %s: %v", cmd.ID, err)
+				p.log(logger.Error, "process_error", "Command processing failed", map[string]any{
+					"command_id":  cmd.ID,
+					"error":       err.Error(),
+					"duration_ms": duration.Milliseconds(),
+				})
 				continue
 			}
 
+			p.log(logger.Info, "process_success", "Command processed successfully", map[string]any{
+				"command_id":   cmd.ID,
+				"duration_ms":  duration.Milliseconds(),
+				"has_response": res != nil,
+			})
+
+			// Write the response
 			if res != nil {
 				if err := p.writer.Write(ctx, res); err != nil {
-					p.logger.Printf("Error sending response: %v", err)
+					p.log(logger.Error, "write_error", "Error sending response", map[string]any{
+						"command_id":  cmd.ID,
+						"response_id": res.ID,
+						"error":       err.Error(),
+					})
 				}
 			}
-
-			p.logger.Printf("Command %s successfully processed", cmd.ID)
 		}
 	}
 }
@@ -91,10 +123,11 @@ func (p *Processor) Stop() error {
 		return errors.New("processor is not running or already stopped")
 	}
 
+	p.log(logger.Info, "stop_request", "Stopping command processor", nil)
 	p.cancelFunc()
-
 	p.wg.Wait()
 	p.started = false
 
+	p.log(logger.Info, "stopped", "Command processor stopped", nil)
 	return nil
 }
