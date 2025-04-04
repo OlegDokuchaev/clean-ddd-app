@@ -2,7 +2,7 @@ package warehouse
 
 import (
 	warehouseDto "api-gateway/internal/domain/dtos/warehouse"
-	"api-gateway/internal/port/output/auth"
+	"api-gateway/internal/port/output/auth/admin"
 	warehouseClient "api-gateway/internal/port/output/clients/warehouse"
 	"context"
 
@@ -10,12 +10,12 @@ import (
 )
 
 type UseCaseImpl struct {
-	adminAuth       auth.Auth
+	adminAuth       admin.Auth
 	warehouseClient warehouseClient.Client
 }
 
 func NewUseCase(
-	adminAuth auth.Auth,
+	adminAuth admin.Auth,
 	warehouseClient warehouseClient.Client,
 ) UseCase {
 	return &UseCaseImpl{
