@@ -1,13 +1,15 @@
 package warehouse
 
 import (
+	warehouseDto "api-gateway/internal/domain/dtos/warehouse"
 	"context"
+
 	"github.com/google/uuid"
 )
 
 type UseCase interface {
-	ReserveItems(ctx context.Context, items []ItemInfoDto, adminToken string) error
-	ReleaseItems(ctx context.Context, items []ItemInfoDto, adminToken string) error
-	CreateProduct(ctx context.Context, data CreateProductDto, adminToken string) (uuid.UUID, error)
-	GetAllItems(ctx context.Context) ([]*ItemDto, error)
+	ReserveItems(ctx context.Context, items []warehouseDto.ItemInfoDto, adminToken string) error
+	ReleaseItems(ctx context.Context, items []warehouseDto.ItemInfoDto, adminToken string) error
+	CreateProduct(ctx context.Context, data warehouseDto.CreateProductDto, adminToken string) (uuid.UUID, error)
+	GetAllItems(ctx context.Context) ([]*warehouseDto.ItemDto, error)
 }
