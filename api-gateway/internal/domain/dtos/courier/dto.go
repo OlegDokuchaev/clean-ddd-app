@@ -1,4 +1,4 @@
-package dtos
+package courier
 
 type RegisterDto struct {
 	Name     string

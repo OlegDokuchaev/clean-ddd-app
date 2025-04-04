@@ -1,13 +1,13 @@
 package courier
 
 import (
-	"api-gateway/internal/domain/dtos"
+	courierDto "api-gateway/internal/domain/dtos/courier"
 	"context"
 
 	"github.com/google/uuid"
 )
 
 type UseCase interface {
-	Register(ctx context.Context, data dtos.RegisterDto) (uuid.UUID, error)
-	Login(ctx context.Context, data dtos.LoginDto) (string, error)
+	Register(ctx context.Context, data courierDto.RegisterDto) (uuid.UUID, error)
+	Login(ctx context.Context, data courierDto.LoginDto) (string, error)
 }
