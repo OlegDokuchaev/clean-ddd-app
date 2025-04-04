@@ -1,9 +1,11 @@
 package order
 
-import orderUseCase "api-gateway/internal/domain/usecases/order"
+import (
+	orderDto "api-gateway/internal/domain/dtos/order"
+)
 
 type CreateDto struct {
 	CustomerID string
 	Address    string
-	Items      []orderUseCase.ItemDto
+	Items      []orderDto.ItemDto
 }
