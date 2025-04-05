@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package customer.v1;
+
+option go_package = "cli/gen/customer;customer";
+
+//
+// CustomerAuthService provides operations for customer authentication.
+// API Version: v1
+//
+service CustomerAuthService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  
+  rpc Login(LoginRequest) returns (LoginResponse);
+  
+  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+}
+
+//
+// Message definitions
+//
+
+message RegisterRequest {
+  string name = 1;
+  string password = 2;
+  string phone = 3;
+}
+
+message RegisterResponse {
+  string customer_id = 1;
+}
+
+message LoginRequest {
+  string phone = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+}
+
+message AuthenticateRequest {
+  string token = 1;
+}
+
+message AuthenticateResponse {
+  string customer_id = 1;
+}
