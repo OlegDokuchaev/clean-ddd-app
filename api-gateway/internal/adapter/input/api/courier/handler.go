@@ -20,6 +20,19 @@ func NewHandler(courierUseCase courierUseCase.UseCase) *Handler {
 	return &Handler{uc: courierUseCase}
 }
 
+// Register godoc
+// @Summary Register new courier
+// @Description Register a new courier with name, password and phone
+// @Tags couriers
+// @Accept json
+// @Produce json
+// @Param request body request.RegisterRequest true "Courier registration data"
+// @Success 201 {object} response.RegisterResponse "Courier created successfully"
+// @Failure 400 {object} response.ErrorResponseDetail "Invalid request format"
+// @Failure 409 {object} response.ErrorResponseDetail "Courier with this phone already exists"
+// @Failure 422 {object} response.ErrorResponseDetail "Invalid data format"
+// @Failure 500 {object} response.ErrorResponseDetail "Server error"
+// @Router /couriers [post]
 func (h *Handler) Register(c *gin.Context) {
 	var req request.RegisterRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
@@ -39,6 +52,19 @@ func (h *Handler) Register(c *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary Courier login
+// @Description Authenticate a courier and get a JWT token
+// @Tags couriers
+// @Accept json
+// @Produce json
+// @Param request body request.LoginRequest true "Courier login credentials"
+// @Success 200 {object} response.LoginResponse "Login successful"
+// @Failure 400 {object} response.ErrorResponseDetail "Invalid request format"
+// @Failure 401 {object} response.ErrorResponseDetail "Invalid credentials"
+// @Failure 404 {object} response.ErrorResponseDetail "Courier not found"
+// @Failure 500 {object} response.ErrorResponseDetail "Server error"
+// @Router /auth/courier-tokens [post]
 func (h *Handler) Login(c *gin.Context) {
 	var req request.LoginRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
