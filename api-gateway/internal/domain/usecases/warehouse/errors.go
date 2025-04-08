@@ -1,7 +1,10 @@
 package warehouse
 
-import "errors"
+import (
+	domainErrors "api-gateway/internal/domain/errors"
+	"net/http"
+)
 
 var (
-	ErrUnauthorized = errors.New("unauthorized access")
+	ErrUnauthorized = domainErrors.NewAppError(http.StatusUnauthorized, "unauthorized access", nil)
 )
