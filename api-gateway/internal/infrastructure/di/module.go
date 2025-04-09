@@ -1,7 +1,7 @@
 package di
 
 import (
-	api "api-gateway/internal/adapter/input/api"
+	"api-gateway/internal/adapter/input/api"
 	courierApi "api-gateway/internal/adapter/input/api/courier"
 	customerApi "api-gateway/internal/adapter/input/api/customer"
 	orderApi "api-gateway/internal/adapter/input/api/order"
@@ -15,14 +15,12 @@ import (
 	customerUseCase "api-gateway/internal/domain/usecases/customer"
 	orderUseCase "api-gateway/internal/domain/usecases/order"
 	warehouseUseCase "api-gateway/internal/domain/usecases/warehouse"
+	"api-gateway/internal/infrastructure/logger"
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"net/http"
-	"time"
-
 	"github.com/gin-gonic/gin"
+	"net/http"
 
 	"go.uber.org/fx"
 )
@@ -97,7 +95,21 @@ var ApiModule = fx.Options(
 	fx.Invoke(RunServer),
 )
 
-func RunServer(lc fx.Lifecycle, router *gin.Engine, config *api.Config) {
+var LoggerModule = fx.Provide(
+	// Config
+	logger.NewConfig,
+
+	// Logstash
+	logger.NewLogstash,
+
+	// Logrus
+	logger.NewLogrus,
+
+	// Logger
+	logger.NewLogger,
+)
+
+func RunServer(lc fx.Lifecycle, router *gin.Engine, config *api.Config, log logger.Logger) {
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", config.Port),
 		Handler: router,
@@ -107,6 +119,7 @@ func RunServer(lc fx.Lifecycle, router *gin.Engine, config *api.Config) {
 		OnStart: func(ctx context.Context) error {
 			go func() {
 				if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+					log.Error("Could not start HTTP server", map[string]any{"error": err.Error()})
 					panic(err)
 				}
 			}()
@@ -114,9 +127,8 @@ func RunServer(lc fx.Lifecycle, router *gin.Engine, config *api.Config) {
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-			return srv.Shutdown(ctxTimeout)
+			log.Println("Shutting down HTTP server...")
+			return srv.Shutdown(ctx)
 		},
 	})
 }
