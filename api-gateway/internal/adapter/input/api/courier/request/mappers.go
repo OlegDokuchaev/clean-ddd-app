@@ -1,4 +1,4 @@
-package request
+package courier_request
 
 import (
 	courierDto "api-gateway/internal/domain/dtos/courier"

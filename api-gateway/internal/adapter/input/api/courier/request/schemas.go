@@ -1,4 +1,4 @@
-package request
+package courier_request
 
 type RegisterRequest struct {
 	Name     string `json:"name" binding:"required"`

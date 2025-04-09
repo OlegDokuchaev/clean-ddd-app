@@ -1,4 +1,4 @@
-package response
+package courier_response
 
 import "github.com/google/uuid"
 
