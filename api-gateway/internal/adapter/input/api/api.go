@@ -3,6 +3,7 @@ package api
 import (
 	courierApi "api-gateway/internal/adapter/input/api/courier"
 	customerApi "api-gateway/internal/adapter/input/api/customer"
+	"api-gateway/internal/adapter/input/api/docs"
 	orderApi "api-gateway/internal/adapter/input/api/order"
 	warehouseApi "api-gateway/internal/adapter/input/api/warehouse"
 
@@ -23,6 +24,7 @@ func NewAPI(
 		customerApi.RegisterRoutes(api, customerHandler)
 		courierApi.RegisterRoutes(api, courierHandler)
 		warehouseApi.RegisterRoutes(api, warehouseHandler)
+		docs.RegisterRoutes(api)
 	}
 
 	return r
