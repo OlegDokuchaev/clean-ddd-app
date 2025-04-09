@@ -68,7 +68,6 @@ func (u *UseCaseImpl) GetAllItems(ctx context.Context) ([]*warehouseDto.ItemDto,
 	if err != nil {
 		return nil, err
 	}
-
 	return items, nil
 }
 
