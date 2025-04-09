@@ -32,6 +32,7 @@ func main() {
 		di.ClientsModule,
 		di.AuthModule,
 		di.UseCasesModule,
+		di.LoggerModule,
 		di.ApiModule,
 	).Run()
 }
