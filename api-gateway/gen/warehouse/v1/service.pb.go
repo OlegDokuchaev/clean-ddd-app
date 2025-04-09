@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: service.proto
+// source: warehouse/v1/service.proto
 
-package warehouse
+package warehouse_v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -32,7 +32,7 @@ type ReserveItemRequest struct {
 
 func (x *ReserveItemRequest) Reset() {
 	*x = ReserveItemRequest{}
-	mi := &file_service_proto_msgTypes[0]
+	mi := &file_warehouse_v1_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +44,7 @@ func (x *ReserveItemRequest) String() string {
 func (*ReserveItemRequest) ProtoMessage() {}
 
 func (x *ReserveItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[0]
+	mi := &file_warehouse_v1_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +57,7 @@ func (x *ReserveItemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReserveItemRequest.ProtoReflect.Descriptor instead.
 func (*ReserveItemRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{0}
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ReserveItemRequest) GetItems() []*ItemInfo {
@@ -76,7 +76,7 @@ type ReleaseItemRequest struct {
 
 func (x *ReleaseItemRequest) Reset() {
 	*x = ReleaseItemRequest{}
-	mi := &file_service_proto_msgTypes[1]
+	mi := &file_warehouse_v1_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -88,7 +88,7 @@ func (x *ReleaseItemRequest) String() string {
 func (*ReleaseItemRequest) ProtoMessage() {}
 
 func (x *ReleaseItemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[1]
+	mi := &file_warehouse_v1_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -101,7 +101,7 @@ func (x *ReleaseItemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseItemRequest.ProtoReflect.Descriptor instead.
 func (*ReleaseItemRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{1}
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ReleaseItemRequest) GetItems() []*ItemInfo {
@@ -120,7 +120,7 @@ type GetAllItemsResponse struct {
 
 func (x *GetAllItemsResponse) Reset() {
 	*x = GetAllItemsResponse{}
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_warehouse_v1_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -132,7 +132,7 @@ func (x *GetAllItemsResponse) String() string {
 func (*GetAllItemsResponse) ProtoMessage() {}
 
 func (x *GetAllItemsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_warehouse_v1_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -145,7 +145,7 @@ func (x *GetAllItemsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAllItemsResponse.ProtoReflect.Descriptor instead.
 func (*GetAllItemsResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{2}
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetAllItemsResponse) GetItems() []*Item {
@@ -167,7 +167,7 @@ type Item struct {
 
 func (x *Item) Reset() {
 	*x = Item{}
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_warehouse_v1_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -179,7 +179,7 @@ func (x *Item) String() string {
 func (*Item) ProtoMessage() {}
 
 func (x *Item) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_warehouse_v1_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -192,7 +192,7 @@ func (x *Item) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Item.ProtoReflect.Descriptor instead.
 func (*Item) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{3}
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Item) GetItemId() string {
@@ -233,7 +233,7 @@ type ItemInfo struct {
 
 func (x *ItemInfo) Reset() {
 	*x = ItemInfo{}
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_warehouse_v1_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -245,7 +245,7 @@ func (x *ItemInfo) String() string {
 func (*ItemInfo) ProtoMessage() {}
 
 func (x *ItemInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_warehouse_v1_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -258,7 +258,7 @@ func (x *ItemInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ItemInfo.ProtoReflect.Descriptor instead.
 func (*ItemInfo) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{4}
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ItemInfo) GetProductId() string {
@@ -285,7 +285,7 @@ type CreateProductRequest struct {
 
 func (x *CreateProductRequest) Reset() {
 	*x = CreateProductRequest{}
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_warehouse_v1_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -297,7 +297,7 @@ func (x *CreateProductRequest) String() string {
 func (*CreateProductRequest) ProtoMessage() {}
 
 func (x *CreateProductRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_warehouse_v1_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -310,7 +310,7 @@ func (x *CreateProductRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProductRequest.ProtoReflect.Descriptor instead.
 func (*CreateProductRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{5}
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreateProductRequest) GetName() string {
@@ -336,7 +336,7 @@ type CreateProductResponse struct {
 
 func (x *CreateProductResponse) Reset() {
 	*x = CreateProductResponse{}
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_warehouse_v1_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -348,7 +348,7 @@ func (x *CreateProductResponse) String() string {
 func (*CreateProductResponse) ProtoMessage() {}
 
 func (x *CreateProductResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_warehouse_v1_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -361,7 +361,7 @@ func (x *CreateProductResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProductResponse.ProtoReflect.Descriptor instead.
 func (*CreateProductResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{6}
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CreateProductResponse) GetProductId() string {
@@ -383,7 +383,7 @@ type Product struct {
 
 func (x *Product) Reset() {
 	*x = Product{}
-	mi := &file_service_proto_msgTypes[7]
+	mi := &file_warehouse_v1_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -395,7 +395,7 @@ func (x *Product) String() string {
 func (*Product) ProtoMessage() {}
 
 func (x *Product) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[7]
+	mi := &file_warehouse_v1_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -408,7 +408,7 @@ func (x *Product) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Product.ProtoReflect.Descriptor instead.
 func (*Product) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{7}
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Product) GetProductId() string {
@@ -439,11 +439,11 @@ func (x *Product) GetCreated() *timestamppb.Timestamp {
 	return nil
 }
 
-var File_service_proto protoreflect.FileDescriptor
+var File_warehouse_v1_service_proto protoreflect.FileDescriptor
 
-const file_service_proto_rawDesc = "" +
+const file_warehouse_v1_service_proto_rawDesc = "" +
 	"\n" +
-	"\rservice.proto\x12\fwarehouse.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"B\n" +
+	"\x1awarehouse/v1/service.proto\x12\fwarehouse.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"B\n" +
 	"\x12ReserveItemRequest\x12,\n" +
 	"\x05items\x18\x02 \x03(\v2\x16.warehouse.v1.ItemInfoR\x05items\"B\n" +
 	"\x12ReleaseItemRequest\x12,\n" +
@@ -476,22 +476,22 @@ const file_service_proto_rawDesc = "" +
 	"\vReleaseItem\x12 .warehouse.v1.ReleaseItemRequest\x1a\x16.google.protobuf.Empty\x12H\n" +
 	"\vGetAllItems\x12\x16.google.protobuf.Empty\x1a!.warehouse.v1.GetAllItemsResponse2j\n" +
 	"\x0eProductService\x12X\n" +
-	"\rCreateProduct\x12\".warehouse.v1.CreateProductRequest\x1a#.warehouse.v1.CreateProductResponseB\x1dZ\x1bcli/gen/warehouse;warehouseb\x06proto3"
+	"\rCreateProduct\x12\".warehouse.v1.CreateProductRequest\x1a#.warehouse.v1.CreateProductResponseBTZRgithub.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/warehouse/v1;warehouse_v1b\x06proto3"
 
 var (
-	file_service_proto_rawDescOnce sync.Once
-	file_service_proto_rawDescData []byte
+	file_warehouse_v1_service_proto_rawDescOnce sync.Once
+	file_warehouse_v1_service_proto_rawDescData []byte
 )
 
-func file_service_proto_rawDescGZIP() []byte {
-	file_service_proto_rawDescOnce.Do(func() {
-		file_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)))
+func file_warehouse_v1_service_proto_rawDescGZIP() []byte {
+	file_warehouse_v1_service_proto_rawDescOnce.Do(func() {
+		file_warehouse_v1_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_warehouse_v1_service_proto_rawDesc), len(file_warehouse_v1_service_proto_rawDesc)))
 	})
-	return file_service_proto_rawDescData
+	return file_warehouse_v1_service_proto_rawDescData
 }
 
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_service_proto_goTypes = []any{
+var file_warehouse_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_warehouse_v1_service_proto_goTypes = []any{
 	(*ReserveItemRequest)(nil),    // 0: warehouse.v1.ReserveItemRequest
 	(*ReleaseItemRequest)(nil),    // 1: warehouse.v1.ReleaseItemRequest
 	(*GetAllItemsResponse)(nil),   // 2: warehouse.v1.GetAllItemsResponse
@@ -503,7 +503,7 @@ var file_service_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 	(*emptypb.Empty)(nil),         // 9: google.protobuf.Empty
 }
-var file_service_proto_depIdxs = []int32{
+var file_warehouse_v1_service_proto_depIdxs = []int32{
 	4, // 0: warehouse.v1.ReserveItemRequest.items:type_name -> warehouse.v1.ItemInfo
 	4, // 1: warehouse.v1.ReleaseItemRequest.items:type_name -> warehouse.v1.ItemInfo
 	3, // 2: warehouse.v1.GetAllItemsResponse.items:type_name -> warehouse.v1.Item
@@ -524,26 +524,26 @@ var file_service_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_service_proto_init() }
-func file_service_proto_init() {
-	if File_service_proto != nil {
+func init() { file_warehouse_v1_service_proto_init() }
+func file_warehouse_v1_service_proto_init() {
+	if File_warehouse_v1_service_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_warehouse_v1_service_proto_rawDesc), len(file_warehouse_v1_service_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_service_proto_goTypes,
-		DependencyIndexes: file_service_proto_depIdxs,
-		MessageInfos:      file_service_proto_msgTypes,
+		GoTypes:           file_warehouse_v1_service_proto_goTypes,
+		DependencyIndexes: file_warehouse_v1_service_proto_depIdxs,
+		MessageInfos:      file_warehouse_v1_service_proto_msgTypes,
 	}.Build()
-	File_service_proto = out.File
-	file_service_proto_goTypes = nil
-	file_service_proto_depIdxs = nil
+	File_warehouse_v1_service_proto = out.File
+	file_warehouse_v1_service_proto_goTypes = nil
+	file_warehouse_v1_service_proto_depIdxs = nil
 }

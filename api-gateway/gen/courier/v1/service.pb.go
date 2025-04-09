@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: service.proto
+// source: courier/v1/service.proto
 
-package v1
+package courier_v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -32,7 +32,7 @@ type RegisterRequest struct {
 
 func (x *RegisterRequest) Reset() {
 	*x = RegisterRequest{}
-	mi := &file_service_proto_msgTypes[0]
+	mi := &file_courier_v1_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +44,7 @@ func (x *RegisterRequest) String() string {
 func (*RegisterRequest) ProtoMessage() {}
 
 func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[0]
+	mi := &file_courier_v1_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +57,7 @@ func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
 func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{0}
+	return file_courier_v1_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *RegisterRequest) GetName() string {
@@ -90,7 +90,7 @@ type RegisterResponse struct {
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
-	mi := &file_service_proto_msgTypes[1]
+	mi := &file_courier_v1_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -102,7 +102,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[1]
+	mi := &file_courier_v1_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -115,7 +115,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{1}
+	return file_courier_v1_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *RegisterResponse) GetCourierId() string {
@@ -135,7 +135,7 @@ type LoginRequest struct {
 
 func (x *LoginRequest) Reset() {
 	*x = LoginRequest{}
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_courier_v1_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +147,7 @@ func (x *LoginRequest) String() string {
 func (*LoginRequest) ProtoMessage() {}
 
 func (x *LoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_courier_v1_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +160,7 @@ func (x *LoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
 func (*LoginRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{2}
+	return file_courier_v1_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *LoginRequest) GetPhone() string {
@@ -186,7 +186,7 @@ type LoginResponse struct {
 
 func (x *LoginResponse) Reset() {
 	*x = LoginResponse{}
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_courier_v1_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -198,7 +198,7 @@ func (x *LoginResponse) String() string {
 func (*LoginResponse) ProtoMessage() {}
 
 func (x *LoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_courier_v1_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -211,7 +211,7 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{3}
+	return file_courier_v1_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *LoginResponse) GetToken() string {
@@ -230,7 +230,7 @@ type AuthenticateRequest struct {
 
 func (x *AuthenticateRequest) Reset() {
 	*x = AuthenticateRequest{}
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_courier_v1_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -242,7 +242,7 @@ func (x *AuthenticateRequest) String() string {
 func (*AuthenticateRequest) ProtoMessage() {}
 
 func (x *AuthenticateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_courier_v1_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -255,7 +255,7 @@ func (x *AuthenticateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthenticateRequest.ProtoReflect.Descriptor instead.
 func (*AuthenticateRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{4}
+	return file_courier_v1_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *AuthenticateRequest) GetToken() string {
@@ -274,7 +274,7 @@ type AuthenticateResponse struct {
 
 func (x *AuthenticateResponse) Reset() {
 	*x = AuthenticateResponse{}
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_courier_v1_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -286,7 +286,7 @@ func (x *AuthenticateResponse) String() string {
 func (*AuthenticateResponse) ProtoMessage() {}
 
 func (x *AuthenticateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_courier_v1_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -299,7 +299,7 @@ func (x *AuthenticateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthenticateResponse.ProtoReflect.Descriptor instead.
 func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{5}
+	return file_courier_v1_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *AuthenticateResponse) GetCourierId() string {
@@ -309,11 +309,11 @@ func (x *AuthenticateResponse) GetCourierId() string {
 	return ""
 }
 
-var File_service_proto protoreflect.FileDescriptor
+var File_courier_v1_service_proto protoreflect.FileDescriptor
 
-const file_service_proto_rawDesc = "" +
+const file_courier_v1_service_proto_rawDesc = "" +
 	"\n" +
-	"\rservice.proto\x12\n" +
+	"\x18courier/v1/service.proto\x12\n" +
 	"courier.v1\"W\n" +
 	"\x0fRegisterRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
@@ -335,22 +335,22 @@ const file_service_proto_rawDesc = "" +
 	"\x12CourierAuthService\x12E\n" +
 	"\bRegister\x12\x1b.courier.v1.RegisterRequest\x1a\x1c.courier.v1.RegisterResponse\x12<\n" +
 	"\x05Login\x12\x18.courier.v1.LoginRequest\x1a\x19.courier.v1.LoginResponse\x12Q\n" +
-	"\fAuthenticate\x12\x1f.courier.v1.AuthenticateRequest\x1a .courier.v1.AuthenticateResponseB@Z>github.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/v1;v1b\x06proto3"
+	"\fAuthenticate\x12\x1f.courier.v1.AuthenticateRequest\x1a .courier.v1.AuthenticateResponseBPZNgithub.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/courier/v1;courier_v1b\x06proto3"
 
 var (
-	file_service_proto_rawDescOnce sync.Once
-	file_service_proto_rawDescData []byte
+	file_courier_v1_service_proto_rawDescOnce sync.Once
+	file_courier_v1_service_proto_rawDescData []byte
 )
 
-func file_service_proto_rawDescGZIP() []byte {
-	file_service_proto_rawDescOnce.Do(func() {
-		file_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)))
+func file_courier_v1_service_proto_rawDescGZIP() []byte {
+	file_courier_v1_service_proto_rawDescOnce.Do(func() {
+		file_courier_v1_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_courier_v1_service_proto_rawDesc), len(file_courier_v1_service_proto_rawDesc)))
 	})
-	return file_service_proto_rawDescData
+	return file_courier_v1_service_proto_rawDescData
 }
 
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_service_proto_goTypes = []any{
+var file_courier_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_courier_v1_service_proto_goTypes = []any{
 	(*RegisterRequest)(nil),      // 0: courier.v1.RegisterRequest
 	(*RegisterResponse)(nil),     // 1: courier.v1.RegisterResponse
 	(*LoginRequest)(nil),         // 2: courier.v1.LoginRequest
@@ -358,7 +358,7 @@ var file_service_proto_goTypes = []any{
 	(*AuthenticateRequest)(nil),  // 4: courier.v1.AuthenticateRequest
 	(*AuthenticateResponse)(nil), // 5: courier.v1.AuthenticateResponse
 }
-var file_service_proto_depIdxs = []int32{
+var file_courier_v1_service_proto_depIdxs = []int32{
 	0, // 0: courier.v1.CourierAuthService.Register:input_type -> courier.v1.RegisterRequest
 	2, // 1: courier.v1.CourierAuthService.Login:input_type -> courier.v1.LoginRequest
 	4, // 2: courier.v1.CourierAuthService.Authenticate:input_type -> courier.v1.AuthenticateRequest
@@ -372,26 +372,26 @@ var file_service_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_service_proto_init() }
-func file_service_proto_init() {
-	if File_service_proto != nil {
+func init() { file_courier_v1_service_proto_init() }
+func file_courier_v1_service_proto_init() {
+	if File_courier_v1_service_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_courier_v1_service_proto_rawDesc), len(file_courier_v1_service_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_service_proto_goTypes,
-		DependencyIndexes: file_service_proto_depIdxs,
-		MessageInfos:      file_service_proto_msgTypes,
+		GoTypes:           file_courier_v1_service_proto_goTypes,
+		DependencyIndexes: file_courier_v1_service_proto_depIdxs,
+		MessageInfos:      file_courier_v1_service_proto_msgTypes,
 	}.Build()
-	File_service_proto = out.File
-	file_service_proto_goTypes = nil
-	file_service_proto_depIdxs = nil
+	File_courier_v1_service_proto = out.File
+	file_courier_v1_service_proto_goTypes = nil
+	file_courier_v1_service_proto_depIdxs = nil
 }

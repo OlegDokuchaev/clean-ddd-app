@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.29.3
-// source: service.proto
+// source: customer/v1/service.proto
 
-package customer
+package customer_v1
 
 import (
 	context "context"
@@ -199,5 +199,5 @@ var CustomerAuthService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "service.proto",
+	Metadata: "customer/v1/service.proto",
 }

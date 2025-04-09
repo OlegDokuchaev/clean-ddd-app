@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: service.proto
+// source: order/v1/service.proto
 
-package order
+package order_v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -65,11 +65,11 @@ func (x OrderStatus) String() string {
 }
 
 func (OrderStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_service_proto_enumTypes[0].Descriptor()
+	return file_order_v1_service_proto_enumTypes[0].Descriptor()
 }
 
 func (OrderStatus) Type() protoreflect.EnumType {
-	return &file_service_proto_enumTypes[0]
+	return &file_order_v1_service_proto_enumTypes[0]
 }
 
 func (x OrderStatus) Number() protoreflect.EnumNumber {
@@ -78,7 +78,7 @@ func (x OrderStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use OrderStatus.Descriptor instead.
 func (OrderStatus) EnumDescriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{0}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{0}
 }
 
 type CreateOrderRequest struct {
@@ -92,7 +92,7 @@ type CreateOrderRequest struct {
 
 func (x *CreateOrderRequest) Reset() {
 	*x = CreateOrderRequest{}
-	mi := &file_service_proto_msgTypes[0]
+	mi := &file_order_v1_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -104,7 +104,7 @@ func (x *CreateOrderRequest) String() string {
 func (*CreateOrderRequest) ProtoMessage() {}
 
 func (x *CreateOrderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[0]
+	mi := &file_order_v1_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -117,7 +117,7 @@ func (x *CreateOrderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOrderRequest.ProtoReflect.Descriptor instead.
 func (*CreateOrderRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{0}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CreateOrderRequest) GetCustomerId() string {
@@ -150,7 +150,7 @@ type CreateOrderResponse struct {
 
 func (x *CreateOrderResponse) Reset() {
 	*x = CreateOrderResponse{}
-	mi := &file_service_proto_msgTypes[1]
+	mi := &file_order_v1_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -162,7 +162,7 @@ func (x *CreateOrderResponse) String() string {
 func (*CreateOrderResponse) ProtoMessage() {}
 
 func (x *CreateOrderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[1]
+	mi := &file_order_v1_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -175,7 +175,7 @@ func (x *CreateOrderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOrderResponse.ProtoReflect.Descriptor instead.
 func (*CreateOrderResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{1}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateOrderResponse) GetOrderId() string {
@@ -194,7 +194,7 @@ type CancelOrderByCustomerRequest struct {
 
 func (x *CancelOrderByCustomerRequest) Reset() {
 	*x = CancelOrderByCustomerRequest{}
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_order_v1_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -206,7 +206,7 @@ func (x *CancelOrderByCustomerRequest) String() string {
 func (*CancelOrderByCustomerRequest) ProtoMessage() {}
 
 func (x *CancelOrderByCustomerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_order_v1_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -219,7 +219,7 @@ func (x *CancelOrderByCustomerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelOrderByCustomerRequest.ProtoReflect.Descriptor instead.
 func (*CancelOrderByCustomerRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{2}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CancelOrderByCustomerRequest) GetOrderId() string {
@@ -238,7 +238,7 @@ type CompleteDeliveryRequest struct {
 
 func (x *CompleteDeliveryRequest) Reset() {
 	*x = CompleteDeliveryRequest{}
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_order_v1_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -250,7 +250,7 @@ func (x *CompleteDeliveryRequest) String() string {
 func (*CompleteDeliveryRequest) ProtoMessage() {}
 
 func (x *CompleteDeliveryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_order_v1_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -263,7 +263,7 @@ func (x *CompleteDeliveryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteDeliveryRequest.ProtoReflect.Descriptor instead.
 func (*CompleteDeliveryRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{3}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CompleteDeliveryRequest) GetOrderId() string {
@@ -282,7 +282,7 @@ type GetOrdersByCustomerRequest struct {
 
 func (x *GetOrdersByCustomerRequest) Reset() {
 	*x = GetOrdersByCustomerRequest{}
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_order_v1_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -294,7 +294,7 @@ func (x *GetOrdersByCustomerRequest) String() string {
 func (*GetOrdersByCustomerRequest) ProtoMessage() {}
 
 func (x *GetOrdersByCustomerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_order_v1_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -307,7 +307,7 @@ func (x *GetOrdersByCustomerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOrdersByCustomerRequest.ProtoReflect.Descriptor instead.
 func (*GetOrdersByCustomerRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{4}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetOrdersByCustomerRequest) GetCustomerId() string {
@@ -326,7 +326,7 @@ type GetOrdersByCustomerResponse struct {
 
 func (x *GetOrdersByCustomerResponse) Reset() {
 	*x = GetOrdersByCustomerResponse{}
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_order_v1_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -338,7 +338,7 @@ func (x *GetOrdersByCustomerResponse) String() string {
 func (*GetOrdersByCustomerResponse) ProtoMessage() {}
 
 func (x *GetOrdersByCustomerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_order_v1_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -351,7 +351,7 @@ func (x *GetOrdersByCustomerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOrdersByCustomerResponse.ProtoReflect.Descriptor instead.
 func (*GetOrdersByCustomerResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{5}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetOrdersByCustomerResponse) GetOrders() []*Order {
@@ -370,7 +370,7 @@ type GetCurrentOrdersByCourierRequest struct {
 
 func (x *GetCurrentOrdersByCourierRequest) Reset() {
 	*x = GetCurrentOrdersByCourierRequest{}
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_order_v1_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -382,7 +382,7 @@ func (x *GetCurrentOrdersByCourierRequest) String() string {
 func (*GetCurrentOrdersByCourierRequest) ProtoMessage() {}
 
 func (x *GetCurrentOrdersByCourierRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_order_v1_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -395,7 +395,7 @@ func (x *GetCurrentOrdersByCourierRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCurrentOrdersByCourierRequest.ProtoReflect.Descriptor instead.
 func (*GetCurrentOrdersByCourierRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{6}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetCurrentOrdersByCourierRequest) GetCourierId() string {
@@ -414,7 +414,7 @@ type GetCurrentOrdersByCourierResponse struct {
 
 func (x *GetCurrentOrdersByCourierResponse) Reset() {
 	*x = GetCurrentOrdersByCourierResponse{}
-	mi := &file_service_proto_msgTypes[7]
+	mi := &file_order_v1_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -426,7 +426,7 @@ func (x *GetCurrentOrdersByCourierResponse) String() string {
 func (*GetCurrentOrdersByCourierResponse) ProtoMessage() {}
 
 func (x *GetCurrentOrdersByCourierResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[7]
+	mi := &file_order_v1_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -439,7 +439,7 @@ func (x *GetCurrentOrdersByCourierResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GetCurrentOrdersByCourierResponse.ProtoReflect.Descriptor instead.
 func (*GetCurrentOrdersByCourierResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{7}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetCurrentOrdersByCourierResponse) GetOrders() []*Order {
@@ -464,7 +464,7 @@ type Order struct {
 
 func (x *Order) Reset() {
 	*x = Order{}
-	mi := &file_service_proto_msgTypes[8]
+	mi := &file_order_v1_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -476,7 +476,7 @@ func (x *Order) String() string {
 func (*Order) ProtoMessage() {}
 
 func (x *Order) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[8]
+	mi := &file_order_v1_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -489,7 +489,7 @@ func (x *Order) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Order.ProtoReflect.Descriptor instead.
 func (*Order) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{8}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Order) GetOrderId() string {
@@ -552,7 +552,7 @@ type OrderItem struct {
 
 func (x *OrderItem) Reset() {
 	*x = OrderItem{}
-	mi := &file_service_proto_msgTypes[9]
+	mi := &file_order_v1_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -564,7 +564,7 @@ func (x *OrderItem) String() string {
 func (*OrderItem) ProtoMessage() {}
 
 func (x *OrderItem) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[9]
+	mi := &file_order_v1_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -577,7 +577,7 @@ func (x *OrderItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OrderItem.ProtoReflect.Descriptor instead.
 func (*OrderItem) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{9}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *OrderItem) GetProductId() string {
@@ -612,7 +612,7 @@ type Delivery struct {
 
 func (x *Delivery) Reset() {
 	*x = Delivery{}
-	mi := &file_service_proto_msgTypes[10]
+	mi := &file_order_v1_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -624,7 +624,7 @@ func (x *Delivery) String() string {
 func (*Delivery) ProtoMessage() {}
 
 func (x *Delivery) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[10]
+	mi := &file_order_v1_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -637,7 +637,7 @@ func (x *Delivery) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Delivery.ProtoReflect.Descriptor instead.
 func (*Delivery) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{10}
+	return file_order_v1_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Delivery) GetCourierId() string {
@@ -661,11 +661,11 @@ func (x *Delivery) GetArrived() *timestamppb.Timestamp {
 	return nil
 }
 
-var File_service_proto protoreflect.FileDescriptor
+var File_order_v1_service_proto protoreflect.FileDescriptor
 
-const file_service_proto_rawDesc = "" +
+const file_order_v1_service_proto_rawDesc = "" +
 	"\n" +
-	"\rservice.proto\x12\border.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"z\n" +
+	"\x16order/v1/service.proto\x12\border.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"z\n" +
 	"\x12CreateOrderRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
 	"customerId\x12\x18\n" +
@@ -722,23 +722,23 @@ const file_service_proto_rawDesc = "" +
 	"\x15CancelOrderByCustomer\x12&.order.v1.CancelOrderByCustomerRequest\x1a\x16.google.protobuf.Empty\x12M\n" +
 	"\x10CompleteDelivery\x12!.order.v1.CompleteDeliveryRequest\x1a\x16.google.protobuf.Empty\x12b\n" +
 	"\x13GetOrdersByCustomer\x12$.order.v1.GetOrdersByCustomerRequest\x1a%.order.v1.GetOrdersByCustomerResponse\x12t\n" +
-	"\x19GetCurrentOrdersByCourier\x12*.order.v1.GetCurrentOrdersByCourierRequest\x1a+.order.v1.GetCurrentOrdersByCourierResponseB\x15Z\x13cli/gen/order;orderb\x06proto3"
+	"\x19GetCurrentOrdersByCourier\x12*.order.v1.GetCurrentOrdersByCourierRequest\x1a+.order.v1.GetCurrentOrdersByCourierResponseBLZJgithub.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/order/v1;order_v1b\x06proto3"
 
 var (
-	file_service_proto_rawDescOnce sync.Once
-	file_service_proto_rawDescData []byte
+	file_order_v1_service_proto_rawDescOnce sync.Once
+	file_order_v1_service_proto_rawDescData []byte
 )
 
-func file_service_proto_rawDescGZIP() []byte {
-	file_service_proto_rawDescOnce.Do(func() {
-		file_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)))
+func file_order_v1_service_proto_rawDescGZIP() []byte {
+	file_order_v1_service_proto_rawDescOnce.Do(func() {
+		file_order_v1_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_order_v1_service_proto_rawDesc), len(file_order_v1_service_proto_rawDesc)))
 	})
-	return file_service_proto_rawDescData
+	return file_order_v1_service_proto_rawDescData
 }
 
-var file_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
-var file_service_proto_goTypes = []any{
+var file_order_v1_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_order_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_order_v1_service_proto_goTypes = []any{
 	(OrderStatus)(0),                          // 0: order.v1.OrderStatus
 	(*CreateOrderRequest)(nil),                // 1: order.v1.CreateOrderRequest
 	(*CreateOrderResponse)(nil),               // 2: order.v1.CreateOrderResponse
@@ -754,7 +754,7 @@ var file_service_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),             // 12: google.protobuf.Timestamp
 	(*emptypb.Empty)(nil),                     // 13: google.protobuf.Empty
 }
-var file_service_proto_depIdxs = []int32{
+var file_order_v1_service_proto_depIdxs = []int32{
 	10, // 0: order.v1.CreateOrderRequest.items:type_name -> order.v1.OrderItem
 	9,  // 1: order.v1.GetOrdersByCustomerResponse.orders:type_name -> order.v1.Order
 	9,  // 2: order.v1.GetCurrentOrdersByCourierResponse.orders:type_name -> order.v1.Order
@@ -780,28 +780,28 @@ var file_service_proto_depIdxs = []int32{
 	0,  // [0:8] is the sub-list for field type_name
 }
 
-func init() { file_service_proto_init() }
-func file_service_proto_init() {
-	if File_service_proto != nil {
+func init() { file_order_v1_service_proto_init() }
+func file_order_v1_service_proto_init() {
+	if File_order_v1_service_proto != nil {
 		return
 	}
-	file_service_proto_msgTypes[10].OneofWrappers = []any{}
+	file_order_v1_service_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_order_v1_service_proto_rawDesc), len(file_order_v1_service_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_service_proto_goTypes,
-		DependencyIndexes: file_service_proto_depIdxs,
-		EnumInfos:         file_service_proto_enumTypes,
-		MessageInfos:      file_service_proto_msgTypes,
+		GoTypes:           file_order_v1_service_proto_goTypes,
+		DependencyIndexes: file_order_v1_service_proto_depIdxs,
+		EnumInfos:         file_order_v1_service_proto_enumTypes,
+		MessageInfos:      file_order_v1_service_proto_msgTypes,
 	}.Build()
-	File_service_proto = out.File
-	file_service_proto_goTypes = nil
-	file_service_proto_depIdxs = nil
+	File_order_v1_service_proto = out.File
+	file_order_v1_service_proto_goTypes = nil
+	file_order_v1_service_proto_depIdxs = nil
 }
