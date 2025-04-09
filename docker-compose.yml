@@ -221,6 +221,26 @@ services:
       - "50054:50051"
     restart: always
 
+  api_gateway_service:
+    container_name: "clean_app_api_gateway_service"
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    volumes:
+      - ./api-gateway:/api-gateway
+    depends_on:
+      - courier_service
+      - customer_service
+      - order_service
+      - warehouse_service
+    env_file:
+      - ./api-gateway/.env
+    environment:
+      - GIN_MODE=debug
+    ports:
+      - "8082:8080"
+    restart: always
+
 
 volumes:
   postgres_data_order:
