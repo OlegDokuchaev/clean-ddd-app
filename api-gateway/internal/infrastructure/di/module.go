@@ -29,18 +29,22 @@ import (
 var ClientsModule = fx.Options(
 	fx.Provide(
 		// Courier Client
+		courierClient.NewConfig,
 		courierClient.NewGRPCClient,
 		courierClient.NewClient,
 
 		// Order Client
+		orderClient.NewConfig,
 		orderClient.NewGRPCClient,
 		orderClient.NewClient,
 
 		// Customer Client
+		customerClient.NewConfig,
 		customerClient.NewGRPCClient,
 		customerClient.NewClient,
 
 		// Warehouse Client
+		warehouseClient.NewConfig,
 		warehouseClient.NewGRPCClient,
 		warehouseClient.NewClient,
 	),
