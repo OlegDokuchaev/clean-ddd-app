@@ -14,16 +14,19 @@ var customerErrorMap = []struct {
 	target error
 	code   codes.Code
 }{
-	{customerDomain.ErrInvalidCustomerName, codes.FailedPrecondition},
-	{customerDomain.ErrInvalidCustomerPhone, codes.FailedPrecondition},
-	{customerDomain.ErrInvalidCustomerPassword, codes.FailedPrecondition},
-	{customerRepository.ErrCustomerPhoneAlreadyExists, codes.FailedPrecondition},
-	{auth.ErrInvalidSigningMethod, codes.FailedPrecondition},
-	{auth.ErrInvalidToken, codes.FailedPrecondition},
-	{auth.ErrTokenExpired, codes.FailedPrecondition},
+	// InvalidArgument
+	{customerDomain.ErrInvalidCustomerName, codes.InvalidArgument},
+	{customerDomain.ErrInvalidCustomerPhone, codes.InvalidArgument},
+	{customerDomain.ErrInvalidCustomerPassword, codes.InvalidArgument},
+	{customerRepository.ErrCustomerPhoneAlreadyExists, codes.InvalidArgument},
+	{auth.ErrInvalidSigningMethod, codes.InvalidArgument},
+	{auth.ErrInvalidToken, codes.InvalidArgument},
+	{auth.ErrTokenExpired, codes.InvalidArgument},
 
+	// NotFound
 	{customerRepository.ErrCustomerNotFound, codes.NotFound},
 
+	// AlreadyExists
 	{customerRepository.ErrCustomerAlreadyExists, codes.AlreadyExists},
 }
 
