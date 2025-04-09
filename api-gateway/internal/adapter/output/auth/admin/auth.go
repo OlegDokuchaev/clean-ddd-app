@@ -8,7 +8,7 @@ type AuthImpl struct {
 	config *Config
 }
 
-func NewAuth(config *Config) *AuthImpl {
+func NewAuth(config *Config) admin.Auth {
 	return &AuthImpl{config: config}
 }
 
