@@ -23,6 +23,7 @@ func toItemResponse(item *itemDomain.Item) *warehousev1.Item {
 		ItemId:  item.ID.String(),
 		Count:   int32(item.Count),
 		Product: toProductResponse(item.Product),
+		Version: item.Version.String(),
 	}
 }
 
