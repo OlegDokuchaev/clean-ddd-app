@@ -33,7 +33,7 @@ func NewHandler(warehouseUseCase warehouseUseCase.UseCase) *Handler {
 // @Failure 404 {object} response.ErrorResponseDetail "Item not found"
 // @Failure 422 {object} response.ErrorResponseDetail "Invalid item data"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
-// @Security AccessToken
+// @Security AdminAccessToken
 // @Router /items/increase [patch]
 func (h *Handler) IncreaseQuantity(c *gin.Context) {
 	var req request.ReserveItemsRequest
@@ -71,7 +71,7 @@ func (h *Handler) IncreaseQuantity(c *gin.Context) {
 // @Failure 404 {object} response.ErrorResponseDetail "Item not found"
 // @Failure 422 {object} response.ErrorResponseDetail "Invalid item data or insufficient quantity"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
-// @Security AccessToken
+// @Security AdminAccessToken
 // @Router /items/decrease [patch]
 func (h *Handler) DecreaseQuantity(c *gin.Context) {
 	var req request.ReleaseItemsRequest
@@ -109,7 +109,7 @@ func (h *Handler) DecreaseQuantity(c *gin.Context) {
 // @Failure 409 {object} response.ErrorResponseDetail "Product already exists"
 // @Failure 422 {object} response.ErrorResponseDetail "Invalid product data"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
-// @Security AccessToken
+// @Security AdminAccessToken
 // @Router /products [post]
 func (h *Handler) CreateProduct(c *gin.Context) {
 	var req request.CreateProductRequest
