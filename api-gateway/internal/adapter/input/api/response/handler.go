@@ -31,7 +31,7 @@ func HandleError(c *gin.Context, err error) {
 		respErr = ErrInternal
 	}
 
-	AbortWithError(c, ErrInternal)
+	AbortWithError(c, respErr)
 }
 
 func AbortWithError(c *gin.Context, err *ErrorResponse) {
