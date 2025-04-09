@@ -51,6 +51,7 @@ func LoggingInterceptor(log logger.Logger) grpc.UnaryServerInterceptor {
 		extra := map[string]any{
 			"status_code": statusCode.String(),
 			"duration_ms": duration.Milliseconds(),
+			"response":    resp,
 		}
 		if err != nil {
 			extra["error"] = err.Error()
