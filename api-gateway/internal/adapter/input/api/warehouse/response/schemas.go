@@ -1,4 +1,4 @@
-package response
+package warehouse_response
 
 import (
 	"time"

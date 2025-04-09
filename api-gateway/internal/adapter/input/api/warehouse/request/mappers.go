@@ -1,4 +1,4 @@
-package request
+package warehouse_request
 
 import (
 	warehouseDto "api-gateway/internal/domain/dtos/warehouse"

@@ -3,8 +3,8 @@ package warehouse
 import (
 	commonRequest "api-gateway/internal/adapter/input/api/request"
 	commonResponse "api-gateway/internal/adapter/input/api/response"
-	"api-gateway/internal/adapter/input/api/warehouse/request"
-	"api-gateway/internal/adapter/input/api/warehouse/response"
+	request "api-gateway/internal/adapter/input/api/warehouse/request"
+	response "api-gateway/internal/adapter/input/api/warehouse/response"
 	warehouseUseCase "api-gateway/internal/domain/usecases/warehouse"
 	"net/http"
 
@@ -26,7 +26,7 @@ func NewHandler(warehouseUseCase warehouseUseCase.UseCase) *Handler {
 // @Tags items
 // @Accept json
 // @Produce json
-// @Param request body request.ReserveItemsRequest true "Items to increase quantity"
+// @Param request body warehouse_request.ReserveItemsRequest true "Items to increase quantity"
 // @Success 200 "" "Quantity increased successfully"
 // @Failure 400 {object} response.ErrorResponseDetail "Invalid request format"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid access token"
@@ -64,7 +64,7 @@ func (h *Handler) IncreaseQuantity(c *gin.Context) {
 // @Tags items
 // @Accept json
 // @Produce json
-// @Param request body request.ReleaseItemsRequest true "Items to decrease quantity"
+// @Param request body warehouse_request.ReleaseItemsRequest true "Items to decrease quantity"
 // @Success 200 "" "Quantity decreased successfully"
 // @Failure 400 {object} response.ErrorResponseDetail "Invalid request format"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid access token"
@@ -102,8 +102,8 @@ func (h *Handler) DecreaseQuantity(c *gin.Context) {
 // @Tags products
 // @Accept json
 // @Produce json
-// @Param request body request.CreateProductRequest true "Product details"
-// @Success 201 {object} response.CreateProductResponse "Product created successfully"
+// @Param request body warehouse_request.CreateProductRequest true "Product details"
+// @Success 201 {object} warehouse_response.CreateProductResponse "Product created successfully"
 // @Failure 400 {object} response.ErrorResponseDetail "Invalid request format"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid access token"
 // @Failure 409 {object} response.ErrorResponseDetail "Product already exists"
@@ -142,7 +142,7 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 // @Tags items
 // @Accept json
 // @Produce json
-// @Success 200 {object} response.ItemsResponse "List of items"
+// @Success 200 {object} warehouse_response.ItemsResponse "List of items"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /items [get]
 func (h *Handler) GetAllItems(c *gin.Context) {

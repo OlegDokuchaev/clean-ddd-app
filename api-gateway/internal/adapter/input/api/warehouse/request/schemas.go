@@ -1,4 +1,4 @@
-package request
+package warehouse_request
 
 import (
 	"github.com/google/uuid"
