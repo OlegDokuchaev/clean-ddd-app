@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package customer.v1;
 
-option go_package = "cli/gen/customer;customer";
+option go_package = "github.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/customer/v1;customer_v1";
 
 //
 // CustomerAuthService provides operations for customer authentication.

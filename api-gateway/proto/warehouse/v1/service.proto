@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package warehouse.v1;
 
-option go_package = "cli/gen/warehouse;warehouse";
+option go_package = "github.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/warehouse/v1;warehouse_v1";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";

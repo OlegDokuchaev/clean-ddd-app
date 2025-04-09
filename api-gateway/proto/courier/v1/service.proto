@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package courier.v1;
 
-option go_package = "github.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/v1;v1";
+option go_package = "github.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/courier/v1;courier_v1";
 
 //
 // CourierAuthService provides operations for courier authentication.
