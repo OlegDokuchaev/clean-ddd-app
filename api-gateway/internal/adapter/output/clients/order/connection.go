@@ -10,7 +10,7 @@ import (
 )
 
 func newConnection(config *Config) (*grpc.ClientConn, error) {
-	timeout := time.Duration(config.Timeout) * time.Second
+	timeout := time.Duration(config.TimeoutSeconds) * time.Second
 	target := "passthrough:///" + config.Address
 
 	conn, err := grpc.NewClient(
