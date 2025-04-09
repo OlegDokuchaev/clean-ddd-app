@@ -13,12 +13,15 @@ var orderErrorMap = []struct {
 	target error
 	code   codes.Code
 }{
-	{orderDomain.ErrInvalidItems, codes.FailedPrecondition},
-	{orderDomain.ErrInvalidAddress, codes.FailedPrecondition},
-	{orderDomain.ErrUnsupportedStatusTransition, codes.FailedPrecondition},
+	// InvalidArgument
+	{orderDomain.ErrInvalidItems, codes.InvalidArgument},
+	{orderDomain.ErrInvalidAddress, codes.InvalidArgument},
+	{orderDomain.ErrUnsupportedStatusTransition, codes.InvalidArgument},
 
+	// NotFound
 	{orderRepository.ErrOrderNotFound, codes.NotFound},
 
+	// AlreadyExists
 	{orderRepository.ErrOrderAlreadyExists, codes.AlreadyExists},
 }
 
