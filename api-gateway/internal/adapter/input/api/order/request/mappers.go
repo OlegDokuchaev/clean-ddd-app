@@ -1,4 +1,4 @@
-package request
+package order_request
 
 import orderDto "api-gateway/internal/domain/dtos/order"
 

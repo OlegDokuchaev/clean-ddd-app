@@ -1,4 +1,4 @@
-package request
+package order_request
 
 import (
 	"github.com/google/uuid"

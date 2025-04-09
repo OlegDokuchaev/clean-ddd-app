@@ -1,8 +1,8 @@
 package order
 
 import (
-	"api-gateway/internal/adapter/input/api/order/request"
-	"api-gateway/internal/adapter/input/api/order/response"
+	request "api-gateway/internal/adapter/input/api/order/request"
+	response "api-gateway/internal/adapter/input/api/order/response"
 	commonRequest "api-gateway/internal/adapter/input/api/request"
 	commonResponse "api-gateway/internal/adapter/input/api/response"
 	orderUseCase "api-gateway/internal/domain/usecases/order"
@@ -26,7 +26,7 @@ func NewHandler(orderUseCase orderUseCase.UseCase) *Handler {
 // @Tags orders
 // @Accept json
 // @Produce json
-// @Param request body request.CreateRequest true "Order details"
+// @Param request body order_request.CreateRequest true "Order details"
 // @Success 201 "" "Created with location header"
 // @Failure 400 {object} response.ErrorResponseDetail "Invalid request format"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid bearer token"
@@ -72,7 +72,7 @@ func (h *Handler) Create(c *gin.Context) {
 // @Failure 422 {object} response.ErrorResponseDetail "Invalid order ID format"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Security BearerAuth
-// @Router /orders/{id} [delete]
+// @Router /orders/{id}/cancel [patch]
 func (h *Handler) CancelOrder(c *gin.Context) {
 	orderID, err := commonRequest.ParseParamUUID(c, "id")
 	if err != nil {
@@ -102,7 +102,6 @@ func (h *Handler) CancelOrder(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Order ID"
-// @Param request body request.UpdateStatusRequest true "Status update"
 // @Success 200 "" "OK"
 // @Failure 400 {object} response.ErrorResponseDetail "Invalid request"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid bearer token"
@@ -139,7 +138,7 @@ func (h *Handler) CompleteDelivery(c *gin.Context) {
 // @Tags orders
 // @Accept json
 // @Produce json
-// @Success 200 {object} response.OrdersResponse "List of orders"
+// @Success 200 {object} order_response.OrdersResponse "List of orders"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid bearer token"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Security BearerAuth
@@ -166,7 +165,7 @@ func (h *Handler) GetCustomerOrders(c *gin.Context) {
 // @Tags couriers
 // @Accept json
 // @Produce json
-// @Success 200 {object} response.OrdersResponse "List of orders"
+// @Success 200 {object} order_response.OrdersResponse "List of orders"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid bearer token"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Security BearerAuth
