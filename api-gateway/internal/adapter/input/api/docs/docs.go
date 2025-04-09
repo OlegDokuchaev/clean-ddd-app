@@ -135,7 +135,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CourierBearerAuth": []
                     }
                 ],
                 "description": "Get all current orders for the authenticated courier",
@@ -320,7 +320,7 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "AccessToken": []
+                        "AdminAccessToken": []
                     }
                 ],
                 "description": "Decrease the quantity of items in the warehouse (admin only)",
@@ -386,7 +386,7 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "AccessToken": []
+                        "AdminAccessToken": []
                     }
                 ],
                 "description": "Increase the quantity of items in the warehouse (admin only)",
@@ -452,7 +452,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CustomerBearerAuth": []
                     }
                 ],
                 "description": "Get all orders for the authenticated customer",
@@ -490,7 +490,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CustomerBearerAuth": []
                     }
                 ],
                 "description": "Create a new order with items",
@@ -550,7 +550,7 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CustomerBearerAuth": []
                     }
                 ],
                 "description": "Cancel an order by its ID",
@@ -610,11 +610,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/orders/{id}/status": {
+        "/orders/{id}/complete": {
             "patch": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CourierBearerAuth": []
                     }
                 ],
                 "description": "Mark an order as delivered (completed)",
@@ -678,7 +678,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "AccessToken": []
+                        "AdminAccessToken": []
                     }
                 ],
                 "description": "Create a new product in the warehouse (admin only)",
@@ -1073,17 +1073,37 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "AdminAccessToken": {
+            "description": "Admin's access token.",
+            "type": "apiKey",
+            "name": "X-Access-Token",
+            "in": "header"
+        },
+        "CourierBearerAuth": {
+            "description": "Courier's JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "CustomerBearerAuth": {
+            "description": "Customer's JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Clean DDD App API Gateway",
+	Description:      "This is the API Gateway for the Clean DDD application.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

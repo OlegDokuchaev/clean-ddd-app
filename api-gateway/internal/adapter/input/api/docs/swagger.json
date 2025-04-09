@@ -1,8 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "This is the API Gateway for the Clean DDD application.",
+        "title": "Clean DDD App API Gateway",
+        "contact": {},
+        "version": "1.0"
     },
+    "basePath": "/",
     "paths": {
         "/couriers": {
             "post": {
@@ -124,7 +128,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CourierBearerAuth": []
                     }
                 ],
                 "description": "Get all current orders for the authenticated courier",
@@ -309,7 +313,7 @@
             "patch": {
                 "security": [
                     {
-                        "AccessToken": []
+                        "AdminAccessToken": []
                     }
                 ],
                 "description": "Decrease the quantity of items in the warehouse (admin only)",
@@ -375,7 +379,7 @@
             "patch": {
                 "security": [
                     {
-                        "AccessToken": []
+                        "AdminAccessToken": []
                     }
                 ],
                 "description": "Increase the quantity of items in the warehouse (admin only)",
@@ -441,7 +445,7 @@
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CustomerBearerAuth": []
                     }
                 ],
                 "description": "Get all orders for the authenticated customer",
@@ -479,7 +483,7 @@
             "post": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CustomerBearerAuth": []
                     }
                 ],
                 "description": "Create a new order with items",
@@ -539,7 +543,7 @@
             "patch": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CustomerBearerAuth": []
                     }
                 ],
                 "description": "Cancel an order by its ID",
@@ -599,11 +603,11 @@
                 }
             }
         },
-        "/orders/{id}/status": {
+        "/orders/{id}/complete": {
             "patch": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CourierBearerAuth": []
                     }
                 ],
                 "description": "Mark an order as delivered (completed)",
@@ -667,7 +671,7 @@
             "post": {
                 "security": [
                     {
-                        "AccessToken": []
+                        "AdminAccessToken": []
                     }
                 ],
                 "description": "Create a new product in the warehouse (admin only)",
@@ -1061,6 +1065,26 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "AdminAccessToken": {
+            "description": "Admin's access token.",
+            "type": "apiKey",
+            "name": "X-Access-Token",
+            "in": "header"
+        },
+        "CourierBearerAuth": {
+            "description": "Courier's JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "CustomerBearerAuth": {
+            "description": "Customer's JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

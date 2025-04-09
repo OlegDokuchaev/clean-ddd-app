@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   courier_request.LoginRequest:
     properties:
@@ -217,6 +218,9 @@ definitions:
     type: object
 info:
   contact: {}
+  description: This is the API Gateway for the Clean DDD application.
+  title: Clean DDD App API Gateway
+  version: "1.0"
 paths:
   /couriers:
     post:
@@ -315,7 +319,7 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       security:
-      - BearerAuth: []
+      - CourierBearerAuth: []
       summary: Get courier orders
       tags:
       - couriers
@@ -452,7 +456,7 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       security:
-      - AccessToken: []
+      - AdminAccessToken: []
       summary: Decrease items quantity
       tags:
       - items
@@ -494,7 +498,7 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       security:
-      - AccessToken: []
+      - AdminAccessToken: []
       summary: Increase items quantity
       tags:
       - items
@@ -519,7 +523,7 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       security:
-      - BearerAuth: []
+      - CustomerBearerAuth: []
       summary: Get customer orders
       tags:
       - orders
@@ -556,7 +560,7 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       security:
-      - BearerAuth: []
+      - CustomerBearerAuth: []
       summary: Create a new order
       tags:
       - orders
@@ -597,11 +601,11 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       security:
-      - BearerAuth: []
+      - CustomerBearerAuth: []
       summary: Cancel an order
       tags:
       - orders
-  /orders/{id}/status:
+  /orders/{id}/complete:
     patch:
       consumes:
       - application/json
@@ -638,7 +642,7 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       security:
-      - BearerAuth: []
+      - CourierBearerAuth: []
       summary: Update order status to delivered
       tags:
       - orders
@@ -682,8 +686,24 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       security:
-      - AccessToken: []
+      - AdminAccessToken: []
       summary: Create a new product
       tags:
       - products
+securityDefinitions:
+  AdminAccessToken:
+    description: Admin's access token.
+    in: header
+    name: X-Access-Token
+    type: apiKey
+  CourierBearerAuth:
+    description: Courier's JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+  CustomerBearerAuth:
+    description: Customer's JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
