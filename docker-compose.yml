@@ -229,10 +229,16 @@ services:
     volumes:
       - ./api-gateway:/api-gateway
     depends_on:
-      - courier_service
-      - customer_service
-      - order_service
-      - warehouse_service
+      courier_service:
+        condition: service_started
+      customer_service:
+        condition: service_started
+      order_service:
+        condition: service_started
+      warehouse_service:
+        condition: service_started
+      logstash:
+          condition: service_started
     env_file:
       - ./api-gateway/.env
     environment:
