@@ -32,7 +32,7 @@ func NewHandler(courierUseCase courierUseCase.UseCase) *Handler {
 // @Failure 409 {object} response.ErrorResponseDetail "Courier with this phone already exists"
 // @Failure 422 {object} response.ErrorResponseDetail "Invalid data format"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
-// @Router /couriers [post]
+// @Router /couriers/register [post]
 func (h *Handler) Register(c *gin.Context) {
 	var req request.RegisterRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
