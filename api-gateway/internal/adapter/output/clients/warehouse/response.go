@@ -10,9 +10,10 @@ func toItems(protoItems []*warehouseGRPC.Item) ([]*warehouseDto.ItemDto, error) 
 	items := make([]*warehouseDto.ItemDto, 0, len(protoItems))
 	for _, protoItem := range protoItems {
 		item, err := toItem(protoItem)
-		if err == nil {
-			items = append(items, item)
+		if err != nil {
+			return nil, err
 		}
+		items = append(items, item)
 	}
 	return items, nil
 }
