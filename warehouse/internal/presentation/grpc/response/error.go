@@ -17,12 +17,12 @@ var domainErrorMap = []struct {
 	target error
 	code   codes.Code
 }{
-	// FailedPrecondition
-	{productDomain.ErrInvalidProductPrice, codes.FailedPrecondition},
-	{productDomain.ErrInvalidProductName, codes.FailedPrecondition},
-	{itemDomain.ErrInvalidItemCount, codes.FailedPrecondition},
-	{outboxDomain.ErrInvalidOutboxPayload, codes.FailedPrecondition},
-	{outboxPublisher.ErrInvalidOutboxMessage, codes.FailedPrecondition},
+	// InvalidArgument
+	{productDomain.ErrInvalidProductPrice, codes.InvalidArgument},
+	{productDomain.ErrInvalidProductName, codes.InvalidArgument},
+	{itemDomain.ErrInvalidItemCount, codes.InvalidArgument},
+	{outboxDomain.ErrInvalidOutboxPayload, codes.InvalidArgument},
+	{outboxPublisher.ErrInvalidOutboxMessage, codes.InvalidArgument},
 
 	// NotFound
 	{productRepository.ErrProductNotFound, codes.NotFound},
