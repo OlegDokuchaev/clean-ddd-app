@@ -15,64 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/couriers": {
-            "post": {
-                "description": "Register a new courier with name, password and phone",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "couriers"
-                ],
-                "summary": "Register new courier",
-                "parameters": [
-                    {
-                        "description": "Courier registration data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/courier_request.RegisterRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Courier created successfully",
-                        "schema": {
-                            "$ref": "#/definitions/courier_response.RegisterResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request format",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponseDetail"
-                        }
-                    },
-                    "409": {
-                        "description": "Courier with this phone already exists",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponseDetail"
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid data format",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponseDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponseDetail"
-                        }
-                    }
-                }
-            }
-        },
         "/couriers/login": {
             "post": {
                 "description": "Authenticate a courier and get a JWT token",
@@ -171,9 +113,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/customers": {
+        "/couriers/register": {
             "post": {
-                "description": "Register a new customer with name, password and phone",
+                "description": "Register a new courier with name, password and phone",
                 "consumes": [
                     "application/json"
                 ],
@@ -181,25 +123,25 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "customers"
+                    "couriers"
                 ],
-                "summary": "Register new customer",
+                "summary": "Register new courier",
                 "parameters": [
                     {
-                        "description": "Customer registration data",
+                        "description": "Courier registration data",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/customer_request.RegisterRequest"
+                            "$ref": "#/definitions/courier_request.RegisterRequest"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Customer created successfully",
+                        "description": "Courier created successfully",
                         "schema": {
-                            "$ref": "#/definitions/customer_response.RegisterResponse"
+                            "$ref": "#/definitions/courier_response.RegisterResponse"
                         }
                     },
                     "400": {
@@ -209,7 +151,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Customer with this phone already exists",
+                        "description": "Courier with this phone already exists",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponseDetail"
                         }
@@ -274,6 +216,64 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Customer not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/register": {
+            "post": {
+                "description": "Register a new customer with name, password and phone",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Register new customer",
+                "parameters": [
+                    {
+                        "description": "Customer registration data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/customer_request.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Customer created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/customer_response.RegisterResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "409": {
+                        "description": "Customer with this phone already exists",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid data format",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponseDetail"
                         }

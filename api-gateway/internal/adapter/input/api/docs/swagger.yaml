@@ -222,44 +222,6 @@ info:
   title: Clean DDD App API Gateway
   version: "1.0"
 paths:
-  /couriers:
-    post:
-      consumes:
-      - application/json
-      description: Register a new courier with name, password and phone
-      parameters:
-      - description: Courier registration data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/courier_request.RegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Courier created successfully
-          schema:
-            $ref: '#/definitions/courier_response.RegisterResponse'
-        "400":
-          description: Invalid request format
-          schema:
-            $ref: '#/definitions/response.ErrorResponseDetail'
-        "409":
-          description: Courier with this phone already exists
-          schema:
-            $ref: '#/definitions/response.ErrorResponseDetail'
-        "422":
-          description: Invalid data format
-          schema:
-            $ref: '#/definitions/response.ErrorResponseDetail'
-        "500":
-          description: Server error
-          schema:
-            $ref: '#/definitions/response.ErrorResponseDetail'
-      summary: Register new courier
-      tags:
-      - couriers
   /couriers/login:
     post:
       consumes:
@@ -323,31 +285,31 @@ paths:
       summary: Get courier orders
       tags:
       - couriers
-  /customers:
+  /couriers/register:
     post:
       consumes:
       - application/json
-      description: Register a new customer with name, password and phone
+      description: Register a new courier with name, password and phone
       parameters:
-      - description: Customer registration data
+      - description: Courier registration data
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/customer_request.RegisterRequest'
+          $ref: '#/definitions/courier_request.RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
-          description: Customer created successfully
+          description: Courier created successfully
           schema:
-            $ref: '#/definitions/customer_response.RegisterResponse'
+            $ref: '#/definitions/courier_response.RegisterResponse'
         "400":
           description: Invalid request format
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
         "409":
-          description: Customer with this phone already exists
+          description: Courier with this phone already exists
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
         "422":
@@ -358,9 +320,9 @@ paths:
           description: Server error
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
-      summary: Register new customer
+      summary: Register new courier
       tags:
-      - customers
+      - couriers
   /customers/login:
     post:
       consumes:
@@ -397,6 +359,44 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       summary: Customer login
+      tags:
+      - customers
+  /customers/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new customer with name, password and phone
+      parameters:
+      - description: Customer registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/customer_request.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Customer created successfully
+          schema:
+            $ref: '#/definitions/customer_response.RegisterResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "409":
+          description: Customer with this phone already exists
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid data format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      summary: Register new customer
       tags:
       - customers
   /items:
