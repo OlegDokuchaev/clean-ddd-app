@@ -15,17 +15,20 @@ var parseErrorMap = []struct {
 	target error
 	code   codes.Code
 }{
-	{courierDomain.ErrInvalidCourierName, codes.FailedPrecondition},
-	{courierDomain.ErrInvalidCourierPhone, codes.FailedPrecondition},
-	{courierDomain.ErrInvalidCourierPassword, codes.FailedPrecondition},
-	{courierRepository.ErrCourierPhoneAlreadyExists, codes.FailedPrecondition},
-	{courierApplication.ErrAvailableCourierNotFound, codes.FailedPrecondition},
-	{auth.ErrInvalidSigningMethod, codes.FailedPrecondition},
-	{auth.ErrInvalidToken, codes.FailedPrecondition},
-	{auth.ErrTokenExpired, codes.FailedPrecondition},
+	// InvalidArgument
+	{courierDomain.ErrInvalidCourierName, codes.InvalidArgument},
+	{courierDomain.ErrInvalidCourierPhone, codes.InvalidArgument},
+	{courierDomain.ErrInvalidCourierPassword, codes.InvalidArgument},
+	{courierRepository.ErrCourierPhoneAlreadyExists, codes.InvalidArgument},
+	{courierApplication.ErrAvailableCourierNotFound, codes.InvalidArgument},
+	{auth.ErrInvalidSigningMethod, codes.InvalidArgument},
+	{auth.ErrInvalidToken, codes.InvalidArgument},
+	{auth.ErrTokenExpired, codes.InvalidArgument},
 
+	// NotFound
 	{courierRepository.ErrCourierNotFound, codes.NotFound},
 
+	// AlreadyExists
 	{courierRepository.ErrCourierAlreadyExists, codes.AlreadyExists},
 }
 
