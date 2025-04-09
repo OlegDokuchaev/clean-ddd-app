@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	Port string `envconfig:"API_PORT" required:"true"`
+	Port int `envconfig:"API_PORT" required:"true"`
 }
 
 func NewConfig() (*Config, error) {

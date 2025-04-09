@@ -17,6 +17,7 @@ import (
 	warehouseUseCase "api-gateway/internal/domain/usecases/warehouse"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -98,7 +99,7 @@ var ApiModule = fx.Options(
 
 func RunServer(lc fx.Lifecycle, router *gin.Engine, config *api.Config) {
 	srv := &http.Server{
-		Addr:    config.Port,
+		Addr:    fmt.Sprintf(":%d", config.Port),
 		Handler: router,
 	}
 
