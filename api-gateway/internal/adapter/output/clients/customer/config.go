@@ -6,8 +6,8 @@ import (
 )
 
 type Config struct {
-	Address string `envconfig:"CUSTOMER_ADDRESS" required:"true"`
-	Timeout int    `envconfig:"CUSTOMER_TIMEOUT" required:"true"`
+	Address        string `envconfig:"CUSTOMER_ADDRESS" required:"true"`
+	TimeoutSeconds int    `envconfig:"CUSTOMER_TIMEOUT_SECONDS" required:"true"`
 }
 
 func NewConfig() (*Config, error) {
