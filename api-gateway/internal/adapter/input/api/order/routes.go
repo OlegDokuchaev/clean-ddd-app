@@ -10,7 +10,7 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
 		orders.POST("", handler.Create)
 		orders.GET("", handler.GetCustomerOrders)
 		orders.PATCH("/:id/cancel", handler.CancelOrder)
-		orders.PATCH("/:id/status", handler.CompleteDelivery)
+		orders.PATCH("/:id/complete", handler.CompleteDelivery)
 	}
 
 	router.GET("/couriers/me/orders", handler.GetCourierOrders)
