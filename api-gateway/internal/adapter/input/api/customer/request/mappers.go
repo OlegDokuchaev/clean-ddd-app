@@ -1,4 +1,4 @@
-package request
+package customer_request
 
 import (
 	customerDto "api-gateway/internal/domain/dtos/customer"

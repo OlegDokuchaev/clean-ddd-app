@@ -1,4 +1,4 @@
-package response
+package customer_response
 
 import "github.com/google/uuid"
 
