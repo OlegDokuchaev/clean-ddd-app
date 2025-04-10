@@ -96,7 +96,7 @@ func (h *Handler) CancelOrder(c *gin.Context) {
 }
 
 // CompleteDelivery godoc
-// @Summary Update order status to delivered
+// @Summary Complete order
 // @Description Mark an order as delivered (completed)
 // @Tags orders
 // @Accept json
