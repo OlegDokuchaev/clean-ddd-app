@@ -36,7 +36,7 @@ func NewHandler(warehouseUseCase warehouseUseCase.UseCase) *Handler {
 // @Security AdminAccessToken
 // @Router /items/increase [patch]
 func (h *Handler) IncreaseQuantity(c *gin.Context) {
-	var req request.ReserveItemsRequest
+	var req request.ReleaseItemsRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -49,7 +49,7 @@ func (h *Handler) IncreaseQuantity(c *gin.Context) {
 	}
 
 	items := request.ToItemInfoDtoList(req.Items)
-	err = h.uc.ReserveItems(c, items, token)
+	err = h.uc.ReleaseItems(c, items, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -74,7 +74,7 @@ func (h *Handler) IncreaseQuantity(c *gin.Context) {
 // @Security AdminAccessToken
 // @Router /items/decrease [patch]
 func (h *Handler) DecreaseQuantity(c *gin.Context) {
-	var req request.ReleaseItemsRequest
+	var req request.ReserveItemsRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -87,7 +87,7 @@ func (h *Handler) DecreaseQuantity(c *gin.Context) {
 	}
 
 	items := request.ToItemInfoDtoList(req.Items)
-	err = h.uc.ReleaseItems(c, items, token)
+	err = h.uc.ReserveItems(c, items, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
