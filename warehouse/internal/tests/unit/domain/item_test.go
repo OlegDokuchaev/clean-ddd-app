@@ -1,16 +1,29 @@
 package domain
 
 import (
-	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	"testing"
 	itemDomain "warehouse/internal/domain/item"
 	productDomain "warehouse/internal/domain/product"
+
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 type ItemDomainTestSuite struct {
 	suite.Suite
+}
+
+func (i *ItemDomainTestSuite) createProduct(name string, price decimal.Decimal) *productDomain.Product {
+	product, _, err := productDomain.Create(name, price, "product.png")
+	require.NoError(i.T(), err)
+	return product
+}
+
+func (i *ItemDomainTestSuite) createItem(product *productDomain.Product, count int) *itemDomain.Item {
+	item, err := itemDomain.Create(product, count)
+	require.NoError(i.T(), err)
+	return item
 }
 
 func (i *ItemDomainTestSuite) TestCreate() {
@@ -23,9 +36,7 @@ func (i *ItemDomainTestSuite) TestCreate() {
 		{
 			name: "Success",
 			setup: func() *productDomain.Product {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				return product
+				return i.createProduct("test", decimal.NewFromInt(1))
 			},
 			count:       10,
 			expectedErr: nil,
@@ -33,9 +44,7 @@ func (i *ItemDomainTestSuite) TestCreate() {
 		{
 			name: "Success: Zero count",
 			setup: func() *productDomain.Product {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				return product
+				return i.createProduct("test", decimal.NewFromInt(1))
 			},
 			count:       0,
 			expectedErr: nil,
@@ -43,9 +52,7 @@ func (i *ItemDomainTestSuite) TestCreate() {
 		{
 			name: "Failure: Negative count",
 			setup: func() *productDomain.Product {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				return product
+				return i.createProduct("test", decimal.NewFromInt(1))
 			},
 			count:       -10,
 			expectedErr: itemDomain.ErrInvalidItemCount,
@@ -82,11 +89,7 @@ func (i *ItemDomainTestSuite) TestReserve() {
 		{
 			name: "Success",
 			setup: func() *itemDomain.Item {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				item, err := itemDomain.Create(product, 10)
-				require.NoError(i.T(), err)
-				return item
+				return i.createItem(i.createProduct("test", decimal.NewFromInt(1)), 10)
 			},
 			reserveCount:  1,
 			expectedCount: 9,
@@ -95,11 +98,7 @@ func (i *ItemDomainTestSuite) TestReserve() {
 		{
 			name: "Success: Zero item count",
 			setup: func() *itemDomain.Item {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				item, err := itemDomain.Create(product, 10)
-				require.NoError(i.T(), err)
-				return item
+				return i.createItem(i.createProduct("test", decimal.NewFromInt(1)), 10)
 			},
 			reserveCount:  10,
 			expectedCount: 0,
@@ -108,11 +107,7 @@ func (i *ItemDomainTestSuite) TestReserve() {
 		{
 			name: "Failure: Zero reserve count",
 			setup: func() *itemDomain.Item {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				item, err := itemDomain.Create(product, 10)
-				require.NoError(i.T(), err)
-				return item
+				return i.createItem(i.createProduct("test", decimal.NewFromInt(1)), 10)
 			},
 			reserveCount:  0,
 			expectedCount: 10,
@@ -121,11 +116,7 @@ func (i *ItemDomainTestSuite) TestReserve() {
 		{
 			name: "Failure: Negative reserve count",
 			setup: func() *itemDomain.Item {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				item, err := itemDomain.Create(product, 10)
-				require.NoError(i.T(), err)
-				return item
+				return i.createItem(i.createProduct("test", decimal.NewFromInt(1)), 10)
 			},
 			reserveCount:  -1,
 			expectedCount: 10,
@@ -134,11 +125,7 @@ func (i *ItemDomainTestSuite) TestReserve() {
 		{
 			name: "Failure: Negative item count",
 			setup: func() *itemDomain.Item {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				item, err := itemDomain.Create(product, 10)
-				require.NoError(i.T(), err)
-				return item
+				return i.createItem(i.createProduct("test", decimal.NewFromInt(1)), 10)
 			},
 			reserveCount:  100,
 			expectedCount: 10,
@@ -176,11 +163,7 @@ func (i *ItemDomainTestSuite) TestRelease() {
 		{
 			name: "Success",
 			setup: func() *itemDomain.Item {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				item, err := itemDomain.Create(product, 10)
-				require.NoError(i.T(), err)
-				return item
+				return i.createItem(i.createProduct("test", decimal.NewFromInt(1)), 10)
 			},
 			releaseCount:  1,
 			expectedCount: 11,
@@ -189,11 +172,7 @@ func (i *ItemDomainTestSuite) TestRelease() {
 		{
 			name: "Failure: Zero reserve count",
 			setup: func() *itemDomain.Item {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				item, err := itemDomain.Create(product, 10)
-				require.NoError(i.T(), err)
-				return item
+				return i.createItem(i.createProduct("test", decimal.NewFromInt(1)), 10)
 			},
 			releaseCount:  0,
 			expectedCount: 10,
@@ -202,11 +181,7 @@ func (i *ItemDomainTestSuite) TestRelease() {
 		{
 			name: "Failure: Negative reserve count",
 			setup: func() *itemDomain.Item {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(i.T(), err)
-				item, err := itemDomain.Create(product, 10)
-				require.NoError(i.T(), err)
-				return item
+				return i.createItem(i.createProduct("test", decimal.NewFromInt(1)), 10)
 			},
 			releaseCount:  -1,
 			expectedCount: 10,

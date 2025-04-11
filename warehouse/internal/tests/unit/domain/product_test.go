@@ -17,36 +17,42 @@ func (p *ProductDomainTestSuite) TestCreate() {
 	tests := []struct {
 		name        string
 		pName       string
+		path        string
 		price       decimal.Decimal
 		expectedErr error
 	}{
 		{
 			name:        "Success",
 			pName:       "test",
+			path:        "product.png",
 			price:       decimal.NewFromInt(1),
 			expectedErr: nil,
 		},
 		{
 			name:        "Failure: Empty name",
 			pName:       "",
+			path:        "product.png",
 			price:       decimal.NewFromInt(1),
 			expectedErr: productDomain.ErrInvalidProductName,
 		},
 		{
 			name:        "Failure: Name consists only of whitespaces",
 			pName:       "   ",
+			path:        "product.png",
 			price:       decimal.NewFromInt(1),
 			expectedErr: productDomain.ErrInvalidProductName,
 		},
 		{
 			name:        "Failure: Price is zero",
 			pName:       "test",
+			path:        "product.png",
 			price:       decimal.Zero,
 			expectedErr: productDomain.ErrInvalidProductPrice,
 		},
 		{
 			name:        "Failure: Price less then zero",
 			pName:       "test",
+			path:        "product.png",
 			price:       decimal.NewFromInt(-1),
 			expectedErr: productDomain.ErrInvalidProductPrice,
 		},
@@ -57,7 +63,7 @@ func (p *ProductDomainTestSuite) TestCreate() {
 		p.Run(tc.name, func() {
 			p.T().Parallel()
 
-			product, events, err := productDomain.Create(tc.pName, tc.price)
+			product, events, err := productDomain.Create(tc.pName, tc.price, tc.path)
 
 			if tc.expectedErr != nil {
 				require.Error(p.T(), err)

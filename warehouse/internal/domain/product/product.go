@@ -11,4 +11,5 @@ type Product struct {
 	Name    string
 	Price   decimal.Decimal
 	Created time.Time
+	Image   Image
 }

@@ -29,9 +29,13 @@ func (s *ItemUseCaseTestSuite) SetupTest() {
 	s.ctx = context.Background()
 }
 
-func (s *ItemUseCaseTestSuite) createTestItem(count int) *itemDomain.Item {
-	product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
+func (s *ItemUseCaseTestSuite) createTestProduct(name string, price decimal.Decimal) *productDomain.Product {
+	product, _, err := productDomain.Create(name, price, "product.png")
 	require.NoError(s.T(), err)
+	return product
+}
+
+func (s *ItemUseCaseTestSuite) createTestItem(product *productDomain.Product, count int) *itemDomain.Item {
 	item, err := itemDomain.Create(product, count)
 	require.NoError(s.T(), err)
 	return item
@@ -40,11 +44,8 @@ func (s *ItemUseCaseTestSuite) createTestItem(count int) *itemDomain.Item {
 func (s *ItemUseCaseTestSuite) createTestItems(counts ...int) []*itemDomain.Item {
 	items := make([]*itemDomain.Item, len(counts))
 	for i, count := range counts {
-		product, _, err := productDomain.Create(fmt.Sprintf("test-product-%d", i), decimal.NewFromInt(int64(10+i)))
-		require.NoError(s.T(), err)
-		item, err := itemDomain.Create(product, count)
-		require.NoError(s.T(), err)
-		items[i] = item
+		product := s.createTestProduct(fmt.Sprintf("test-product-%d", i), decimal.NewFromInt(int64(10+i)))
+		items[i] = s.createTestItem(product, count)
 	}
 	return items
 }
@@ -60,8 +61,7 @@ func (s *ItemUseCaseTestSuite) TestCreate() {
 			name: "Success",
 			dto:  itemApplication.CreateDto{ProductID: uuid.New(), Count: 10},
 			setup: func(uow *mocks.UoWMock) {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(s.T(), err)
+				product := s.createTestProduct("test", decimal.NewFromInt(1))
 				uow.ProductMock.On("GetByID", s.ctx, mock.Anything).Return(product, nil).Once()
 
 				uow.ItemMock.On("Create", s.ctx, mock.Anything).
@@ -82,8 +82,7 @@ func (s *ItemUseCaseTestSuite) TestCreate() {
 			name: "Failure: Create item error (negative count)",
 			dto:  itemApplication.CreateDto{ProductID: uuid.New(), Count: -1},
 			setup: func(uow *mocks.UoWMock) {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(s.T(), err)
+				product := s.createTestProduct("test", decimal.NewFromInt(1))
 				uow.ProductMock.On("GetByID", s.ctx, mock.Anything).Return(product, nil).Once()
 			},
 			expectedErr: itemDomain.ErrInvalidItemCount,
@@ -92,8 +91,7 @@ func (s *ItemUseCaseTestSuite) TestCreate() {
 			name: "Failure: Item repository create error",
 			dto:  itemApplication.CreateDto{ProductID: uuid.New(), Count: 10},
 			setup: func(uow *mocks.UoWMock) {
-				product, _, err := productDomain.Create("test", decimal.NewFromInt(1))
-				require.NoError(s.T(), err)
+				product := s.createTestProduct("test", decimal.NewFromInt(1))
 				uow.ProductMock.On("GetByID", s.ctx, mock.Anything).Return(product, nil).Once()
 
 				uow.ItemMock.On("Create", s.ctx, mock.Anything).
