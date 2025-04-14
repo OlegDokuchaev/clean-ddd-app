@@ -49,9 +49,14 @@ func (s *ItemRepositoryTestSuite) getProductRepo() productDomain.Repository {
 	return productRepository.New(s.testDB.DB)
 }
 
-func (s *ItemRepositoryTestSuite) createTestItem() *itemDomain.Item {
-	product, _, err := productDomain.Create("Test Product", decimal.NewFromInt(100))
+func (s *ItemRepositoryTestSuite) createTestProduct() *productDomain.Product {
+	product, _, err := productDomain.Create("Test Product", decimal.NewFromInt(100), "test.png")
 	require.NoError(s.T(), err)
+	return product
+}
+
+func (s *ItemRepositoryTestSuite) createTestItem() *itemDomain.Item {
+	product := s.createTestProduct()
 	item, err := itemDomain.Create(product, 10)
 	require.NoError(s.T(), err)
 	return item
