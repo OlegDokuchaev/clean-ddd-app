@@ -44,7 +44,7 @@ func (s *ProductRepositoryTestSuite) getRepo() productDomain.Repository {
 }
 
 func (s *ProductRepositoryTestSuite) createTestProduct() *productDomain.Product {
-	product, _, err := productDomain.Create("Test Product", decimal.NewFromInt(100))
+	product, _, err := productDomain.Create("Test Product", decimal.NewFromInt(100), "test.png")
 	require.NoError(s.T(), err)
 	return product
 }
