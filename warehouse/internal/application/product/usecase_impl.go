@@ -2,24 +2,32 @@ package product
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"warehouse/internal/domain/outbox"
 	productDomain "warehouse/internal/domain/product"
 	"warehouse/internal/domain/uow"
+
+	"github.com/google/uuid"
 )
 
 type UseCaseImpl struct {
-	uow uow.UoW
+	uow          uow.UoW
+	imageService ImageService
 }
 
-func NewUseCase(uow uow.UoW) *UseCaseImpl {
+func NewUseCase(uow uow.UoW, imageService ImageService) *UseCaseImpl {
 	return &UseCaseImpl{
-		uow: uow,
+		uow:          uow,
+		imageService: imageService,
 	}
 }
 
 func (u *UseCaseImpl) Create(ctx context.Context, data CreateDto) (uuid.UUID, error) {
-	product, events, err := productDomain.Create(data.Name, data.Price)
+	path, err := u.imageService.Create(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	product, events, err := productDomain.Create(data.Name, data.Price, path)
 	if err != nil {
 		return uuid.Nil, err
 	}
