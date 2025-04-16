@@ -79,35 +79,46 @@ func (c *ClientImpl) UpdateProductImage(
 	contentType string,
 ) error {
 	// Create stream
-	stream, err := c.clients.ProductImage.UploadImage(ctx)
+	stream, err := c.clients.ProductImage.UpdateImage(ctx)
 	if err != nil {
 		return response.ParseGRPCError(err)
 	}
 
 	// Send product ID and content type
-	if err = stream.Send(&warehouseGRPC.UploadImageRequest{
-		ProductId:   productID.String(),
-		ContentType: contentType,
-	}); err != nil {
+	infoMsg := &warehouseGRPC.UpdateImageRequest{
+		Data: &warehouseGRPC.UpdateImageRequest_Info{
+			Info: &warehouseGRPC.UpdateImageInfo{
+				ProductId:   productID.String(),
+				ContentType: contentType,
+			},
+		},
+	}
+	if err = stream.Send(infoMsg); err != nil {
 		return response.ParseGRPCError(err)
 	}
 
 	// Send file data
 	buf := make([]byte, 32*1024)
 	for {
-		n, readErr := fileReader.Read(buf)
-		if readErr != nil && readErr != io.EOF {
+		n, err := fileReader.Read(buf)
+		if err != nil && err != io.EOF {
 			return response.ParseGRPCError(err)
 		}
 		if n > 0 {
-			if err := stream.Send(&warehouseGRPC.UploadImageRequest{
-				ChunkData: buf[:n],
-			}); err != nil {
+			chunkMsg := &warehouseGRPC.UpdateImageRequest{
+				Data: &warehouseGRPC.UpdateImageRequest_ChunkData{
+					ChunkData: buf[:n],
+				},
+			}
+			if err = stream.Send(chunkMsg); err != nil {
 				return response.ParseGRPCError(err)
 			}
 		}
-		if readErr == io.EOF {
+		if err == io.EOF {
 			break
+		}
+		if err != nil {
+			return response.ParseGRPCError(err)
 		}
 	}
 
@@ -140,7 +151,7 @@ func (c *ClientImpl) GetProductImage(ctx context.Context, productID uuid.UUID) (
 	case *warehouseGRPC.GetImageResponse_Info:
 		contentType = x.Info.GetContentType()
 	default:
-		return nil, "", response.ParseGRPCError(err)
+		return nil, "", response.ErrInternalServerError
 	}
 
 	// Get file data
