@@ -40,6 +40,20 @@ func (s *ImageServiceImpl) Create(ctx context.Context) (string, error) {
 	return objectName, nil
 }
 
+func (s *ImageServiceImpl) Get(ctx context.Context, path string) (io.ReadCloser, string, error) {
+	stat, err := s.client.StatObject(ctx, s.config.BucketName, path, minio.StatObjectOptions{})
+	if err != nil {
+		return nil, "", parseError(err)
+	}
+
+	obj, err := s.client.GetObject(ctx, s.config.BucketName, path, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, "", parseError(err)
+	}
+
+	return obj, stat.ContentType, nil
+}
+
 func (s *ImageServiceImpl) Update(ctx context.Context, path string, fileReader io.Reader, contentType string) error {
 	options := minio.PutObjectOptions{
 		ContentType: contentType,
