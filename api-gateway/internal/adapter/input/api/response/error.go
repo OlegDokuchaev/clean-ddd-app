@@ -30,4 +30,8 @@ var (
 		Status: http.StatusUnauthorized,
 		Detail: "invalid authorization",
 	}
+	ErrMissingFormFile = &ErrorResponse{
+		Status: http.StatusUnprocessableEntity,
+		Detail: "missing form file",
+	}
 )
