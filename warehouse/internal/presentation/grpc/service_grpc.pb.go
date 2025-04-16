@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.29.3
-// source: warehouse/internal/presentation/grpc/service.proto
+// source: internal/presentation/grpc/service.proto
 
 package warehousev1
 
@@ -198,7 +198,7 @@ var ItemService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "warehouse/internal/presentation/grpc/service.proto",
+	Metadata: "internal/presentation/grpc/service.proto",
 }
 
 const (
@@ -304,5 +304,104 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "warehouse/internal/presentation/grpc/service.proto",
+	Metadata: "internal/presentation/grpc/service.proto",
+}
+
+const (
+	ProductImageService_UploadImage_FullMethodName = "/warehouse.v1.ProductImageService/UploadImage"
+)
+
+// ProductImageServiceClient is the client API for ProductImageService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ProductImageService provides operations for managing product images.
+type ProductImageServiceClient interface {
+	UploadImage(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadImageRequest, emptypb.Empty], error)
+}
+
+type productImageServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewProductImageServiceClient(cc grpc.ClientConnInterface) ProductImageServiceClient {
+	return &productImageServiceClient{cc}
+}
+
+func (c *productImageServiceClient) UploadImage(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadImageRequest, emptypb.Empty], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ProductImageService_ServiceDesc.Streams[0], ProductImageService_UploadImage_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[UploadImageRequest, emptypb.Empty]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ProductImageService_UploadImageClient = grpc.ClientStreamingClient[UploadImageRequest, emptypb.Empty]
+
+// ProductImageServiceServer is the server API for ProductImageService service.
+// All implementations must embed UnimplementedProductImageServiceServer
+// for forward compatibility.
+//
+// ProductImageService provides operations for managing product images.
+type ProductImageServiceServer interface {
+	UploadImage(grpc.ClientStreamingServer[UploadImageRequest, emptypb.Empty]) error
+	mustEmbedUnimplementedProductImageServiceServer()
+}
+
+// UnimplementedProductImageServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedProductImageServiceServer struct{}
+
+func (UnimplementedProductImageServiceServer) UploadImage(grpc.ClientStreamingServer[UploadImageRequest, emptypb.Empty]) error {
+	return status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
+}
+func (UnimplementedProductImageServiceServer) mustEmbedUnimplementedProductImageServiceServer() {}
+func (UnimplementedProductImageServiceServer) testEmbeddedByValue()                             {}
+
+// UnsafeProductImageServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ProductImageServiceServer will
+// result in compilation errors.
+type UnsafeProductImageServiceServer interface {
+	mustEmbedUnimplementedProductImageServiceServer()
+}
+
+func RegisterProductImageServiceServer(s grpc.ServiceRegistrar, srv ProductImageServiceServer) {
+	// If the following call pancis, it indicates UnimplementedProductImageServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&ProductImageService_ServiceDesc, srv)
+}
+
+func _ProductImageService_UploadImage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ProductImageServiceServer).UploadImage(&grpc.GenericServerStream[UploadImageRequest, emptypb.Empty]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ProductImageService_UploadImageServer = grpc.ClientStreamingServer[UploadImageRequest, emptypb.Empty]
+
+// ProductImageService_ServiceDesc is the grpc.ServiceDesc for ProductImageService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ProductImageService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "warehouse.v1.ProductImageService",
+	HandlerType: (*ProductImageServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "UploadImage",
+			Handler:       _ProductImageService_UploadImage_Handler,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "internal/presentation/grpc/service.proto",
 }
