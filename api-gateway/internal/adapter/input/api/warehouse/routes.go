@@ -15,5 +15,6 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
 	products := router.Group("/products")
 	{
 		products.POST("", handler.CreateProduct)
+		products.PUT("/:id/image", handler.UpdateProductImage)
 	}
 }

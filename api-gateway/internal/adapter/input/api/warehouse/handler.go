@@ -154,3 +154,59 @@ func (h *Handler) GetAllItems(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.ToItemsResponse(items))
 }
+
+// UpdateProductImage godoc
+// @Summary      Update product image
+// @Description  Update the image for a specific product (admin only)
+// @Tags         products
+// @Accept       mpfd
+// @Produce      json
+// @Param        id   path      string  true  "Product ID" format(uuid)
+// @Param        file formData  file    true  "Product image file"
+// @Success      204  "No Content" "Image updated successfully"
+// @Failure      400  {object}  response.ErrorResponseDetail "Invalid request format or invalid product ID"
+// @Failure      401  {object}  response.ErrorResponseDetail "Missing or invalid access token"
+// @Failure      404  {object}  response.ErrorResponseDetail "Product not found"
+// @Failure      500  {object}  response.ErrorResponseDetail "Server error"
+// @Security     AdminAccessToken
+// @Router       /products/{id}/image [put]
+func (h *Handler) UpdateProductImage(c *gin.Context) {
+	// Product ID
+	productID, err := commonRequest.ParseParamUUID(c, "id")
+	if err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
+	// Access token
+	token, err := commonRequest.ParseAccessToken(c)
+	if err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
+	// File
+	fileHeader, err := commonRequest.ParseFormFile(c, "file")
+	if err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+	defer file.Close()
+
+	// Content type
+	contentType := fileHeader.Header.Get("Content-Type")
+
+	err = h.uc.UpdateProductImage(c, productID, file, contentType, token)
+	if err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
