@@ -499,6 +499,176 @@ func (x *UploadImageRequest) GetChunkData() []byte {
 	return nil
 }
 
+type GetImageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProductId     string                 `protobuf:"bytes,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetImageRequest) Reset() {
+	*x = GetImageRequest{}
+	mi := &file_warehouse_v1_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetImageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetImageRequest) ProtoMessage() {}
+
+func (x *GetImageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_warehouse_v1_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetImageRequest.ProtoReflect.Descriptor instead.
+func (*GetImageRequest) Descriptor() ([]byte, []int) {
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetImageRequest) GetProductId() string {
+	if x != nil {
+		return x.ProductId
+	}
+	return ""
+}
+
+type GetImageResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Data:
+	//
+	//	*GetImageResponse_Info
+	//	*GetImageResponse_ChunkData
+	Data          isGetImageResponse_Data `protobuf_oneof:"data"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetImageResponse) Reset() {
+	*x = GetImageResponse{}
+	mi := &file_warehouse_v1_service_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetImageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetImageResponse) ProtoMessage() {}
+
+func (x *GetImageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_warehouse_v1_service_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetImageResponse.ProtoReflect.Descriptor instead.
+func (*GetImageResponse) Descriptor() ([]byte, []int) {
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetImageResponse) GetData() isGetImageResponse_Data {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *GetImageResponse) GetInfo() *ImageInfo {
+	if x != nil {
+		if x, ok := x.Data.(*GetImageResponse_Info); ok {
+			return x.Info
+		}
+	}
+	return nil
+}
+
+func (x *GetImageResponse) GetChunkData() []byte {
+	if x != nil {
+		if x, ok := x.Data.(*GetImageResponse_ChunkData); ok {
+			return x.ChunkData
+		}
+	}
+	return nil
+}
+
+type isGetImageResponse_Data interface {
+	isGetImageResponse_Data()
+}
+
+type GetImageResponse_Info struct {
+	Info *ImageInfo `protobuf:"bytes,1,opt,name=info,proto3,oneof"`
+}
+
+type GetImageResponse_ChunkData struct {
+	ChunkData []byte `protobuf:"bytes,2,opt,name=chunk_data,json=chunkData,proto3,oneof"`
+}
+
+func (*GetImageResponse_Info) isGetImageResponse_Data() {}
+
+func (*GetImageResponse_ChunkData) isGetImageResponse_Data() {}
+
+type ImageInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentType   string                 `protobuf:"bytes,1,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageInfo) Reset() {
+	*x = ImageInfo{}
+	mi := &file_warehouse_v1_service_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageInfo) ProtoMessage() {}
+
+func (x *ImageInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_warehouse_v1_service_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageInfo.ProtoReflect.Descriptor instead.
+func (*ImageInfo) Descriptor() ([]byte, []int) {
+	return file_warehouse_v1_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ImageInfo) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
 var File_warehouse_v1_service_proto protoreflect.FileDescriptor
 
 const file_warehouse_v1_service_proto_rawDesc = "" +
@@ -536,15 +706,26 @@ const file_warehouse_v1_service_proto_rawDesc = "" +
 	"product_id\x18\x01 \x01(\tR\tproductId\x12!\n" +
 	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\x12\x1d\n" +
 	"\n" +
-	"chunk_data\x18\x03 \x01(\fR\tchunkData2\xe9\x01\n" +
+	"chunk_data\x18\x03 \x01(\fR\tchunkData\"0\n" +
+	"\x0fGetImageRequest\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x01 \x01(\tR\tproductId\"j\n" +
+	"\x10GetImageResponse\x12-\n" +
+	"\x04info\x18\x01 \x01(\v2\x17.warehouse.v1.ImageInfoH\x00R\x04info\x12\x1f\n" +
+	"\n" +
+	"chunk_data\x18\x02 \x01(\fH\x00R\tchunkDataB\x06\n" +
+	"\x04data\".\n" +
+	"\tImageInfo\x12!\n" +
+	"\fcontent_type\x18\x01 \x01(\tR\vcontentType2\xe9\x01\n" +
 	"\vItemService\x12G\n" +
 	"\vReserveItem\x12 .warehouse.v1.ReserveItemRequest\x1a\x16.google.protobuf.Empty\x12G\n" +
 	"\vReleaseItem\x12 .warehouse.v1.ReleaseItemRequest\x1a\x16.google.protobuf.Empty\x12H\n" +
 	"\vGetAllItems\x12\x16.google.protobuf.Empty\x1a!.warehouse.v1.GetAllItemsResponse2j\n" +
 	"\x0eProductService\x12X\n" +
-	"\rCreateProduct\x12\".warehouse.v1.CreateProductRequest\x1a#.warehouse.v1.CreateProductResponse2`\n" +
+	"\rCreateProduct\x12\".warehouse.v1.CreateProductRequest\x1a#.warehouse.v1.CreateProductResponse2\xad\x01\n" +
 	"\x13ProductImageService\x12I\n" +
-	"\vUploadImage\x12 .warehouse.v1.UploadImageRequest\x1a\x16.google.protobuf.Empty(\x01BTZRgithub.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/warehouse/v1;warehouse_v1b\x06proto3"
+	"\vUploadImage\x12 .warehouse.v1.UploadImageRequest\x1a\x16.google.protobuf.Empty(\x01\x12K\n" +
+	"\bGetImage\x12\x1d.warehouse.v1.GetImageRequest\x1a\x1e.warehouse.v1.GetImageResponse0\x01BTZRgithub.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/warehouse/v1;warehouse_v1b\x06proto3"
 
 var (
 	file_warehouse_v1_service_proto_rawDescOnce sync.Once
@@ -558,7 +739,7 @@ func file_warehouse_v1_service_proto_rawDescGZIP() []byte {
 	return file_warehouse_v1_service_proto_rawDescData
 }
 
-var file_warehouse_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_warehouse_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_warehouse_v1_service_proto_goTypes = []any{
 	(*ReserveItemRequest)(nil),    // 0: warehouse.v1.ReserveItemRequest
 	(*ReleaseItemRequest)(nil),    // 1: warehouse.v1.ReleaseItemRequest
@@ -569,30 +750,36 @@ var file_warehouse_v1_service_proto_goTypes = []any{
 	(*CreateProductResponse)(nil), // 6: warehouse.v1.CreateProductResponse
 	(*Product)(nil),               // 7: warehouse.v1.Product
 	(*UploadImageRequest)(nil),    // 8: warehouse.v1.UploadImageRequest
-	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 10: google.protobuf.Empty
+	(*GetImageRequest)(nil),       // 9: warehouse.v1.GetImageRequest
+	(*GetImageResponse)(nil),      // 10: warehouse.v1.GetImageResponse
+	(*ImageInfo)(nil),             // 11: warehouse.v1.ImageInfo
+	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 13: google.protobuf.Empty
 }
 var file_warehouse_v1_service_proto_depIdxs = []int32{
 	4,  // 0: warehouse.v1.ReserveItemRequest.items:type_name -> warehouse.v1.ItemInfo
 	4,  // 1: warehouse.v1.ReleaseItemRequest.items:type_name -> warehouse.v1.ItemInfo
 	3,  // 2: warehouse.v1.GetAllItemsResponse.items:type_name -> warehouse.v1.Item
 	7,  // 3: warehouse.v1.Item.product:type_name -> warehouse.v1.Product
-	9,  // 4: warehouse.v1.Product.created:type_name -> google.protobuf.Timestamp
-	0,  // 5: warehouse.v1.ItemService.ReserveItem:input_type -> warehouse.v1.ReserveItemRequest
-	1,  // 6: warehouse.v1.ItemService.ReleaseItem:input_type -> warehouse.v1.ReleaseItemRequest
-	10, // 7: warehouse.v1.ItemService.GetAllItems:input_type -> google.protobuf.Empty
-	5,  // 8: warehouse.v1.ProductService.CreateProduct:input_type -> warehouse.v1.CreateProductRequest
-	8,  // 9: warehouse.v1.ProductImageService.UploadImage:input_type -> warehouse.v1.UploadImageRequest
-	10, // 10: warehouse.v1.ItemService.ReserveItem:output_type -> google.protobuf.Empty
-	10, // 11: warehouse.v1.ItemService.ReleaseItem:output_type -> google.protobuf.Empty
-	2,  // 12: warehouse.v1.ItemService.GetAllItems:output_type -> warehouse.v1.GetAllItemsResponse
-	6,  // 13: warehouse.v1.ProductService.CreateProduct:output_type -> warehouse.v1.CreateProductResponse
-	10, // 14: warehouse.v1.ProductImageService.UploadImage:output_type -> google.protobuf.Empty
-	10, // [10:15] is the sub-list for method output_type
-	5,  // [5:10] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	12, // 4: warehouse.v1.Product.created:type_name -> google.protobuf.Timestamp
+	11, // 5: warehouse.v1.GetImageResponse.info:type_name -> warehouse.v1.ImageInfo
+	0,  // 6: warehouse.v1.ItemService.ReserveItem:input_type -> warehouse.v1.ReserveItemRequest
+	1,  // 7: warehouse.v1.ItemService.ReleaseItem:input_type -> warehouse.v1.ReleaseItemRequest
+	13, // 8: warehouse.v1.ItemService.GetAllItems:input_type -> google.protobuf.Empty
+	5,  // 9: warehouse.v1.ProductService.CreateProduct:input_type -> warehouse.v1.CreateProductRequest
+	8,  // 10: warehouse.v1.ProductImageService.UploadImage:input_type -> warehouse.v1.UploadImageRequest
+	9,  // 11: warehouse.v1.ProductImageService.GetImage:input_type -> warehouse.v1.GetImageRequest
+	13, // 12: warehouse.v1.ItemService.ReserveItem:output_type -> google.protobuf.Empty
+	13, // 13: warehouse.v1.ItemService.ReleaseItem:output_type -> google.protobuf.Empty
+	2,  // 14: warehouse.v1.ItemService.GetAllItems:output_type -> warehouse.v1.GetAllItemsResponse
+	6,  // 15: warehouse.v1.ProductService.CreateProduct:output_type -> warehouse.v1.CreateProductResponse
+	13, // 16: warehouse.v1.ProductImageService.UploadImage:output_type -> google.protobuf.Empty
+	10, // 17: warehouse.v1.ProductImageService.GetImage:output_type -> warehouse.v1.GetImageResponse
+	12, // [12:18] is the sub-list for method output_type
+	6,  // [6:12] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_warehouse_v1_service_proto_init() }
@@ -600,13 +787,17 @@ func file_warehouse_v1_service_proto_init() {
 	if File_warehouse_v1_service_proto != nil {
 		return
 	}
+	file_warehouse_v1_service_proto_msgTypes[10].OneofWrappers = []any{
+		(*GetImageResponse_Info)(nil),
+		(*GetImageResponse_ChunkData)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_warehouse_v1_service_proto_rawDesc), len(file_warehouse_v1_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   3,
 		},
