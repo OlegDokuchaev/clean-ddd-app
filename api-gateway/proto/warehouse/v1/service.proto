@@ -29,7 +29,7 @@ service ProductService {
 // ProductImageService provides operations for managing product images.
 //
 service ProductImageService {
-  rpc UploadImage(stream UploadImageRequest) returns (google.protobuf.Empty);
+  rpc UpdateImage(stream UpdateImageRequest) returns (google.protobuf.Empty);
   rpc GetImage(GetImageRequest) returns (stream GetImageResponse);
 }
 
@@ -85,10 +85,16 @@ message Product {
 // Message definitions for ProductImageService
 //
 
-message UploadImageRequest {
+message UpdateImageRequest {
+  oneof data {
+    UpdateImageInfo info = 1;
+    bytes chunk_data = 2;
+  }
+}
+
+message UpdateImageInfo {
   string product_id = 1;
   string content_type = 2;
-  bytes chunk_data = 3;
 }
 
 message GetImageRequest {
@@ -97,11 +103,11 @@ message GetImageRequest {
 
 message GetImageResponse {
   oneof data {
-    ImageInfo info = 1;
+    GetImageInfo info = 1;
     bytes chunk_data = 2;
   }
 }
 
-message ImageInfo {
+message GetImageInfo {
   string content_type = 1;
 }
