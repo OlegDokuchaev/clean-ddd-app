@@ -25,10 +25,15 @@ func (r *RepositoryImpl) Create(ctx context.Context, product *productDomain.Prod
 
 func (r *RepositoryImpl) GetByID(ctx context.Context, productID uuid.UUID) (*productDomain.Product, error) {
 	var productModel tables.Product
-	res := r.db.WithContext(ctx).Where("id = ?", productID).First(&productModel)
+
+	res := r.db.WithContext(ctx).
+		Preload("Image").
+		Where("id = ?", productID).
+		First(&productModel)
 	if res.Error != nil {
 		return nil, ParseError(res.Error)
 	}
+
 	return ToDomain(&productModel), nil
 }
 
