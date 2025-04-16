@@ -2,6 +2,7 @@ package request
 
 import (
 	"api-gateway/internal/adapter/input/api/response"
+	"mime/multipart"
 	"net/http"
 	"strings"
 
@@ -46,4 +47,12 @@ func ParseAccessToken(c *gin.Context) (string, error) {
 	}
 
 	return "", response.ErrMissingAuthorization
+}
+
+func ParseFormFile(c *gin.Context, name string) (*multipart.FileHeader, error) {
+	fileHeader, err := c.FormFile(name)
+	if err != nil {
+		return nil, response.ErrMissingFormFile
+	}
+	return fileHeader, nil
 }
