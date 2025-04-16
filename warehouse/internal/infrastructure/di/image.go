@@ -1,6 +1,7 @@
 package di
 
 import (
+	productApplication "warehouse/internal/application/product"
 	productImage "warehouse/internal/infrastructure/image/product"
 
 	"go.uber.org/fx"
@@ -14,5 +15,8 @@ var ImageModule = fx.Provide(
 	productImage.NewClient,
 
 	// Service
-	productImage.NewImageService,
+	fx.Annotate(
+		productImage.NewImageService,
+		fx.As(new(productApplication.ImageService)),
+	),
 )
