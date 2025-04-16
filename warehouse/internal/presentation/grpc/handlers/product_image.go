@@ -25,7 +25,7 @@ func NewProductImageServiceHandler(usecase productApplication.ImageUseCase) *Pro
 	}
 }
 
-func (h *ProductImageServiceHandler) UploadImage(
+func (h *ProductImageServiceHandler) UpdateImage(
 	stream grpc.ClientStreamingServer[warehousev1.UpdateImageRequest, emptypb.Empty],
 ) error {
 	// Get file info
@@ -104,21 +104,21 @@ func (h *ProductImageServiceHandler) GetImage(
 	}
 
 	// Send file info
-	headerMsg := &warehousev1.GetImageResponse{
+	infoMsg := &warehousev1.GetImageResponse{
 		Data: &warehousev1.GetImageResponse_Info{
 			Info: &warehousev1.GetImageInfo{
 				ContentType: contentType,
 			},
 		},
 	}
-	if err = stream.Send(headerMsg); err != nil {
+	if err = stream.Send(infoMsg); err != nil {
 		return response.ParseError(err)
 	}
 
 	// Send file data
 	buf := make([]byte, 32*1024)
 	for {
-		n, readErr := fileReader.Read(buf)
+		n, err := fileReader.Read(buf)
 		if n > 0 {
 			chunkMsg := &warehousev1.GetImageResponse{
 				Data: &warehousev1.GetImageResponse_ChunkData{
@@ -129,10 +129,10 @@ func (h *ProductImageServiceHandler) GetImage(
 				return response.ParseError(err)
 			}
 		}
-		if readErr == io.EOF {
+		if err == io.EOF {
 			break
 		}
-		if readErr != nil {
+		if err != nil {
 			return response.ParseError(err)
 		}
 	}
