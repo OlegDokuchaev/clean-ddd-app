@@ -85,4 +85,15 @@ func (u *UseCaseImpl) UpdateProductImage(
 	return u.warehouseClient.UpdateProductImage(ctx, productID, fileReader, contentType)
 }
 
+func (u *UseCaseImpl) GetProductImage(
+	ctx context.Context,
+	productID uuid.UUID,
+	adminToken string,
+) (fileReader io.Reader, contentType string, err error) {
+	if !u.adminAuth.Validate(adminToken) {
+		return nil, "", ErrUnauthorized
+	}
+	return u.warehouseClient.GetProductImage(ctx, productID)
+}
+
 var _ UseCase = (*UseCaseImpl)(nil)

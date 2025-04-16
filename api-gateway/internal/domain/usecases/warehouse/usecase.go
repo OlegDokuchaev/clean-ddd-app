@@ -14,4 +14,5 @@ type UseCase interface {
 	CreateProduct(ctx context.Context, data warehouseDto.CreateProductDto, adminToken string) (uuid.UUID, error)
 	GetAllItems(ctx context.Context) ([]*warehouseDto.ItemDto, error)
 	UpdateProductImage(ctx context.Context, productID uuid.UUID, fileReader io.Reader, contentType string, adminToken string) error
+	GetProductImage(ctx context.Context, productID uuid.UUID, adminToken string) (fileReader io.Reader, contentType string, err error)
 }
