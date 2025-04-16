@@ -10,8 +10,9 @@ import (
 )
 
 type GRPCClients struct {
-	Product warehouseGRPC.ProductServiceClient
-	Item    warehouseGRPC.ItemServiceClient
+	Product      warehouseGRPC.ProductServiceClient
+	ProductImage warehouseGRPC.ProductImageServiceClient
+	Item         warehouseGRPC.ItemServiceClient
 }
 
 func newConnection(config *Config) (*grpc.ClientConn, error) {
@@ -49,7 +50,8 @@ func NewGRPCClient(config *Config) (*GRPCClients, error) {
 		return nil, err
 	}
 	return &GRPCClients{
-		Product: warehouseGRPC.NewProductServiceClient(conn),
-		Item:    warehouseGRPC.NewItemServiceClient(conn),
+		Product:      warehouseGRPC.NewProductServiceClient(conn),
+		ProductImage: warehouseGRPC.NewProductImageServiceClient(conn),
+		Item:         warehouseGRPC.NewItemServiceClient(conn),
 	}, nil
 }
