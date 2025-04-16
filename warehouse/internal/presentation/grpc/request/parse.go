@@ -6,7 +6,7 @@ import (
 	"warehouse/internal/presentation/grpc/response"
 )
 
-func parseUUID(key string) (uuid.UUID, error) {
+func ParseUUID(key string) (uuid.UUID, error) {
 	if id, err := uuid.Parse(key); err != nil {
 		return uuid.Nil, response.ErrInvalidID
 	} else {
@@ -14,6 +14,6 @@ func parseUUID(key string) (uuid.UUID, error) {
 	}
 }
 
-func parseDecimal(key float64) decimal.Decimal {
+func ParseDecimal(key float64) decimal.Decimal {
 	return decimal.NewFromFloat(key)
 }

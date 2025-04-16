@@ -7,7 +7,7 @@ import (
 )
 
 func toItemInfoDto(req *warehousev1.ItemInfo) (itemApplication.ItemDto, error) {
-	productID, err := parseUUID(req.ProductId)
+	productID, err := ParseUUID(req.ProductId)
 	if err != nil {
 		return itemApplication.ItemDto{}, err
 	}
@@ -33,7 +33,7 @@ func toItemsInfoDto(req []*warehousev1.ItemInfo) ([]itemApplication.ItemDto, err
 func ToCreateProductDto(req *warehousev1.CreateProductRequest) (productApplication.CreateDto, error) {
 	return productApplication.CreateDto{
 		Name:  req.Name,
-		Price: parseDecimal(req.Price),
+		Price: ParseDecimal(req.Price),
 	}, nil
 }
 
