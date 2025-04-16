@@ -744,6 +744,63 @@ const docTemplate = `{
             }
         },
         "/products/{id}/image": {
+            "get": {
+                "security": [
+                    {
+                        "AdminAccessToken": []
+                    }
+                ],
+                "description": "Get the image for a specific product (admin only)",
+                "produces": [
+                    "image/*"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get product image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product image",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format or invalid product ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Product or image not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
