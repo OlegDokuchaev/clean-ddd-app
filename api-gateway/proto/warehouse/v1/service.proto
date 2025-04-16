@@ -30,6 +30,7 @@ service ProductService {
 //
 service ProductImageService {
   rpc UploadImage(stream UploadImageRequest) returns (google.protobuf.Empty);
+  rpc GetImage(GetImageRequest) returns (stream GetImageResponse);
 }
 
 //
@@ -88,4 +89,19 @@ message UploadImageRequest {
   string product_id = 1;
   string content_type = 2;
   bytes chunk_data = 3;
+}
+
+message GetImageRequest {
+  string product_id = 1;
+}
+
+message GetImageResponse {
+  oneof data {
+    ImageInfo info = 1;
+    bytes chunk_data = 2;
+  }
+}
+
+message ImageInfo {
+  string content_type = 1;
 }
