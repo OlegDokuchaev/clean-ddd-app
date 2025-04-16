@@ -19,4 +19,10 @@ var UseCaseModule = fx.Provide(
 		productApplication.NewUseCase,
 		fx.As(new(productApplication.UseCase)),
 	),
+
+	// Product image use case
+	fx.Annotate(
+		productApplication.NewImageUseCase,
+		fx.As(new(productApplication.ImageUseCase)),
+	),
 )
