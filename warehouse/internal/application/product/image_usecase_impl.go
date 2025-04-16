@@ -2,9 +2,10 @@ package product
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"io"
 	"warehouse/internal/domain/uow"
+
+	"github.com/google/uuid"
 )
 
 type ImageUseCaseImpl struct {
@@ -17,6 +18,14 @@ func NewImageUseCase(uow uow.UoW, imageService ImageService) *ImageUseCaseImpl {
 		uow:          uow,
 		imageService: imageService,
 	}
+}
+
+func (u *ImageUseCaseImpl) GetByID(ctx context.Context, productID uuid.UUID) (io.ReadCloser, string, error) {
+	product, err := u.uow.Product().GetByID(ctx, productID)
+	if err != nil {
+		return nil, "", err
+	}
+	return u.imageService.Get(ctx, product.Image.Path)
 }
 
 func (u *ImageUseCaseImpl) UpdateByID(
