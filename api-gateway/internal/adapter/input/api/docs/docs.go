@@ -627,7 +627,7 @@ const docTemplate = `{
                 "tags": [
                     "orders"
                 ],
-                "summary": "Update order status to delivered",
+                "summary": "Complete order",
                 "parameters": [
                     {
                         "type": "string",
@@ -730,6 +730,72 @@ const docTemplate = `{
                     },
                     "422": {
                         "description": "Invalid product data",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{id}/image": {
+            "put": {
+                "security": [
+                    {
+                        "AdminAccessToken": []
+                    }
+                ],
+                "description": "Update the image for a specific product (admin only)",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Update product image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Product image file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content\" \"Image updated successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request format or invalid product ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid access token",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Product not found",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponseDetail"
                         }

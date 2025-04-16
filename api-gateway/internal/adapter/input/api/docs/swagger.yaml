@@ -643,7 +643,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponseDetail'
       security:
       - CourierBearerAuth: []
-      summary: Update order status to delivered
+      summary: Complete order
       tags:
       - orders
   /products:
@@ -688,6 +688,49 @@ paths:
       security:
       - AdminAccessToken: []
       summary: Create a new product
+      tags:
+      - products
+  /products/{id}/image:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update the image for a specific product (admin only)
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content" "Image updated successfully
+        "400":
+          description: Invalid request format or invalid product ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Missing or invalid access token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - AdminAccessToken: []
+      summary: Update product image
       tags:
       - products
 securityDefinitions:
