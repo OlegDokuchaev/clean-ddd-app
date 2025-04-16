@@ -6,6 +6,7 @@ import (
 	request "api-gateway/internal/adapter/input/api/warehouse/request"
 	response "api-gateway/internal/adapter/input/api/warehouse/response"
 	warehouseUseCase "api-gateway/internal/domain/usecases/warehouse"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -209,4 +210,45 @@ func (h *Handler) UpdateProductImage(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// GetProductImage godoc
+// @Summary      Get product image
+// @Description  Get the image for a specific product (admin only)
+// @Tags         products
+// @Produce      image/*
+// @Param        id   path      string  true  "Product ID" format(uuid)
+// @Success      200  {file}    file    "Product image"
+// @Failure      400  {object}  response.ErrorResponseDetail "Invalid request format or invalid product ID"
+// @Failure      401  {object}  response.ErrorResponseDetail "Missing or invalid access token"
+// @Failure      404  {object}  response.ErrorResponseDetail "Product or image not found"
+// @Failure      500  {object}  response.ErrorResponseDetail "Server error"
+// @Security     AdminAccessToken
+// @Router       /products/{id}/image [get]
+func (h *Handler) GetProductImage(c *gin.Context) {
+	productID, err := commonRequest.ParseParamUUID(c, "id")
+	if err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
+	token, err := commonRequest.ParseAccessToken(c)
+	if err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
+	reader, contentType, err := h.uc.GetProductImage(c, productID, token)
+	if err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
+	c.Writer.Header().Set("Content-Type", contentType)
+	c.Status(http.StatusOK)
+
+	if _, err = io.Copy(c.Writer, reader); err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
 }

@@ -16,5 +16,6 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
 	{
 		products.POST("", handler.CreateProduct)
 		products.PUT("/:id/image", handler.UpdateProductImage)
+		products.GET("/:id/image", handler.GetProductImage)
 	}
 }
