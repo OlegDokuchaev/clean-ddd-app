@@ -5,6 +5,7 @@ import (
 	"api-gateway/internal/port/output/auth/admin"
 	warehouseClient "api-gateway/internal/port/output/clients/warehouse"
 	"context"
+	"io"
 
 	"github.com/google/uuid"
 )
@@ -69,6 +70,19 @@ func (u *UseCaseImpl) GetAllItems(ctx context.Context) ([]*warehouseDto.ItemDto,
 		return nil, err
 	}
 	return items, nil
+}
+
+func (u *UseCaseImpl) UpdateProductImage(
+	ctx context.Context,
+	productID uuid.UUID,
+	fileReader io.Reader,
+	contentType string,
+	adminToken string,
+) error {
+	if !u.adminAuth.Validate(adminToken) {
+		return ErrUnauthorized
+	}
+	return u.warehouseClient.UpdateProductImage(ctx, productID, fileReader, contentType)
 }
 
 var _ UseCase = (*UseCaseImpl)(nil)
