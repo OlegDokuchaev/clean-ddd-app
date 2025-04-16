@@ -1,13 +1,14 @@
 package warehouse
 
 import (
+	warehouseGRPC "api-gateway/gen/warehouse/v1"
 	"api-gateway/internal/adapter/output/clients/response"
 	warehouseDto "api-gateway/internal/domain/dtos/warehouse"
 	warehouseClient "api-gateway/internal/port/output/clients/warehouse"
 	"context"
-
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"io"
 )
 
 type ClientImpl struct {
@@ -68,6 +69,54 @@ func (c *ClientImpl) GetAllItems(ctx context.Context) ([]*warehouseDto.ItemDto, 
 	}
 
 	return items, nil
+}
+
+func (c *ClientImpl) UpdateProductImage(
+	ctx context.Context,
+	productID uuid.UUID,
+	fileReader io.Reader,
+	contentType string,
+) error {
+	// Create stream
+	stream, err := c.clients.ProductImage.UploadImage(ctx)
+	if err != nil {
+		return response.ParseGRPCError(err)
+	}
+
+	// Send product ID and content type
+	if err = stream.Send(&warehouseGRPC.UploadImageRequest{
+		ProductId:   productID.String(),
+		ContentType: contentType,
+	}); err != nil {
+		return response.ParseGRPCError(err)
+	}
+
+	// Send file data
+	buf := make([]byte, 32*1024)
+	for {
+		n, readErr := fileReader.Read(buf)
+		if readErr != nil && readErr != io.EOF {
+			return response.ParseGRPCError(err)
+		}
+		if n > 0 {
+			if err := stream.Send(&warehouseGRPC.UploadImageRequest{
+				ChunkData: buf[:n],
+			}); err != nil {
+				return response.ParseGRPCError(err)
+			}
+		}
+		if readErr == io.EOF {
+			break
+		}
+	}
+
+	// Close stream
+	_, err = stream.CloseAndRecv()
+	if err != nil {
+		return response.ParseGRPCError(err)
+	}
+
+	return nil
 }
 
 var _ warehouseClient.Client = (*ClientImpl)(nil)
