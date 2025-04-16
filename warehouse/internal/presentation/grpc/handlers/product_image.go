@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	productApplication "warehouse/internal/application/product"
 	warehousev1 "warehouse/internal/presentation/grpc"
@@ -25,19 +26,29 @@ func NewProductImageServiceHandler(usecase productApplication.ImageUseCase) *Pro
 }
 
 func (h *ProductImageServiceHandler) UploadImage(
-	stream grpc.ClientStreamingServer[warehousev1.UploadImageRequest, emptypb.Empty],
+	stream grpc.ClientStreamingServer[warehousev1.UpdateImageRequest, emptypb.Empty],
 ) error {
+	// Get file info
+	var productID uuid.UUID
+	var contentType string
+
 	req, err := stream.Recv()
 	if err != nil {
 		return response.ParseError(err)
 	}
 
-	productID, err := request.ParseUUID(req.GetProductId())
-	if err != nil {
-		return response.ParseError(err)
+	switch x := req.Data.(type) {
+	case *warehousev1.UpdateImageRequest_Info:
+		productID, err = request.ParseUUID(x.Info.GetProductId())
+		if err != nil {
+			return response.ParseError(err)
+		}
+		contentType = x.Info.GetContentType()
+	default:
+		return response.ErrInternalError
 	}
-	contentType := req.GetContentType()
 
+	// Get file data
 	pr, pw := io.Pipe()
 	defer pr.Close()
 
@@ -95,7 +106,7 @@ func (h *ProductImageServiceHandler) GetImage(
 	// Send file info
 	headerMsg := &warehousev1.GetImageResponse{
 		Data: &warehousev1.GetImageResponse_Info{
-			Info: &warehousev1.ImageInfo{
+			Info: &warehousev1.GetImageInfo{
 				ContentType: contentType,
 			},
 		},
