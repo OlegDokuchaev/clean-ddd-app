@@ -29,6 +29,10 @@ var GRPCModule = fx.Options(
 			handlers.NewProductServiceHandler,
 			fx.As(new(warehousev1.ProductServiceServer)),
 		),
+		fx.Annotate(
+			handlers.NewProductImageServiceHandler,
+			fx.As(new(warehousev1.ProductImageServiceServer)),
+		),
 
 		// gRPC server
 		newGRPCServer,
@@ -41,6 +45,7 @@ var GRPCModule = fx.Options(
 func newGRPCServer(
 	itemHandler warehousev1.ItemServiceServer,
 	productHandler warehousev1.ProductServiceServer,
+	productImageHandler warehousev1.ProductImageServiceServer,
 	logger logger.Logger,
 ) *grpc.Server {
 	server := grpc.NewServer(
@@ -50,7 +55,9 @@ func newGRPCServer(
 
 	warehousev1.RegisterItemServiceServer(server, itemHandler)
 	warehousev1.RegisterProductServiceServer(server, productHandler)
+	warehousev1.RegisterProductImageServiceServer(server, productImageHandler)
 	reflection.Register(server)
+
 	return server
 }
 
