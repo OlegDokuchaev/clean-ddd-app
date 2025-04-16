@@ -309,6 +309,7 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	ProductImageService_UploadImage_FullMethodName = "/warehouse.v1.ProductImageService/UploadImage"
+	ProductImageService_GetImage_FullMethodName    = "/warehouse.v1.ProductImageService/GetImage"
 )
 
 // ProductImageServiceClient is the client API for ProductImageService service.
@@ -318,6 +319,7 @@ const (
 // ProductImageService provides operations for managing product images.
 type ProductImageServiceClient interface {
 	UploadImage(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadImageRequest, emptypb.Empty], error)
+	GetImage(ctx context.Context, in *GetImageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetImageResponse], error)
 }
 
 type productImageServiceClient struct {
@@ -341,6 +343,25 @@ func (c *productImageServiceClient) UploadImage(ctx context.Context, opts ...grp
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ProductImageService_UploadImageClient = grpc.ClientStreamingClient[UploadImageRequest, emptypb.Empty]
 
+func (c *productImageServiceClient) GetImage(ctx context.Context, in *GetImageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetImageResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ProductImageService_ServiceDesc.Streams[1], ProductImageService_GetImage_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[GetImageRequest, GetImageResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ProductImageService_GetImageClient = grpc.ServerStreamingClient[GetImageResponse]
+
 // ProductImageServiceServer is the server API for ProductImageService service.
 // All implementations must embed UnimplementedProductImageServiceServer
 // for forward compatibility.
@@ -348,6 +369,7 @@ type ProductImageService_UploadImageClient = grpc.ClientStreamingClient[UploadIm
 // ProductImageService provides operations for managing product images.
 type ProductImageServiceServer interface {
 	UploadImage(grpc.ClientStreamingServer[UploadImageRequest, emptypb.Empty]) error
+	GetImage(*GetImageRequest, grpc.ServerStreamingServer[GetImageResponse]) error
 	mustEmbedUnimplementedProductImageServiceServer()
 }
 
@@ -360,6 +382,9 @@ type UnimplementedProductImageServiceServer struct{}
 
 func (UnimplementedProductImageServiceServer) UploadImage(grpc.ClientStreamingServer[UploadImageRequest, emptypb.Empty]) error {
 	return status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
+}
+func (UnimplementedProductImageServiceServer) GetImage(*GetImageRequest, grpc.ServerStreamingServer[GetImageResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method GetImage not implemented")
 }
 func (UnimplementedProductImageServiceServer) mustEmbedUnimplementedProductImageServiceServer() {}
 func (UnimplementedProductImageServiceServer) testEmbeddedByValue()                             {}
@@ -389,6 +414,17 @@ func _ProductImageService_UploadImage_Handler(srv interface{}, stream grpc.Serve
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ProductImageService_UploadImageServer = grpc.ClientStreamingServer[UploadImageRequest, emptypb.Empty]
 
+func _ProductImageService_GetImage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetImageRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ProductImageServiceServer).GetImage(m, &grpc.GenericServerStream[GetImageRequest, GetImageResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ProductImageService_GetImageServer = grpc.ServerStreamingServer[GetImageResponse]
+
 // ProductImageService_ServiceDesc is the grpc.ServiceDesc for ProductImageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -401,6 +437,11 @@ var ProductImageService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "UploadImage",
 			Handler:       _ProductImageService_UploadImage_Handler,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetImage",
+			Handler:       _ProductImageService_GetImage_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "internal/presentation/grpc/service.proto",
