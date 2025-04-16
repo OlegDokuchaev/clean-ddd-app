@@ -26,6 +26,13 @@ service ProductService {
 }
 
 //
+// ProductImageService provides operations for managing product images.
+//
+service ProductImageService {
+  rpc UploadImage(stream UploadImageRequest) returns (google.protobuf.Empty);
+}
+
+//
 // Message definitions for ItemService
 //
 
@@ -71,4 +78,14 @@ message Product {
   string name = 2;
   double price = 3;
   google.protobuf.Timestamp created = 4;
+}
+
+//
+// Message definitions for ProductImageService
+//
+
+message UploadImageRequest {
+  string product_id = 1;
+  string content_type = 2;
+  bytes chunk_data = 3;
 }
