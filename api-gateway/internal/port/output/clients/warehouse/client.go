@@ -14,4 +14,5 @@ type Client interface {
 	CreateProduct(ctx context.Context, data warehouseDto.CreateProductDto) (uuid.UUID, error)
 	GetAllItems(ctx context.Context) ([]*warehouseDto.ItemDto, error)
 	UpdateProductImage(ctx context.Context, productID uuid.UUID, fileReader io.Reader, contentType string) error
+	GetProductImage(ctx context.Context, productID uuid.UUID) (fileReader io.Reader, contentType string, err error)
 }

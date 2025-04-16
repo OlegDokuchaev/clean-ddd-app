@@ -6,9 +6,10 @@ import (
 	warehouseDto "api-gateway/internal/domain/dtos/warehouse"
 	warehouseClient "api-gateway/internal/port/output/clients/warehouse"
 	"context"
+	"io"
+
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"io"
 )
 
 type ClientImpl struct {
@@ -117,6 +118,38 @@ func (c *ClientImpl) UpdateProductImage(
 	}
 
 	return nil
+}
+
+func (c *ClientImpl) GetProductImage(ctx context.Context, productID uuid.UUID) (io.Reader, string, error) {
+	// Create stream
+	stream, err := c.clients.ProductImage.GetImage(ctx, &warehouseGRPC.GetImageRequest{
+		ProductId: productID.String(),
+	})
+	if err != nil {
+		return nil, "", response.ParseGRPCError(err)
+	}
+
+	// Get file stats
+	msg, err := stream.Recv()
+	if err != nil {
+		return nil, "", response.ParseGRPCError(err)
+	}
+
+	var contentType string
+	switch x := msg.Data.(type) {
+	case *warehouseGRPC.GetImageResponse_Info:
+		contentType = x.Info.GetContentType()
+	default:
+		return nil, "", response.ParseGRPCError(err)
+	}
+
+	// Get file data
+	fileReader := &productImageGrpcStreamReader{
+		stream: stream,
+		buffer: nil,
+	}
+
+	return fileReader, contentType, nil
 }
 
 var _ warehouseClient.Client = (*ClientImpl)(nil)
