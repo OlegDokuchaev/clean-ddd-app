@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
@@ -27,8 +26,16 @@ func NewProductImageServiceHandler(usecase productApplication.ImageUseCase) *Pro
 func (h *ProductImageServiceHandler) UploadImage(
 	stream grpc.ClientStreamingServer[warehousev1.UploadImageRequest, emptypb.Empty],
 ) error {
-	var productID uuid.UUID
-	var contentType string
+	req, err := stream.Recv()
+	if err != nil {
+		return response.ParseError(err)
+	}
+
+	productID, err := request.ParseUUID(req.GetProductId())
+	if err != nil {
+		return response.ParseError(err)
+	}
+	contentType := req.GetContentType()
 
 	pr, pw := io.Pipe()
 	defer pr.Close()
@@ -39,7 +46,7 @@ func (h *ProductImageServiceHandler) UploadImage(
 		defer pw.Close()
 
 		for {
-			req, err := stream.Recv()
+			req, err = stream.Recv()
 			if err == io.EOF {
 				errChan <- nil
 				return
@@ -47,15 +54,6 @@ func (h *ProductImageServiceHandler) UploadImage(
 			if err != nil {
 				errChan <- fmt.Errorf("error receiving stream chunk: %w", err)
 				return
-			}
-
-			if productID == uuid.Nil {
-				productID, err = request.ParseUUID(req.GetProductId())
-				if err != nil {
-					errChan <- err
-					return
-				}
-				contentType = req.GetContentType()
 			}
 
 			if data := req.GetChunkData(); len(data) > 0 {
@@ -67,7 +65,7 @@ func (h *ProductImageServiceHandler) UploadImage(
 		}
 	}()
 
-	err := h.usecase.UpdateByID(stream.Context(), productID, pr, contentType)
+	err = h.usecase.UpdateByID(stream.Context(), productID, pr, contentType)
 	if err != nil {
 		return response.ParseError(err)
 	}
