@@ -110,6 +110,82 @@ func (s *ProductImageUseCaseTestSuite) TestUpdateByID() {
 	}
 }
 
+func (s *ProductImageUseCaseTestSuite) TestGetByID() {
+	tests := []struct {
+		name        string
+		setup       func(uowMock *mocks.UoWMock, imageServiceMock *productMock.ImageServiceMock) (uuid.UUID, string)
+		expectedErr error
+	}{
+		{
+			name: "Success",
+			setup: func(uow *mocks.UoWMock, imageServiceMock *productMock.ImageServiceMock) (uuid.UUID, string) {
+				product := s.createTestProduct()
+				expectedContentType := "image/png"
+				readCloser := io.NopCloser(bytes.NewReader([]byte("dummy data")))
+
+				uow.ProductMock.On("GetByID", s.ctx, product.ID).
+					Return(product, nil).Once()
+				imageServiceMock.On("Get", s.ctx, product.Image.Path).
+					Return(readCloser, expectedContentType, nil).Once()
+
+				return product.ID, expectedContentType
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "Failure: Product not found",
+			setup: func(uow *mocks.UoWMock, imageServiceMock *productMock.ImageServiceMock) (uuid.UUID, string) {
+				productID := uuid.New()
+				uow.ProductMock.On("GetByID", s.ctx, productID).
+					Return((*productDomain.Product)(nil), errors.New("product not found")).Once()
+				return productID, ""
+			},
+			expectedErr: errors.New("product not found"),
+		},
+		{
+			name: "Failure: Image service get error",
+			setup: func(uow *mocks.UoWMock, imageServiceMock *productMock.ImageServiceMock) (uuid.UUID, string) {
+				product := s.createTestProduct()
+
+				uow.ProductMock.On("GetByID", s.ctx, product.ID).
+					Return(product, nil).Once()
+				imageServiceMock.On("Get", s.ctx, product.Image.Path).
+					Return(io.NopCloser(nil), "", errors.New("image get failed")).Once()
+
+				return product.ID, ""
+			},
+			expectedErr: errors.New("image get failed"),
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		s.Run(tc.name, func() {
+			s.T().Parallel()
+			uow := mocks.NewUowMock()
+			imageServiceMock := &productMock.ImageServiceMock{}
+			productID, expectedContentType := tc.setup(uow, imageServiceMock)
+			usecase := productApplication.NewImageUseCase(uow, imageServiceMock)
+
+			actualReadCloser, actualContentType, err := usecase.GetByID(s.ctx, productID)
+
+			if tc.expectedErr != nil {
+				require.Error(s.T(), err)
+				require.EqualError(s.T(), err, tc.expectedErr.Error())
+			} else {
+				defer actualReadCloser.Close()
+
+				require.NoError(s.T(), err)
+				require.NotNil(s.T(), actualReadCloser)
+				require.Equal(s.T(), expectedContentType, actualContentType)
+			}
+
+			uow.AssertExpectations(s.T())
+			imageServiceMock.AssertExpectations(s.T())
+		})
+	}
+}
+
 func TestProductImageUseCaseTestSuite(t *testing.T) {
 	suite.Run(t, new(ProductImageUseCaseTestSuite))
 }
