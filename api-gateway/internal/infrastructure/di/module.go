@@ -15,6 +15,7 @@ import (
 	customerUseCase "api-gateway/internal/domain/usecases/customer"
 	orderUseCase "api-gateway/internal/domain/usecases/order"
 	warehouseUseCase "api-gateway/internal/domain/usecases/warehouse"
+	"api-gateway/internal/infrastructure/config"
 	"api-gateway/internal/infrastructure/logger"
 	"context"
 	"errors"
@@ -107,6 +108,11 @@ var LoggerModule = fx.Provide(
 
 	// Logger
 	logger.NewLogger,
+)
+
+var ConfigModule = fx.Provide(
+	// Streaming config
+	config.NewStreamingConfig,
 )
 
 func RunServer(lc fx.Lifecycle, router *gin.Engine, config *api.Config, log logger.Logger) {
