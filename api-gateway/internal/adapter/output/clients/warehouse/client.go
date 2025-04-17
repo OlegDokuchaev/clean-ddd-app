@@ -4,6 +4,7 @@ import (
 	warehouseGRPC "api-gateway/gen/warehouse/v1"
 	"api-gateway/internal/adapter/output/clients/response"
 	warehouseDto "api-gateway/internal/domain/dtos/warehouse"
+	"api-gateway/internal/infrastructure/config"
 	warehouseClient "api-gateway/internal/port/output/clients/warehouse"
 	"context"
 	"io"
@@ -14,10 +15,14 @@ import (
 
 type ClientImpl struct {
 	clients *GRPCClients
+	sConfig *config.StreamingConfig
 }
 
-func NewClient(clients *GRPCClients) warehouseClient.Client {
-	return &ClientImpl{clients: clients}
+func NewClient(clients *GRPCClients, sConfig *config.StreamingConfig) warehouseClient.Client {
+	return &ClientImpl{
+		clients: clients,
+		sConfig: sConfig,
+	}
 }
 
 func (c *ClientImpl) ReserveItems(ctx context.Context, items []warehouseDto.ItemInfoDto) error {
@@ -98,7 +103,7 @@ func (c *ClientImpl) UpdateProductImage(
 	}
 
 	// Send file data
-	buf := make([]byte, 32*1024)
+	buf := make([]byte, c.sConfig.FileChunkSizeBytes)
 	for {
 		n, err := fileReader.Read(buf)
 		if err != nil && err != io.EOF {
