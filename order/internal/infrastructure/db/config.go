@@ -2,15 +2,14 @@ package db
 
 import (
 	"fmt"
+
 	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	Host     string `envconfig:"POSTGRES_HOST" required:"true"`
-	Port     string `envconfig:"POSTGRES_PORT" required:"true"`
-	Database string `envconfig:"POSTGRES_DB" required:"true"`
-	Username string `envconfig:"POSTGRES_USER" required:"true"`
-	Password string `envconfig:"POSTGRES_PASSWORD" required:"true"`
+	URI             string `envconfig:"DB_URI" required:"true"`
+	Database        string `envconfig:"DB_NAME" required:"true"`
+	OrderCollection string `envconfig:"DB_ORDER_COLLECTION" required:"true"`
 }
 
 func NewConfig() (*Config, error) {
