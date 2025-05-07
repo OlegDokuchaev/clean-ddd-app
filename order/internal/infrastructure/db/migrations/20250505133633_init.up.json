@@ -1,0 +1,50 @@
+[
+  {
+    "create": "orders",
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["_id","customer_id","status","created","version","delivery","items"],
+        "properties": {
+          "_id":         { "bsonType": "string" },
+          "customer_id": { "bsonType": "string" },
+          "status": {
+            "enum": [
+              "created",
+              "canceled_courier_not_found",
+              "canceled_out_of_stock",
+              "delivering",
+              "delivered",
+              "customer_canceled"
+            ]
+          },
+          "created":     { "bsonType": "date" },
+          "version":     { "bsonType": "string" },
+          "delivery": {
+            "bsonType": "object",
+            "required": ["address"],
+            "properties": {
+              "courier_id": { "bsonType": ["string","null"] },
+              "address":    { "bsonType": "string" },
+              "arrived":    { "bsonType": ["date","null"] }
+            }
+          },
+          "items": {
+            "bsonType": "array",
+            "items": {
+              "bsonType": "object",
+              "required": ["product_id","price","count"],
+              "properties": {
+                "product_id": { "bsonType": "string" },
+                "price":      { "bsonType": "string" },
+                "count":      { "bsonType": "int" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "validationLevel": "strict",
+    "validationAction": "error"
+  }
+]
