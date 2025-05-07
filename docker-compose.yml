@@ -17,6 +17,21 @@ services:
       timeout: 5s
       retries: 5
 
+  order_mongo_db:
+    container_name: "clean_app_order_mongo_db"
+    image: mongo:latest
+    volumes:
+      - mongo_data_order:/data/db
+    ports:
+      - "27017:27017"
+    env_file:
+      - ./order/.env
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   warehouse_db:
     container_name: "clean_app_warehouse_db"
     image: postgres:latest
@@ -162,7 +177,7 @@ services:
     volumes:
       - ./order:/order
     depends_on:
-      order_db:
+      order_mongo_db:
         condition: service_healthy
       message_bus_kafka:
         condition: service_healthy
@@ -173,7 +188,7 @@ services:
     environment:
       - DEV_MODE=air
     ports:
-      - "50051:50051"
+      - "50055:50051"
     restart: always
 
   warehouse_service:
@@ -275,3 +290,4 @@ volumes:
   postgres_data_courier:
   postgres_data_customer:
   elasticsearch_data:
+  mongo_data_order:
