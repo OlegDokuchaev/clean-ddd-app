@@ -16,13 +16,12 @@ import (
 )
 
 const (
-	TestDbName         = "name"
-	TestCollectionName = "orders"
+	TestDbName = "name"
 )
 
 type TestDB struct {
-	Collection *mongo.Collection
-	container  testcontainers.Container
+	DB        *mongo.Database
+	container testcontainers.Container
 }
 
 func (d *TestDB) Close(ctx context.Context) error {
@@ -119,10 +118,8 @@ func NewTestDB(ctx context.Context, config *migrations.Config) (*TestDB, error) 
 		return nil, err
 	}
 
-	collection := db.Collection(TestCollectionName)
-
 	return &TestDB{
-		Collection: collection,
-		container:  container,
+		DB:        db,
+		container: container,
 	}, nil
 }

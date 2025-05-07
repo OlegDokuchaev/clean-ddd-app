@@ -14,12 +14,20 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+const (
+	TestOrderCollectionName = "orders"
 )
 
 type OrderRepositoryTestSuite struct {
 	suite.Suite
-	ctx    context.Context
-	testDB *testutils.TestDB
+
+	ctx context.Context
+
+	db              *testutils.TestDB
+	orderCollection *mongo.Collection
 }
 
 func (s *OrderRepositoryTestSuite) SetupSuite() {
@@ -28,19 +36,21 @@ func (s *OrderRepositoryTestSuite) SetupSuite() {
 
 	s.ctx = context.Background()
 
-	s.testDB, err = testutils.NewTestDB(s.ctx, config)
+	s.db, err = testutils.NewTestDB(s.ctx, config)
 	require.NoError(s.T(), err)
+
+	s.orderCollection = s.db.DB.Collection(TestOrderCollectionName)
 }
 
 func (s *OrderRepositoryTestSuite) TearDownSuite() {
-	if s.testDB != nil {
-		err := s.testDB.Close(s.ctx)
+	if s.db != nil {
+		err := s.db.Close(s.ctx)
 		require.NoError(s.T(), err)
 	}
 }
 
 func (s *OrderRepositoryTestSuite) getRepo() orderDomain.Repository {
-	return orderRepository.New(s.testDB.DB)
+	return orderRepository.New(s.orderCollection)
 }
 
 func (s *OrderRepositoryTestSuite) createTestOrder() *orderDomain.Order {
