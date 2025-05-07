@@ -2,91 +2,143 @@ package order
 
 import (
 	orderDomain "order/internal/domain/order"
-	"order/internal/infrastructure/db/tables"
+	"order/internal/infrastructure/db/documents"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
-func ToDomain(model *tables.Order) *orderDomain.Order {
-	return &orderDomain.Order{
-		ID:         model.ID,
-		CustomerID: model.CustomerID,
-		Status:     model.Status,
-		Created:    model.Created,
-		Version:    model.Version,
-		Items:      toItemDomains(model.Items),
-		Delivery:   toDeliveryDomain(model.Delivery),
+func toDoc(o *orderDomain.Order) *documents.Order {
+	return &documents.Order{
+		ID:         o.ID.String(),
+		CustomerID: o.CustomerID.String(),
+		Status:     o.Status,
+		Created:    o.Created,
+		Version:    o.Version.String(),
+		Delivery:   toDeliveryDoc(o.Delivery),
+		Items:      toItemsDoc(o.Items),
 	}
 }
 
-func toItemDomain(model tables.OrderItem) orderDomain.Item {
-	return orderDomain.Item{
-		ProductID: model.ProductID,
-		Price:     model.Price,
-		Count:     model.Count,
-	}
-}
-
-func toDeliveryDomain(model tables.Delivery) orderDomain.Delivery {
-	return orderDomain.Delivery{
-		CourierID: model.CourierID,
-		Address:   model.Address,
-		Arrived:   model.Arrived,
-	}
-}
-
-func ToDomains(models []*tables.Order) []*orderDomain.Order {
-	domains := make([]*orderDomain.Order, 0, len(models))
-	for _, model := range models {
-		domains = append(domains, ToDomain(model))
-	}
-	return domains
-}
-
-func toItemDomains(models []tables.OrderItem) []orderDomain.Item {
-	domains := make([]orderDomain.Item, 0, len(models))
-	for _, model := range models {
-		domains = append(domains, toItemDomain(model))
-	}
-	return domains
-}
-
-func ToModel(domain *orderDomain.Order) *tables.Order {
-	return &tables.Order{
-		ID:         domain.ID,
-		CustomerID: domain.CustomerID,
-		Status:     domain.Status,
-		Created:    domain.Created,
-		Version:    domain.Version,
-		Items:      toItemModels(domain.ID, domain.Items),
-		Delivery:   toDeliveryModel(domain.ID, domain.Delivery),
-	}
-}
-
-func toItemModels(orderID uuid.UUID, domains []orderDomain.Item) []tables.OrderItem {
-	models := make([]tables.OrderItem, 0, len(domains))
-	for _, domain := range domains {
-		models = append(models, toItemModel(orderID, domain))
-	}
-	return models
-}
-
-func toItemModel(orderID uuid.UUID, domain orderDomain.Item) tables.OrderItem {
-	return tables.OrderItem{
-		ID:        uuid.New(),
-		OrderID:   orderID,
-		ProductID: domain.ProductID,
-		Price:     domain.Price,
+func toItemDoc(domain orderDomain.Item) documents.OrderItem {
+	return documents.OrderItem{
+		ProductID: domain.ProductID.String(),
+		Price:     domain.Price.String(),
 		Count:     domain.Count,
 	}
 }
 
-func toDeliveryModel(orderID uuid.UUID, domain orderDomain.Delivery) tables.Delivery {
-	return tables.Delivery{
-		ID:        uuid.New(),
-		OrderID:   orderID,
-		CourierID: domain.CourierID,
+func toDeliveryDoc(domain orderDomain.Delivery) documents.Delivery {
+	var courierID *string
+	if domain.CourierID != nil {
+		id := domain.CourierID.String()
+		courierID = &id
+	}
+
+	return documents.Delivery{
+		CourierID: courierID,
 		Address:   domain.Address,
 		Arrived:   domain.Arrived,
 	}
+}
+
+func toItemsDoc(domains []orderDomain.Item) []documents.OrderItem {
+	items := make([]documents.OrderItem, 0, len(domains))
+	for _, domain := range domains {
+		items = append(items, toItemDoc(domain))
+	}
+	return items
+}
+
+func toDomain(doc *documents.Order) (*orderDomain.Order, error) {
+	id, err := uuid.Parse(doc.ID)
+	if err != nil {
+		return nil, err
+	}
+	customerID, err := uuid.Parse(doc.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+	version, err := uuid.Parse(doc.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := toItemsDomain(doc.Items)
+	if err != nil {
+		return nil, err
+	}
+
+	delivery, err := toDeliveryDomain(doc.Delivery)
+	if err != nil {
+		return nil, err
+	}
+
+	return &orderDomain.Order{
+		ID:         id,
+		CustomerID: customerID,
+		Status:     doc.Status,
+		Created:    doc.Created,
+		Version:    version,
+		Delivery:   delivery,
+		Items:      items,
+	}, nil
+}
+
+func toItemDomain(doc documents.OrderItem) (orderDomain.Item, error) {
+	prodID, err := uuid.Parse(doc.ProductID)
+	if err != nil {
+		return orderDomain.Item{}, err
+	}
+	price, err := decimal.NewFromString(doc.Price)
+	if err != nil {
+		return orderDomain.Item{}, err
+	}
+
+	return orderDomain.Item{
+		ProductID: prodID,
+		Price:     price,
+		Count:     doc.Count,
+	}, nil
+}
+
+func toDeliveryDomain(doc documents.Delivery) (orderDomain.Delivery, error) {
+	var courierID *uuid.UUID
+	if doc.CourierID != nil {
+		tmp, err := uuid.Parse(*doc.CourierID)
+		if err != nil {
+			return orderDomain.Delivery{}, err
+		}
+		courierID = &tmp
+	}
+
+	return orderDomain.Delivery{
+		CourierID: courierID,
+		Address:   doc.Address,
+		Arrived:   doc.Arrived,
+	}, nil
+}
+
+func toDomains(docs []documents.Order) ([]*orderDomain.Order, error) {
+	orders := make([]*orderDomain.Order, 0, len(docs))
+	for _, doc := range docs {
+		o, err := toDomain(&doc)
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, o)
+	}
+	return orders, nil
+}
+
+func toItemsDomain(docs []documents.OrderItem) ([]orderDomain.Item, error) {
+	items := make([]orderDomain.Item, 0, len(docs))
+	for _, model := range docs {
+		item, err := toItemDomain(model)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, nil
 }

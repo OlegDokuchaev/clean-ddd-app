@@ -3,8 +3,8 @@ package order
 import (
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgconn"
-	"gorm.io/gorm"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var (
@@ -13,24 +13,22 @@ var (
 )
 
 func ParseError(err error) error {
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, mongo.ErrNoDocuments) {
 		return ErrOrderNotFound
 	}
 
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		return parsePgError(pgErr)
+	var we mongo.WriteException
+	if errors.As(err, &we) {
+		for _, writeErr := range we.WriteErrors {
+			if writeErr.Code == 11000 {
+				return ErrOrderAlreadyExists
+			}
+		}
+		return fmt.Errorf("order not saved: %w", err)
 	}
 
 	return err
-}
-
-func parsePgError(err *pgconn.PgError) error {
-	switch err.ConstraintName {
-	case "orders_pkey":
-		return ErrOrderAlreadyExists
-
-	default:
-		return fmt.Errorf("order not saved: %v", err)
-	}
 }

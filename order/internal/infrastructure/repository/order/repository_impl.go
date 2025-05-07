@@ -2,98 +2,84 @@ package order
 
 import (
 	"context"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"order/internal/infrastructure/db/documents"
+
 	orderDomain "order/internal/domain/order"
-	"order/internal/infrastructure/db/tables"
+
+	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type RepositoryImpl struct {
-	db *gorm.DB
+	collection *mongo.Collection
 }
 
-func New(db *gorm.DB) *RepositoryImpl {
-	return &RepositoryImpl{db: db}
+func New(collection *mongo.Collection) *RepositoryImpl {
+	return &RepositoryImpl{collection: collection}
 }
 
 func (r *RepositoryImpl) Create(ctx context.Context, order *orderDomain.Order) error {
-	orderModel := ToModel(order)
-	res := r.db.WithContext(ctx).Create(orderModel)
-	return ParseError(res.Error)
+	doc := toDoc(order)
+	_, err := r.collection.InsertOne(ctx, doc)
+	return ParseError(err)
 }
 
 func (r *RepositoryImpl) Update(ctx context.Context, order *orderDomain.Order) error {
+	oldVersion := order.Version
 	newVersion := uuid.New()
-	orderModel := ToModel(order)
+	order.Version = newVersion
+	doc := toDoc(order)
 
-	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		res := tx.Model(&tables.Order{}).
-			Where("id = ? AND version = ?", orderModel.ID, orderModel.Version).
-			Updates(map[string]any{
-				"customer_id": orderModel.CustomerID,
-				"status":      orderModel.Status,
-				"created":     orderModel.Created,
-				"version":     newVersion,
-			})
-		if res.Error != nil {
-			return ParseError(res.Error)
-		}
-		if res.RowsAffected == 0 {
-			return ErrOrderNotFound
-		}
-
-		return updateDelivery(tx, orderModel.ID, orderModel.Delivery)
-	})
-
-	if err == nil {
-		order.Version = newVersion
+	filter := bson.M{"_id": order.ID.String(), "version": oldVersion.String()}
+	result, err := r.collection.ReplaceOne(ctx, filter, doc)
+	if err != nil {
+		return ParseError(err)
 	}
-	return err
+	if result.MatchedCount == 0 {
+		return ErrOrderNotFound
+	}
+
+	return nil
 }
 
 func (r *RepositoryImpl) GetByID(ctx context.Context, orderID uuid.UUID) (*orderDomain.Order, error) {
-	var orderModel tables.Order
-	if err := r.db.WithContext(ctx).
-		Preload("Items").
-		Preload("Delivery").
-		Where("id = ?", orderID).
-		First(&orderModel).Error; err != nil {
+	filter := bson.M{"_id": orderID.String()}
+	var doc documents.Order
+	if err := r.collection.FindOne(ctx, filter).Decode(&doc); err != nil {
 		return nil, ParseError(err)
 	}
-	return ToDomain(&orderModel), nil
+	return toDomain(&doc)
 }
 
 func (r *RepositoryImpl) GetAllByCustomer(ctx context.Context, customerID uuid.UUID) ([]*orderDomain.Order, error) {
-	var orderModels []*tables.Order
-	if err := r.db.WithContext(ctx).
-		Preload("Items").
-		Preload("Delivery").
-		Where("customer_id = ?", customerID).
-		Find(&orderModels).Error; err != nil {
+	filter := bson.M{"customer_id": customerID.String()}
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
 		return nil, ParseError(err)
 	}
-	return ToDomains(orderModels), nil
+	defer cursor.Close(ctx)
+
+	var docs []documents.Order
+	if err := cursor.All(ctx, &docs); err != nil {
+		return nil, ParseError(err)
+	}
+	return toDomains(docs)
 }
 
 func (r *RepositoryImpl) GetCurrentByCourier(ctx context.Context, courierID uuid.UUID) ([]*orderDomain.Order, error) {
-	var orderModels []*tables.Order
-	if err := r.db.WithContext(ctx).
-		Joins("JOIN deliveries ON deliveries.order_id = orders.id").
-		Preload("Items").
-		Preload("Delivery").
-		Where("deliveries.courier_id = ?", courierID).
-		Find(&orderModels).Error; err != nil {
+	filter := bson.M{"delivery.courier_id": courierID.String()}
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
 		return nil, ParseError(err)
 	}
-	return ToDomains(orderModels), nil
-}
+	defer cursor.Close(ctx)
 
-func updateDelivery(tx *gorm.DB, orderID uuid.UUID, delivery tables.Delivery) error {
-	if err := tx.Where("order_id = ?", orderID).Delete(&tables.Delivery{}).Error; err != nil {
-		return ParseError(err)
+	var docs []documents.Order
+	if err := cursor.All(ctx, &docs); err != nil {
+		return nil, ParseError(err)
 	}
-	res := tx.Create(&delivery)
-	return ParseError(res.Error)
+	return toDomains(docs)
 }
 
 var _ orderDomain.Repository = (*RepositoryImpl)(nil)
