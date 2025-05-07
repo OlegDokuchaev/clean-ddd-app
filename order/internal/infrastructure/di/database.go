@@ -11,5 +11,11 @@ var DatabaseModule = fx.Provide(
 	db.NewConfig,
 
 	// Database connection
+	db.NewConnection,
+
+	// Database
 	db.NewDB,
+
+	// Order collection
+	db.NewOrderCollection,
 )
