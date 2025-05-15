@@ -11,10 +11,9 @@ import (
 )
 
 func NewConnection(cfg *Config) (*mongo.Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
-	clientOptions := options.Client().ApplyURI(cfg.URI)
+	clientOptions := options.Client().ApplyURI(cfg.URI).SetConnectTimeout(cfg.ConnectTimeoutSeconds * time.Second)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
