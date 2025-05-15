@@ -8,10 +8,10 @@ import (
 )
 
 type Config struct {
-	URI                   string        `envconfig:"DB_URI" required:"true"`
-	Database              string        `envconfig:"DB_NAME" required:"true"`
-	OrderCollection       string        `envconfig:"DB_ORDER_COLLECTION" required:"true"`
-	ConnectTimeoutSeconds time.Duration `envconfig:"DB_CONNECT_TIMEOUT_SECONDS" required:"true"`
+	URI             string        `envconfig:"DB_URI" required:"true"`
+	Database        string        `envconfig:"DB_NAME" required:"true"`
+	OrderCollection string        `envconfig:"DB_ORDER_COLLECTION" required:"true"`
+	ConnectTimeout  time.Duration `envconfig:"DB_CONNECT_TIMEOUT" required:"true"`
 }
 
 func NewConfig() (*Config, error) {

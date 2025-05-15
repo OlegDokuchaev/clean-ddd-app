@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -13,7 +12,7 @@ import (
 func NewConnection(cfg *Config) (*mongo.Client, error) {
 	ctx := context.Background()
 
-	clientOptions := options.Client().ApplyURI(cfg.URI).SetConnectTimeout(cfg.ConnectTimeoutSeconds * time.Second)
+	clientOptions := options.Client().ApplyURI(cfg.URI).SetConnectTimeout(cfg.ConnectTimeout)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
