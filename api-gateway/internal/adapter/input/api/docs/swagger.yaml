@@ -1,0 +1,789 @@
+basePath: /
+definitions:
+  courier_request.LoginRequest:
+    properties:
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - password
+    - phone
+    type: object
+  courier_request.RegisterRequest:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - name
+    - password
+    - phone
+    type: object
+  courier_response.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  courier_response.RegisterResponse:
+    properties:
+      courier_id:
+        type: string
+    type: object
+  customer_request.LoginRequest:
+    properties:
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - password
+    - phone
+    type: object
+  customer_request.RegisterRequest:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - name
+    - password
+    - phone
+    type: object
+  customer_response.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  customer_response.RegisterResponse:
+    properties:
+      customer_id:
+        type: string
+    type: object
+  order_request.CreateRequest:
+    properties:
+      address:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/order_request.ItemSchema'
+        minItems: 1
+        type: array
+    required:
+    - address
+    - items
+    type: object
+  order_request.ItemSchema:
+    properties:
+      count:
+        type: integer
+      price:
+        type: number
+      product_id:
+        type: string
+    required:
+    - count
+    - price
+    - product_id
+    type: object
+  order_response.DeliverySchema:
+    properties:
+      address:
+        type: string
+      arrived:
+        type: string
+      courier_id:
+        type: string
+    type: object
+  order_response.ItemSchema:
+    properties:
+      count:
+        type: integer
+      price:
+        type: number
+      product_id:
+        type: string
+    type: object
+  order_response.OrderResponse:
+    properties:
+      created:
+        type: string
+      customer_id:
+        type: string
+      delivery:
+        $ref: '#/definitions/order_response.DeliverySchema'
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/order_response.ItemSchema'
+        type: array
+      status:
+        type: string
+      version:
+        type: string
+    type: object
+  order_response.OrdersResponse:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/order_response.OrderResponse'
+        type: array
+    type: object
+  response.ErrorResponseDetail:
+    properties:
+      detail:
+        type: string
+    type: object
+  warehouse_request.CreateProductRequest:
+    properties:
+      name:
+        type: string
+      price:
+        type: number
+    required:
+    - name
+    - price
+    type: object
+  warehouse_request.ItemInfoSchema:
+    properties:
+      count:
+        minimum: 1
+        type: integer
+      product_id:
+        type: string
+    required:
+    - count
+    - product_id
+    type: object
+  warehouse_request.ReleaseItemsRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/warehouse_request.ItemInfoSchema'
+        minItems: 1
+        type: array
+    required:
+    - items
+    type: object
+  warehouse_request.ReserveItemsRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/warehouse_request.ItemInfoSchema'
+        minItems: 1
+        type: array
+    required:
+    - items
+    type: object
+  warehouse_response.CreateProductResponse:
+    properties:
+      product_id:
+        type: string
+    type: object
+  warehouse_response.ItemResponse:
+    properties:
+      count:
+        type: integer
+      item_id:
+        type: string
+      product:
+        $ref: '#/definitions/warehouse_response.ProductSchema'
+      version:
+        type: string
+    type: object
+  warehouse_response.ItemsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/warehouse_response.ItemResponse'
+        type: array
+    type: object
+  warehouse_response.ProductSchema:
+    properties:
+      created:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      product_id:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is the API Gateway for the Clean DDD application.
+  title: Clean DDD App API Gateway
+  version: "1.0"
+paths:
+  /couriers/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a courier and get a JWT token
+      parameters:
+      - description: Courier login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/courier_request.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/courier_response.LoginResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Courier not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      summary: Courier login
+      tags:
+      - couriers
+  /couriers/me/orders:
+    get:
+      consumes:
+      - application/json
+      description: Get all current orders for the authenticated courier
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of orders
+          schema:
+            $ref: '#/definitions/order_response.OrdersResponse'
+        "401":
+          description: Missing or invalid bearer token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - CourierBearerAuth: []
+      summary: Get courier orders
+      tags:
+      - couriers
+  /couriers/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new courier with name, password and phone
+      parameters:
+      - description: Courier registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/courier_request.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Courier created successfully
+          schema:
+            $ref: '#/definitions/courier_response.RegisterResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "409":
+          description: Courier with this phone already exists
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid data format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      summary: Register new courier
+      tags:
+      - couriers
+  /customers/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a customer and get a JWT token
+      parameters:
+      - description: Customer login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/customer_request.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/customer_response.LoginResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Customer not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      summary: Customer login
+      tags:
+      - customers
+  /customers/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new customer with name, password and phone
+      parameters:
+      - description: Customer registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/customer_request.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Customer created successfully
+          schema:
+            $ref: '#/definitions/customer_response.RegisterResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "409":
+          description: Customer with this phone already exists
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid data format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      summary: Register new customer
+      tags:
+      - customers
+  /items:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all items available in the warehouse
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of items
+          schema:
+            $ref: '#/definitions/warehouse_response.ItemsResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      summary: Get all warehouse items
+      tags:
+      - items
+  /items/decrease:
+    patch:
+      consumes:
+      - application/json
+      description: Decrease the quantity of items in the warehouse (admin only)
+      parameters:
+      - description: Items to decrease quantity
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/warehouse_request.ReleaseItemsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ' "Quantity decreased successfully'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Missing or invalid access token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Item not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid item data or insufficient quantity
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - AdminAccessToken: []
+      summary: Decrease items quantity
+      tags:
+      - items
+  /items/increase:
+    patch:
+      consumes:
+      - application/json
+      description: Increase the quantity of items in the warehouse (admin only)
+      parameters:
+      - description: Items to increase quantity
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/warehouse_request.ReserveItemsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ' "Quantity increased successfully'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Missing or invalid access token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Item not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid item data
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - AdminAccessToken: []
+      summary: Increase items quantity
+      tags:
+      - items
+  /orders:
+    get:
+      consumes:
+      - application/json
+      description: Get all orders for the authenticated customer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of orders
+          schema:
+            $ref: '#/definitions/order_response.OrdersResponse'
+        "401":
+          description: Missing or invalid bearer token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - CustomerBearerAuth: []
+      summary: Get customer orders
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      description: Create a new order with items
+      parameters:
+      - description: Order details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/order_request.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ' "Created with location header'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Missing or invalid bearer token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid item data
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - CustomerBearerAuth: []
+      summary: Create a new order
+      tags:
+      - orders
+  /orders/{id}/cancel:
+    patch:
+      consumes:
+      - application/json
+      description: Cancel an order by its ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ' "No Content'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Missing or invalid bearer token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Order not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid order ID format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - CustomerBearerAuth: []
+      summary: Cancel an order
+      tags:
+      - orders
+  /orders/{id}/complete:
+    patch:
+      consumes:
+      - application/json
+      description: Mark an order as delivered (completed)
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ' "OK'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Missing or invalid bearer token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Order not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid order ID format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - CourierBearerAuth: []
+      summary: Complete order
+      tags:
+      - orders
+  /products:
+    post:
+      consumes:
+      - application/json
+      description: Create a new product in the warehouse (admin only)
+      parameters:
+      - description: Product details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/warehouse_request.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Product created successfully
+          schema:
+            $ref: '#/definitions/warehouse_response.CreateProductResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Missing or invalid access token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "409":
+          description: Product already exists
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid product data
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - AdminAccessToken: []
+      summary: Create a new product
+      tags:
+      - products
+  /products/{id}/image:
+    get:
+      description: Get the image for a specific product (admin only)
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - image/*
+      responses:
+        "200":
+          description: Product image
+          schema:
+            type: file
+        "400":
+          description: Invalid request format or invalid product ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Missing or invalid access token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Product or image not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - AdminAccessToken: []
+      summary: Get product image
+      tags:
+      - products
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update the image for a specific product (admin only)
+      parameters:
+      - description: Product ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content" "Image updated successfully
+        "400":
+          description: Invalid request format or invalid product ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Missing or invalid access token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      security:
+      - AdminAccessToken: []
+      summary: Update product image
+      tags:
+      - products
+securityDefinitions:
+  AdminAccessToken:
+    description: Admin's access token.
+    in: header
+    name: X-Access-Token
+    type: apiKey
+  CourierBearerAuth:
+    description: Courier's JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+  CustomerBearerAuth:
+    description: Customer's JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

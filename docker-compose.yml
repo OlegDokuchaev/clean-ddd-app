@@ -1,0 +1,293 @@
+version: "3.8"
+name: "clean-ddd-app"
+
+services:
+  order_db:
+    container_name: "clean_app_order_db"
+    image: postgres:latest
+    volumes:
+      - postgres_data_order:/var/lib/postgresql/data/
+    ports:
+      - "5444:5432"
+    env_file:
+      - ./order/.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  order_mongo_db:
+    container_name: "clean_app_order_mongo_db"
+    image: mongo:latest
+    volumes:
+      - mongo_data_order:/data/db
+    ports:
+      - "27017:27017"
+    env_file:
+      - ./order/.env
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  warehouse_db:
+    container_name: "clean_app_warehouse_db"
+    image: postgres:latest
+    volumes:
+      - postgres_data_warehouse:/var/lib/postgresql/data/
+    ports:
+      - "5445:5432"
+    env_file:
+      - ./warehouse/.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  courier_db:
+    container_name: "clean_app_courier_db"
+    image: postgres:latest
+    volumes:
+      - postgres_data_courier:/var/lib/postgresql/data/
+    ports:
+      - "5446:5432"
+    env_file:
+      - ./courier/.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  customer_db:
+    container_name: "clean_app_customer_db"
+    image: postgres:latest
+    volumes:
+      - postgres_data_customer:/var/lib/postgresql/data/
+    ports:
+      - "5447:5432"
+    env_file:
+      - ./customer/.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  message_bus_zookeeper:
+    container_name: "clean_app_message_bus_zookeeper"
+    image: confluentinc/cp-zookeeper:latest
+    env_file:
+      - .env
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test: ["CMD-SHELL", "zookeeper-shell localhost:2181 ls / 2>&1 | grep zookeeper"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  message_bus_kafka:
+    container_name: "clean_app_message_bus_kafka"
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      message_bus_zookeeper:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    container_name: "clean_app_elasticsearch"
+    image: elasticsearch:8.12.2
+    volumes:
+      - ./configs/elasticsearch/config.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    environment:
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+      discovery.type: single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  
+  minio:
+    image: minio/minio:latest
+    container_name: "clean_app_minio"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data:/data
+      - ./config:/root/.minio
+    env_file:
+      - .env
+    command: server /data --console-address ":9001"
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  logstash:
+    container_name: "clean_app_logstash"
+    image: logstash:8.12.2
+    volumes:
+      - ./configs/logstash/config.yml:/usr/share/logstash/config/config.yml:ro
+      - ./configs/logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5001:5000"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  kibana:
+    container_name: "clean_app_kibana"
+    image: kibana:8.12.2
+    ports:
+      - "5601:5601"
+    volumes:
+      - ./configs/kibana/config.yml:/usr/share/kibana/config/kibana.yml:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  order_service:
+    container_name: "clean_app_order_service"
+    build:
+      context: ./order
+      dockerfile: Dockerfile
+    volumes:
+      - ./order:/order
+    depends_on:
+      order_mongo_db:
+        condition: service_healthy
+      message_bus_kafka:
+        condition: service_healthy
+      logstash:
+        condition: service_started
+    env_file:
+      - ./order/.env
+    environment:
+      - DEV_MODE=air
+    ports:
+      - "50055:50051"
+    restart: always
+
+  warehouse_service:
+    container_name: "clean_app_warehouse_service"
+    build:
+      context: ./warehouse
+      dockerfile: Dockerfile
+    volumes:
+      - ./warehouse:/warehouse
+    depends_on:
+      warehouse_db:
+        condition: service_healthy
+      message_bus_kafka:
+        condition: service_healthy
+      logstash:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    env_file:
+      - ./warehouse/.env
+    environment:
+      - DEV_MODE=air
+    ports:
+      - "50052:50051"
+    restart: always
+
+  courier_service:
+    container_name: "clean_app_courier_service"
+    build:
+      context: ./courier
+      dockerfile: Dockerfile
+    volumes:
+      - ./courier:/courier
+    depends_on:
+      courier_db:
+        condition: service_healthy
+      message_bus_kafka:
+        condition: service_healthy
+      logstash:
+        condition: service_started
+    env_file:
+      - ./courier/.env
+    environment:
+      - DEV_MODE=air
+    ports:
+      - "50053:50051"
+    restart: always
+
+  customer_service:
+    container_name: "clean_app_customer_service"
+    build:
+      context: ./customer
+      dockerfile: Dockerfile
+    volumes:
+      - ./customer:/customer
+    depends_on:
+      customer_db:
+        condition: service_healthy
+      logstash:
+        condition: service_started
+    env_file:
+      - ./customer/.env
+    environment:
+      - DEV_MODE=air
+    ports:
+      - "50054:50051"
+    restart: always
+
+  api_gateway_service:
+    container_name: "clean_app_api_gateway_service"
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    volumes:
+      - ./api-gateway:/api-gateway
+    depends_on:
+      courier_service:
+        condition: service_started
+      customer_service:
+        condition: service_started
+      order_service:
+        condition: service_started
+      warehouse_service:
+        condition: service_started
+      logstash:
+          condition: service_started
+    env_file:
+      - ./api-gateway/.env
+    environment:
+      - GIN_MODE=debug
+    ports:
+      - "8082:8080"
+    restart: always
+
+
+volumes:
+  postgres_data_order:
+  postgres_data_warehouse:
+  postgres_data_courier:
+  postgres_data_customer:
+  elasticsearch_data:
+  mongo_data_order:

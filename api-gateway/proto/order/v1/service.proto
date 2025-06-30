@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package order.v1;
+
+option go_package = "github.com/OlegDokuchaev/clean-ddd-app/api-gateway/proto/order/v1;order_v1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+//
+// OrderService provides operations for creating and managing orders.
+// API Version: v1
+//
+service OrderService {
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+
+  rpc CancelOrderByCustomer(CancelOrderByCustomerRequest) returns (google.protobuf.Empty);
+
+  rpc CompleteDelivery(CompleteDeliveryRequest) returns (google.protobuf.Empty);
+
+  rpc GetOrdersByCustomer(GetOrdersByCustomerRequest) returns (GetOrdersByCustomerResponse);
+
+  rpc GetCurrentOrdersByCourier(GetCurrentOrdersByCourierRequest) returns (GetCurrentOrdersByCourierResponse);
+}
+
+//
+// Message definitions
+//
+
+message CreateOrderRequest {
+  string customer_id = 1;
+  string address = 2;
+  repeated OrderItem items = 3;
+}
+
+message CreateOrderResponse {
+  string order_id = 1;
+}
+
+message CancelOrderByCustomerRequest {
+  string order_id = 1;
+}
+
+message CompleteDeliveryRequest {
+  string order_id = 1;
+}
+
+message GetOrdersByCustomerRequest {
+  string customer_id = 1;
+}
+
+message GetOrdersByCustomerResponse {
+  repeated Order orders = 1;
+}
+
+message GetCurrentOrdersByCourierRequest {
+  string courier_id = 1;
+}
+
+message GetCurrentOrdersByCourierResponse {
+  repeated Order orders = 1;
+}
+
+message Order {
+  string order_id = 1;
+  string customer_id = 2;
+  OrderStatus status = 3;
+  string version = 4;
+  repeated OrderItem items = 5;
+  Delivery delivery = 6;
+  google.protobuf.Timestamp created = 7;
+}
+
+message OrderItem {
+  string product_id = 1;
+  double price = 2;
+  int32 count = 3;
+}
+
+message Delivery {
+  optional string courier_id = 1;
+  string address = 2;
+  optional google.protobuf.Timestamp arrived = 3;
+}
+
+enum OrderStatus {
+  CREATED = 0;
+  CANCELED_COURIER_NOT_FOUND = 1;
+  CANCELED_OUT_OF_STOCK = 2;
+  DELIVERING = 3;
+  DELIVERED = 4;
+  CUSTOMER_CANCELED = 5;
+}
