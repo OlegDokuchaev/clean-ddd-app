@@ -3,16 +3,13 @@ package saga
 import (
 	"context"
 	"errors"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	createOrder "order/internal/application/order/saga/create_order"
 	orderDomain "order/internal/domain/order"
 	createOrderMock "order/internal/mocks/order/saga/create_order"
+	"order/internal/tests/testutils/mothers"
 	"testing"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 )
 
 type CreateOrderSagaManagerTestSuite struct {
@@ -32,42 +29,16 @@ func (s *CreateOrderSagaManagerTestSuite) TestCreate() {
 		expectedErr error
 	}{
 		{
-			name: "Success",
-			order: &orderDomain.Order{
-				ID:         uuid.New(),
-				CustomerID: uuid.New(),
-				Status:     orderDomain.Created,
-				Created:    time.Now(),
-				Version:    uuid.New(),
-				Items: []orderDomain.Item{
-					{
-						ProductID: uuid.New(),
-						Price:     decimal.NewFromInt(100),
-						Count:     2,
-					},
-				},
-			},
+			name:  "Success",
+			order: mothers.DefaultOrder(),
 			setup: func(publisher *createOrderMock.PublisherMock) {
 				publisher.On("PublishReserveItemsCmd", mock.Anything, mock.Anything).Return(nil).Once()
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "Failure: Publisher error",
-			order: &orderDomain.Order{
-				ID:         uuid.New(),
-				CustomerID: uuid.New(),
-				Status:     orderDomain.Created,
-				Created:    time.Now(),
-				Version:    uuid.New(),
-				Items: []orderDomain.Item{
-					{
-						ProductID: uuid.New(),
-						Price:     decimal.NewFromInt(100),
-						Count:     2,
-					},
-				},
-			},
+			name:  "Failure: Publisher error",
+			order: mothers.DefaultOrder(),
 			setup: func(publisher *createOrderMock.PublisherMock) {
 				publisher.On("PublishReserveItemsCmd", mock.Anything, mock.Anything).
 					Return(errors.New("publisher error")).Once()
