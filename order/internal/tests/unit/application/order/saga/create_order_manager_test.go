@@ -3,8 +3,9 @@ package saga
 import (
 	"context"
 	"errors"
+	"github.com/ozontech/allure-go/pkg/framework/provider"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 	createOrder "order/internal/application/order/saga/create_order"
 	orderDomain "order/internal/domain/order"
 	createOrderMock "order/internal/mocks/order/saga/create_order"
@@ -21,7 +22,9 @@ func (s *CreateOrderSagaManagerTestSuite) SetupTest() {
 	s.ctx = context.Background()
 }
 
-func (s *CreateOrderSagaManagerTestSuite) TestCreate() {
+func (s *CreateOrderSagaManagerTestSuite) TestCreate(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		order       *orderDomain.Order
@@ -49,19 +52,20 @@ func (s *CreateOrderSagaManagerTestSuite) TestCreate() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			publisher := new(createOrderMock.PublisherMock)
 			manager := createOrder.NewManager(publisher)
 			tc.setup(publisher)
 
 			manager.Create(s.ctx, tc.order)
 
-			publisher.AssertExpectations(s.T())
+			publisher.AssertExpectations(t)
 		})
 	}
 }
 
 func TestCreateOrderSagaManagerTestSuite(t *testing.T) {
-	suite.Run(t, new(CreateOrderSagaManagerTestSuite))
+	suite.RunSuite(t, new(CreateOrderSagaManagerTestSuite))
 }
