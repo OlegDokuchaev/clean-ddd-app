@@ -7,10 +7,10 @@ import (
 	orderDomain "order/internal/domain/order"
 	orderMock "order/internal/mocks/order"
 	createOrderMock "order/internal/mocks/order/saga/create_order"
+	"order/internal/tests/testutils/mothers"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -149,16 +149,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 			event: createOrder.CourierAssignmentFailed{
 				OrderID: uuid.New(),
 			},
-			order: &orderDomain.Order{
-				ID: uuid.New(),
-				Items: []orderDomain.Item{
-					{
-						ProductID: uuid.New(),
-						Price:     decimal.NewFromInt(100),
-						Count:     2,
-					},
-				},
-			},
+			order:   mothers.DefaultOrder(),
 			repoErr: nil,
 			setup: func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock, order *orderDomain.Order) {
 				publisher.On("PublishReleaseItemsCmd", s.ctx, mock.Anything).Return(nil).Once()
@@ -184,16 +175,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 			event: createOrder.CourierAssignmentFailed{
 				OrderID: uuid.New(),
 			},
-			order: &orderDomain.Order{
-				ID: uuid.New(),
-				Items: []orderDomain.Item{
-					{
-						ProductID: uuid.New(),
-						Price:     decimal.NewFromInt(100),
-						Count:     2,
-					},
-				},
-			},
+			order:   mothers.DefaultOrder(),
 			repoErr: nil,
 			setup: func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock, order *orderDomain.Order) {
 				publisher.On("PublishReleaseItemsCmd", s.ctx, mock.Anything).
