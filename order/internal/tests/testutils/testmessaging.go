@@ -108,3 +108,7 @@ func NewTestMessaging(ctx context.Context) (*TestMessaging, error) {
 		url:       url,
 	}, nil
 }
+
+func (m *TestMessaging) Address() string {
+	return m.url
+}

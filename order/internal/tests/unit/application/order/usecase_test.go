@@ -3,19 +3,18 @@ package usecase_test
 import (
 	"context"
 	"errors"
-	"testing"
-	"time"
-
 	"github.com/google/uuid"
+	"github.com/ozontech/allure-go/pkg/framework/provider"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-
 	"order/internal/application/order/usecase"
 	orderDomain "order/internal/domain/order"
 	orderMock "order/internal/mocks/order"
 	createOrderMock "order/internal/mocks/order/saga/create_order"
+	"order/internal/tests/testutils/mothers"
+	"testing"
+	"time"
 )
 
 type OrderUseCaseTestSuite struct {
@@ -27,21 +26,9 @@ func (s *OrderUseCaseTestSuite) SetupTest() {
 	s.ctx = context.Background()
 }
 
-func (s *OrderUseCaseTestSuite) createTestOrder() *orderDomain.Order {
-	items := []orderDomain.Item{
-		{
-			ProductID: uuid.New(),
-			Price:     decimal.NewFromInt(100),
-			Count:     1,
-		},
-	}
+func (s *OrderUseCaseTestSuite) TestCreate(t provider.T) {
+	t.Parallel()
 
-	order, err := orderDomain.Create(uuid.New(), "Some Address", items)
-	require.NoError(s.T(), err)
-	return order
-}
-
-func (s *OrderUseCaseTestSuite) TestCreate() {
 	tests := []struct {
 		name        string
 		dto         usecase.CreateDto
@@ -99,8 +86,9 @@ func (s *OrderUseCaseTestSuite) TestCreate() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			repo := new(orderMock.RepositoryMock)
 			manager := new(createOrderMock.ManagerMock)
 			uc := usecase.New(repo, manager)
@@ -109,21 +97,23 @@ func (s *OrderUseCaseTestSuite) TestCreate() {
 			orderID, err := uc.Create(s.ctx, tc.dto)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
-				require.NotEqual(s.T(), uuid.Nil, orderID)
+				t.Require().NoError(err)
+				t.Require().NotEqual(uuid.Nil, orderID)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
-				require.Equal(s.T(), uuid.Nil, orderID)
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
+				t.Require().Equal(uuid.Nil, orderID)
 			}
 
-			repo.AssertExpectations(s.T())
-			manager.AssertExpectations(s.T())
+			repo.AssertExpectations(t)
+			manager.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
+func (s *OrderUseCaseTestSuite) TestCancelByCustomer(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		setup       func(repo *orderMock.RepositoryMock) *orderDomain.Order
@@ -133,8 +123,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 		{
 			name: "Success: Order in Delivering",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
-				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
+				o := mothers.OrderDelivering()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
@@ -145,7 +134,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 		{
 			name: "Failure: repo.GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
@@ -156,7 +145,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 		{
 			name: "Failure: domain method error (order in Created)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
@@ -166,8 +155,7 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 		{
 			name: "Failure: repo.Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
-				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
+				o := mothers.OrderDelivering()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
@@ -178,8 +166,9 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 	}
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			repo := new(orderMock.RepositoryMock)
 			manager := new(createOrderMock.ManagerMock)
 			uc := usecase.New(repo, manager)
@@ -188,20 +177,22 @@ func (s *OrderUseCaseTestSuite) TestCancelByCustomer() {
 			err := uc.CancelByCustomer(s.ctx, o.ID)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
-			require.Equal(s.T(), tc.finalStatus, o.Status)
+			t.Require().Equal(tc.finalStatus, o.Status)
 
-			repo.AssertExpectations(s.T())
-			manager.AssertExpectations(s.T())
+			repo.AssertExpectations(t)
+			manager.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
+func (s *OrderUseCaseTestSuite) TestCancelOutOfStock(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		setup       func(repo *orderMock.RepositoryMock) *orderDomain.Order
@@ -211,7 +202,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 		{
 			name: "Success: Order in Created (default)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
@@ -222,7 +213,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 		{
 			name: "Failure: GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
@@ -233,8 +224,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 		{
 			name: "Failure: domain method error (order in Delivering)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
-				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
+				o := mothers.OrderDelivering()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
@@ -244,7 +234,7 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 		{
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
@@ -255,8 +245,9 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 	}
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			repo := new(orderMock.RepositoryMock)
 			manager := new(createOrderMock.ManagerMock)
 			uc := usecase.New(repo, manager)
@@ -265,20 +256,22 @@ func (s *OrderUseCaseTestSuite) TestCancelOutOfStock() {
 			err := uc.CancelOutOfStock(s.ctx, o.ID)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
-			require.Equal(s.T(), tc.finalStatus, o.Status)
+			t.Require().Equal(tc.finalStatus, o.Status)
 
-			repo.AssertExpectations(s.T())
-			manager.AssertExpectations(s.T())
+			repo.AssertExpectations(t)
+			manager.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
+func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		setup       func(repo *orderMock.RepositoryMock) *orderDomain.Order
@@ -288,7 +281,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 		{
 			name: "Success: Order in Created",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
@@ -299,7 +292,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 		{
 			name: "Failure: GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
@@ -310,8 +303,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 		{
 			name: "Failure: domain method error (order in Delivering)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
-				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
+				o := mothers.OrderDelivering()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
@@ -321,7 +313,7 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 		{
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
@@ -332,8 +324,9 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 	}
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			repo := new(orderMock.RepositoryMock)
 			manager := new(createOrderMock.ManagerMock)
 			uc := usecase.New(repo, manager)
@@ -342,20 +335,22 @@ func (s *OrderUseCaseTestSuite) TestCancelCourierNotFound() {
 			err := uc.CancelCourierNotFound(s.ctx, o.ID)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
-			require.Equal(s.T(), tc.finalStatus, o.Status)
+			t.Require().Equal(tc.finalStatus, o.Status)
 
-			repo.AssertExpectations(s.T())
-			manager.AssertExpectations(s.T())
+			repo.AssertExpectations(t)
+			manager.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
+func (s *OrderUseCaseTestSuite) TestBeginDelivery(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		setup       func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order)
@@ -365,7 +360,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 		{
 			name: "Success: Order in Created",
 			setup: func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order) {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				dto := usecase.BeginDeliveryDto{
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
@@ -380,8 +375,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 		{
 			name: "Failure: domain method error (already in Delivering)",
 			setup: func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order) {
-				o := s.createTestOrder()
-				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
+				o := mothers.OrderDelivering()
 				dto := usecase.BeginDeliveryDto{
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
@@ -395,7 +389,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 		{
 			name: "Failure: repo.GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order) {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				dto := usecase.BeginDeliveryDto{
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
@@ -410,7 +404,7 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 		{
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) (usecase.BeginDeliveryDto, *orderDomain.Order) {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				dto := usecase.BeginDeliveryDto{
 					OrderID:   o.ID,
 					CourierID: uuid.New(),
@@ -425,8 +419,9 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 	}
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			repo := new(orderMock.RepositoryMock)
 			manager := new(createOrderMock.ManagerMock)
 			uc := usecase.New(repo, manager)
@@ -435,20 +430,22 @@ func (s *OrderUseCaseTestSuite) TestBeginDelivery() {
 			err := uc.BeginDelivery(s.ctx, dto)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
-			require.Equal(s.T(), tc.finalStatus, o.Status)
+			t.Require().Equal(tc.finalStatus, o.Status)
 
-			repo.AssertExpectations(s.T())
-			manager.AssertExpectations(s.T())
+			repo.AssertExpectations(t)
+			manager.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
+func (s *OrderUseCaseTestSuite) TestCompleteDelivery(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		setup       func(repo *orderMock.RepositoryMock) *orderDomain.Order
@@ -458,8 +455,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 		{
 			name: "Success: Order in Delivering",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
-				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
+				o := mothers.OrderDelivering()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(nil).Once()
 				return o
@@ -470,7 +466,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 		{
 			name: "Failure: GetByID error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).
 					Return((*orderDomain.Order)(nil), errors.New("not found")).Once()
 				return o
@@ -481,7 +477,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 		{
 			name: "Failure: domain method error (order in Created)",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
+				o := mothers.DefaultOrder()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				return o
 			},
@@ -491,8 +487,7 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 		{
 			name: "Failure: Update error",
 			setup: func(repo *orderMock.RepositoryMock) *orderDomain.Order {
-				o := s.createTestOrder()
-				require.NoError(s.T(), o.NoteDelivering(uuid.New()))
+				o := mothers.OrderDelivering()
 				repo.On("GetByID", s.ctx, o.ID).Return(o, nil).Once()
 				repo.On("Update", s.ctx, o).Return(errors.New("update error")).Once()
 				return o
@@ -503,8 +498,9 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 	}
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			repo := new(orderMock.RepositoryMock)
 			manager := new(createOrderMock.ManagerMock)
 			uc := usecase.New(repo, manager)
@@ -513,22 +509,21 @@ func (s *OrderUseCaseTestSuite) TestCompleteDelivery() {
 			err := uc.CompleteDelivery(s.ctx, o.ID)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
-				require.NotNil(s.T(), o.Delivery.Arrived)
-				require.WithinDuration(s.T(), time.Now(), *o.Delivery.Arrived, time.Second)
+				t.Require().NoError(err)
+				t.Require().NotNil(o.Delivery.Arrived)
+				t.Require().WithinDuration(time.Now(), *o.Delivery.Arrived, time.Second)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
-			require.Equal(s.T(), tc.finalStatus, o.Status)
-
-			repo.AssertExpectations(s.T())
-			manager.AssertExpectations(s.T())
+			t.Require().Equal(tc.finalStatus, o.Status)
 		})
 	}
 }
 
-func (s *OrderUseCaseTestSuite) TestGetAllByCustomer() {
+func (s *OrderUseCaseTestSuite) TestGetAllByCustomer(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		setup       func(repo *orderMock.RepositoryMock) (uuid.UUID, []*orderDomain.Order)
@@ -538,10 +533,7 @@ func (s *OrderUseCaseTestSuite) TestGetAllByCustomer() {
 			name: "Success: Get orders by customer",
 			setup: func(repo *orderMock.RepositoryMock) (uuid.UUID, []*orderDomain.Order) {
 				customerID := uuid.New()
-				expectedOrders := []*orderDomain.Order{
-					s.createTestOrder(),
-					s.createTestOrder(),
-				}
+				expectedOrders := mothers.ListOfOrders(2)
 				repo.On("GetAllByCustomer", s.ctx, customerID).Return(expectedOrders, nil).Once()
 				return customerID, expectedOrders
 			},
@@ -561,8 +553,9 @@ func (s *OrderUseCaseTestSuite) TestGetAllByCustomer() {
 	}
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			repo := new(orderMock.RepositoryMock)
 			manager := new(createOrderMock.ManagerMock)
 			uc := usecase.New(repo, manager)
@@ -571,20 +564,22 @@ func (s *OrderUseCaseTestSuite) TestGetAllByCustomer() {
 			orders, err := uc.GetAllByCustomer(s.ctx, customerID)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
-				require.Equal(s.T(), expectedOrders, orders)
+				t.Require().NoError(err)
+				t.Require().Equal(expectedOrders, orders)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
 
-			repo.AssertExpectations(s.T())
-			manager.AssertExpectations(s.T())
+			repo.AssertExpectations(t)
+			manager.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *OrderUseCaseTestSuite) TestGetCurrentByCourier() {
+func (s *OrderUseCaseTestSuite) TestGetCurrentByCourier(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		setup       func(repo *orderMock.RepositoryMock) (uuid.UUID, []*orderDomain.Order)
@@ -594,10 +589,7 @@ func (s *OrderUseCaseTestSuite) TestGetCurrentByCourier() {
 			name: "Success: Get current orders by courier",
 			setup: func(repo *orderMock.RepositoryMock) (uuid.UUID, []*orderDomain.Order) {
 				courierID := uuid.New()
-				expectedOrders := []*orderDomain.Order{
-					s.createTestOrder(),
-					s.createTestOrder(),
-				}
+				expectedOrders := mothers.ListOfOrders(2)
 				repo.On("GetCurrentByCourier", s.ctx, courierID).Return(expectedOrders, nil).Once()
 				return courierID, expectedOrders
 			},
@@ -617,8 +609,9 @@ func (s *OrderUseCaseTestSuite) TestGetCurrentByCourier() {
 	}
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			repo := new(orderMock.RepositoryMock)
 			manager := new(createOrderMock.ManagerMock)
 			uc := usecase.New(repo, manager)
@@ -627,19 +620,19 @@ func (s *OrderUseCaseTestSuite) TestGetCurrentByCourier() {
 			orders, err := uc.GetCurrentByCourier(s.ctx, courierID)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
-				require.Equal(s.T(), expectedOrders, orders)
+				t.Require().NoError(err)
+				t.Require().Equal(expectedOrders, orders)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
 
-			repo.AssertExpectations(s.T())
-			manager.AssertExpectations(s.T())
+			repo.AssertExpectations(t)
+			manager.AssertExpectations(t)
 		})
 	}
 }
 
 func TestOrderUseCaseTestSuite(t *testing.T) {
-	suite.Run(t, new(OrderUseCaseTestSuite))
+	suite.RunSuite(t, new(OrderUseCaseTestSuite))
 }

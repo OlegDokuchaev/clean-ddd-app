@@ -3,17 +3,17 @@ package saga
 import (
 	"context"
 	"errors"
+	"github.com/ozontech/allure-go/pkg/framework/provider"
 	createOrder "order/internal/application/order/saga/create_order"
 	orderDomain "order/internal/domain/order"
 	orderMock "order/internal/mocks/order"
 	createOrderMock "order/internal/mocks/order/saga/create_order"
+	"order/internal/tests/testutils/mothers"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type CreateOrderSagaTestSuite struct {
@@ -25,7 +25,9 @@ func (s *CreateOrderSagaTestSuite) SetupTest() {
 	s.ctx = context.Background()
 }
 
-func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
+func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		event       createOrder.ItemsReserved
@@ -58,8 +60,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			publisher := new(createOrderMock.PublisherMock)
 			repository := new(orderMock.RepositoryMock)
 			uc := createOrder.New(publisher, repository)
@@ -68,19 +71,21 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReserved() {
 			err := uc.HandleItemsReserved(s.ctx, tc.event)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
 
-			publisher.AssertExpectations(s.T())
-			repository.AssertExpectations(s.T())
+			publisher.AssertExpectations(t)
+			repository.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
+func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		event       createOrder.ItemsReservationFailed
@@ -113,8 +118,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			publisher := new(createOrderMock.PublisherMock)
 			repository := new(orderMock.RepositoryMock)
 			uc := createOrder.New(publisher, repository)
@@ -123,19 +129,21 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReservationFailed() {
 			err := uc.HandleItemsReservationFailed(s.ctx, tc.event)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
 
-			publisher.AssertExpectations(s.T())
-			repository.AssertExpectations(s.T())
+			publisher.AssertExpectations(t)
+			repository.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
+func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		event       createOrder.CourierAssignmentFailed
@@ -149,16 +157,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 			event: createOrder.CourierAssignmentFailed{
 				OrderID: uuid.New(),
 			},
-			order: &orderDomain.Order{
-				ID: uuid.New(),
-				Items: []orderDomain.Item{
-					{
-						ProductID: uuid.New(),
-						Price:     decimal.NewFromInt(100),
-						Count:     2,
-					},
-				},
-			},
+			order:   mothers.DefaultOrder(),
 			repoErr: nil,
 			setup: func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock, order *orderDomain.Order) {
 				publisher.On("PublishReleaseItemsCmd", s.ctx, mock.Anything).Return(nil).Once()
@@ -184,16 +183,7 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 			event: createOrder.CourierAssignmentFailed{
 				OrderID: uuid.New(),
 			},
-			order: &orderDomain.Order{
-				ID: uuid.New(),
-				Items: []orderDomain.Item{
-					{
-						ProductID: uuid.New(),
-						Price:     decimal.NewFromInt(100),
-						Count:     2,
-					},
-				},
-			},
+			order:   mothers.DefaultOrder(),
 			repoErr: nil,
 			setup: func(publisher *createOrderMock.PublisherMock, repository *orderMock.RepositoryMock, order *orderDomain.Order) {
 				publisher.On("PublishReleaseItemsCmd", s.ctx, mock.Anything).
@@ -205,7 +195,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 	}
 
 	for _, tc := range tests {
-		s.Run(tc.name, func() {
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			publisher := new(createOrderMock.PublisherMock)
 			repository := new(orderMock.RepositoryMock)
 			tc.setup(publisher, repository, tc.order)
@@ -214,19 +206,21 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssignmentFailed() {
 			err := uc.HandleCourierAssignmentFailed(s.ctx, tc.event)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
 
-			publisher.AssertExpectations(s.T())
-			repository.AssertExpectations(s.T())
+			publisher.AssertExpectations(t)
+			repository.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
+func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		event       createOrder.ItemsReleased
@@ -259,8 +253,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			publisher := new(createOrderMock.PublisherMock)
 			repository := new(orderMock.RepositoryMock)
 			uc := createOrder.New(publisher, repository)
@@ -269,19 +264,21 @@ func (s *CreateOrderSagaTestSuite) TestHandleItemsReleased() {
 			err := uc.HandleItemsReleased(s.ctx, tc.event)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
 
-			publisher.AssertExpectations(s.T())
-			repository.AssertExpectations(s.T())
+			publisher.AssertExpectations(t)
+			repository.AssertExpectations(t)
 		})
 	}
 }
 
-func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
+func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		event       createOrder.CourierAssigned
@@ -316,8 +313,9 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
+
 			publisher := new(createOrderMock.PublisherMock)
 			repository := new(orderMock.RepositoryMock)
 			uc := createOrder.New(publisher, repository)
@@ -326,18 +324,18 @@ func (s *CreateOrderSagaTestSuite) TestHandleCourierAssigned() {
 			err := uc.HandleCourierAssigned(s.ctx, tc.event)
 
 			if tc.expectedErr == nil {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			} else {
-				require.Error(s.T(), err)
-				require.EqualError(s.T(), err, tc.expectedErr.Error())
+				t.Require().Error(err)
+				t.Require().EqualError(err, tc.expectedErr.Error())
 			}
 
-			publisher.AssertExpectations(s.T())
-			repository.AssertExpectations(s.T())
+			publisher.AssertExpectations(t)
+			repository.AssertExpectations(t)
 		})
 	}
 }
 
 func TestCreateOrderSagaTestSuite(t *testing.T) {
-	suite.Run(t, new(CreateOrderSagaTestSuite))
+	suite.RunSuite(t, new(CreateOrderSagaTestSuite))
 }

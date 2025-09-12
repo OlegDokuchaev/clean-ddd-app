@@ -1,34 +1,24 @@
 package domain
 
 import (
+	"github.com/ozontech/allure-go/pkg/framework/provider"
 	orderDomain "order/internal/domain/order"
+	"order/internal/tests/testutils/mothers"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type OrderDomainTestSuite struct {
 	suite.Suite
 }
 
-func (s *OrderDomainTestSuite) createTestOrder() *orderDomain.Order {
-	items := []orderDomain.Item{
-		{
-			ProductID: uuid.New(),
-			Price:     decimal.NewFromInt(100),
-			Count:     1,
-		},
-	}
-	order, err := orderDomain.Create(uuid.New(), "Test Address", items)
-	require.NoError(s.T(), err)
-	return order
-}
+func (s *OrderDomainTestSuite) TestCreate(t provider.T) {
+	t.Parallel()
 
-func (s *OrderDomainTestSuite) TestCreate() {
 	tests := []struct {
 		name        string
 		CustomerID  uuid.UUID
@@ -93,23 +83,25 @@ func (s *OrderDomainTestSuite) TestCreate() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
 
 			order, err := orderDomain.Create(tc.CustomerID, tc.Address, tc.Items)
 
 			if tc.expectedErr != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tc.expectedErr)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tc.expectedErr)
 			} else {
-				require.NoError(s.T(), err)
-				require.NotNil(s.T(), order)
+				t.Require().NoError(err)
+				t.Require().NotNil(order)
 			}
 		})
 	}
 }
 
-func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
+func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name           string
 		setup          func() *orderDomain.Order
@@ -119,9 +111,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
 		{
 			name: "Success: Order in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := s.createTestOrder()
-				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
-				return ord
+				return mothers.OrderDelivering()
 			},
 			expectedStatus: orderDomain.CustomerCanceled,
 			expectedErr:    nil,
@@ -129,7 +119,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
 		{
 			name: "Failure: Order remains in Created",
 			setup: func() *orderDomain.Order {
-				return s.createTestOrder()
+				return mothers.DefaultOrder()
 			},
 			expectedStatus: orderDomain.Created,
 			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
@@ -138,24 +128,26 @@ func (s *OrderDomainTestSuite) TestNoteCanceledByCustomer() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
 			order := tc.setup()
 
 			err := order.NoteCanceledByCustomer()
 
 			if tc.expectedErr != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tc.expectedErr)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tc.expectedErr)
 			} else {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			}
-			require.Equal(s.T(), tc.expectedStatus, order.Status)
+			t.Require().Equal(tc.expectedStatus, order.Status)
 		})
 	}
 }
 
-func (s *OrderDomainTestSuite) TestNoteCanceledOutOfStock() {
+func (s *OrderDomainTestSuite) TestNoteCanceledOutOfStock(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name           string
 		setup          func() *orderDomain.Order
@@ -165,7 +157,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledOutOfStock() {
 		{
 			name: "Success: Order in Created (default)",
 			setup: func() *orderDomain.Order {
-				return s.createTestOrder()
+				return mothers.DefaultOrder()
 			},
 			expectedStatus: orderDomain.CanceledOutOfStock,
 			expectedErr:    nil,
@@ -173,9 +165,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledOutOfStock() {
 		{
 			name: "Failure: Order in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := s.createTestOrder()
-				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
-				return ord
+				return mothers.OrderDelivering()
 			},
 			expectedStatus: orderDomain.Delivering,
 			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
@@ -184,24 +174,26 @@ func (s *OrderDomainTestSuite) TestNoteCanceledOutOfStock() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
 			order := tc.setup()
 
 			err := order.NoteCanceledOutOfStock()
 
 			if tc.expectedErr != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tc.expectedErr)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tc.expectedErr)
 			} else {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			}
-			require.Equal(s.T(), tc.expectedStatus, order.Status)
+			t.Require().Equal(tc.expectedStatus, order.Status)
 		})
 	}
 }
 
-func (s *OrderDomainTestSuite) TestNoteCanceledCourierNotFound() {
+func (s *OrderDomainTestSuite) TestNoteCanceledCourierNotFound(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name           string
 		setup          func() *orderDomain.Order
@@ -211,7 +203,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledCourierNotFound() {
 		{
 			name: "Success: Order in Created (default)",
 			setup: func() *orderDomain.Order {
-				return s.createTestOrder()
+				return mothers.DefaultOrder()
 			},
 			expectedStatus: orderDomain.CanceledCourierNotFound,
 			expectedErr:    nil,
@@ -219,9 +211,7 @@ func (s *OrderDomainTestSuite) TestNoteCanceledCourierNotFound() {
 		{
 			name: "Failure: Order in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := s.createTestOrder()
-				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
-				return ord
+				return mothers.OrderDelivering()
 			},
 			expectedStatus: orderDomain.Delivering,
 			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
@@ -230,24 +220,26 @@ func (s *OrderDomainTestSuite) TestNoteCanceledCourierNotFound() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
 			order := tc.setup()
 
 			err := order.NoteCanceledCourierNotFound()
 
 			if tc.expectedErr != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tc.expectedErr)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tc.expectedErr)
 			} else {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 			}
-			require.Equal(s.T(), tc.expectedStatus, order.Status)
+			t.Require().Equal(tc.expectedStatus, order.Status)
 		})
 	}
 }
 
-func (s *OrderDomainTestSuite) TestNoteDelivering() {
+func (s *OrderDomainTestSuite) TestNoteDelivering(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name           string
 		setup          func() *orderDomain.Order
@@ -258,7 +250,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivering() {
 		{
 			name: "Success: Order in Created",
 			setup: func() *orderDomain.Order {
-				return s.createTestOrder()
+				return mothers.DefaultOrder()
 			},
 			courierID:      uuid.New(),
 			expectedStatus: orderDomain.Delivering,
@@ -267,9 +259,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivering() {
 		{
 			name: "Failure: Order already in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := s.createTestOrder()
-				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
-				return ord
+				return mothers.OrderDelivering()
 			},
 			courierID:      uuid.New(),
 			expectedStatus: orderDomain.Delivering,
@@ -279,26 +269,28 @@ func (s *OrderDomainTestSuite) TestNoteDelivering() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
 			order := tc.setup()
 
 			err := order.NoteDelivering(tc.courierID)
 
 			if tc.expectedErr != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tc.expectedErr)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tc.expectedErr)
 			} else {
-				require.NoError(s.T(), err)
-				require.NotNil(s.T(), order.Delivery.CourierID)
-				require.Equal(s.T(), tc.courierID, *order.Delivery.CourierID)
+				t.Require().NoError(err)
+				t.Require().NotNil(order.Delivery.CourierID)
+				t.Require().Equal(tc.courierID, *order.Delivery.CourierID)
 			}
-			require.Equal(s.T(), tc.expectedStatus, order.Status)
+			t.Require().Equal(tc.expectedStatus, order.Status)
 		})
 	}
 }
 
-func (s *OrderDomainTestSuite) TestNoteDelivered() {
+func (s *OrderDomainTestSuite) TestNoteDelivered(t provider.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name           string
 		setup          func() *orderDomain.Order
@@ -308,9 +300,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivered() {
 		{
 			name: "Success: Order in Delivering",
 			setup: func() *orderDomain.Order {
-				ord := s.createTestOrder()
-				require.NoError(s.T(), ord.NoteDelivering(uuid.New()))
-				return ord
+				return mothers.OrderDelivering()
 			},
 			expectedStatus: orderDomain.Delivered,
 			expectedErr:    nil,
@@ -318,7 +308,7 @@ func (s *OrderDomainTestSuite) TestNoteDelivered() {
 		{
 			name: "Failure: Order in Created (default)",
 			setup: func() *orderDomain.Order {
-				return s.createTestOrder()
+				return mothers.DefaultOrder()
 			},
 			expectedStatus: orderDomain.Created,
 			expectedErr:    orderDomain.ErrUnsupportedStatusTransition,
@@ -327,25 +317,25 @@ func (s *OrderDomainTestSuite) TestNoteDelivered() {
 
 	for _, tc := range tests {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.T().Parallel()
+		t.Run(tc.name, func(t provider.T) {
+			t.Parallel()
 			order := tc.setup()
 
 			err := order.NoteDelivered()
 
 			if tc.expectedErr != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tc.expectedErr)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tc.expectedErr)
 			} else {
-				require.NoError(s.T(), err)
-				require.NotNil(s.T(), order.Delivery.Arrived)
-				require.WithinDuration(s.T(), time.Now(), *order.Delivery.Arrived, time.Second)
+				t.Require().NoError(err)
+				t.Require().NotNil(order.Delivery.CourierID)
+				t.Require().WithinDuration(time.Now(), *order.Delivery.Arrived, time.Second)
 			}
-			require.Equal(s.T(), tc.expectedStatus, order.Status)
+			t.Require().Equal(tc.expectedStatus, order.Status)
 		})
 	}
 }
 
 func TestOrderDomainTestSuite(t *testing.T) {
-	suite.Run(t, new(OrderDomainTestSuite))
+	suite.RunSuite(t, new(OrderDomainTestSuite))
 }

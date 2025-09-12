@@ -1,0 +1,91 @@
+name: Order CI
+
+on:
+  push:
+    paths:
+      - 'order/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'order/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: order-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DB_MIGRATIONS_PATH: ${{ github.workspace }}/order/internal/infrastructure/db/migrations
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: order
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: order/go.mod
+          cache: true
+          cache-dependency-path: order/go.sum
+      
+      - name: Run unit tests (make unit)
+        run: make unit
+
+  integration:
+    name: Integration tests
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+    needs: unit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: order
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: order/go.mod
+          cache: true
+          cache-dependency-path: order/go.sum
+
+      - name: Ensure Docker is available
+        run: docker version
+
+      - name: Run integration tests (make integration)
+        run: make integration
+
+  e2e:
+    name: E2E tests
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+    needs: integration
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: order
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: order/go.mod
+          cache: true
+          cache-dependency-path: order/go.sum
+
+      - name: Ensure Docker is available
+        run: docker version
+
+      - name: Run e2e tests (make e2e)
+        run: make e2e
