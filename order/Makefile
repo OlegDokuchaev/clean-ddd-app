@@ -12,3 +12,6 @@ unit:
 
 integration:
 	@bash -c 'set -a; source $(ENV_FILE); set +a; $(GO_TEST) -tags=integration ./...'
+
+e2e:
+	@bash -c 'set -a; source $(ENV_FILE); set +a; $(GO_TEST) -tags=e2e ./...'
