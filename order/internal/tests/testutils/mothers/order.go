@@ -2,25 +2,12 @@ package mothers
 
 import (
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 	orderDomain "order/internal/domain/order"
 	"order/internal/tests/testutils/builders"
 )
 
 func DefaultOrder() *orderDomain.Order {
 	return builders.NewOrderBuilder().Build()
-}
-
-func OrderWithSingleItem(price int64, count int) *orderDomain.Order {
-	return builders.NewOrderBuilder().
-		WithItems([]orderDomain.Item{
-			{
-				ProductID: uuid.New(),
-				Price:     decimal.NewFromInt(price),
-				Count:     count,
-			},
-		}).
-		Build()
 }
 
 func OrderDelivering() *orderDomain.Order {
