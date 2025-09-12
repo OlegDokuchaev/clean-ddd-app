@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/ozontech/allure-go/pkg/framework/provider"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/segmentio/kafka-go"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 const (
@@ -39,15 +39,15 @@ type CreateOrderPublisherTestSuite struct {
 	courierReader *kafka.Reader
 }
 
-func (s *CreateOrderPublisherTestSuite) SetupSuite() {
+func (s *CreateOrderPublisherTestSuite) BeforeAll(t provider.T) {
 	s.ctx = context.Background()
 
 	testMessaging, err := testutils.NewTestMessaging(s.ctx)
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 	s.testMessaging = testMessaging
 
 	err = s.testMessaging.CreateTopics(s.ctx, WarehouseTopic, OrderTopic, CourierTopic)
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 
 	s.warehouseWriter = s.testMessaging.CreateWriter(WarehouseTopic)
 	s.warehouseReader = s.testMessaging.CreateReader(WarehouseTopic)
@@ -59,31 +59,31 @@ func (s *CreateOrderPublisherTestSuite) SetupSuite() {
 	s.courierReader = s.testMessaging.CreateReader(CourierTopic)
 }
 
-func (s *CreateOrderPublisherTestSuite) TearDownSuite() {
+func (s *CreateOrderPublisherTestSuite) AfterAll(t provider.T) {
 	if s.warehouseWriter != nil {
 		err := s.warehouseWriter.Close()
-		require.NoError(s.T(), err)
+		t.Require().NoError(err)
 		err = s.warehouseReader.Close()
-		require.NoError(s.T(), err)
+		t.Require().NoError(err)
 	}
 
 	if s.orderWriter != nil {
 		err := s.orderWriter.Close()
-		require.NoError(s.T(), err)
+		t.Require().NoError(err)
 		err = s.orderReader.Close()
-		require.NoError(s.T(), err)
+		t.Require().NoError(err)
 	}
 
 	if s.courierWriter != nil {
 		err := s.courierWriter.Close()
-		require.NoError(s.T(), err)
+		t.Require().NoError(err)
 		err = s.courierReader.Close()
-		require.NoError(s.T(), err)
+		t.Require().NoError(err)
 	}
 
 	if s.testMessaging != nil {
 		err := s.testMessaging.Close(s.ctx)
-		require.NoError(s.T(), err)
+		t.Require().NoError(err)
 	}
 }
 
@@ -91,7 +91,7 @@ func (s *CreateOrderPublisherTestSuite) createTestPublisher() createOrder.Publis
 	return createOrderPublisher.NewPublisher(s.warehouseWriter, s.orderWriter, s.courierWriter)
 }
 
-func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd() {
+func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd(t provider.T) {
 	tests := []struct {
 		name            string
 		cmd             createOrder.ReserveItemsCmd
@@ -112,16 +112,16 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd() {
 			validateMessage: func(cmd createOrder.ReserveItemsCmd, message kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				encodedPayload, err := json.Marshal(cmdMessage.Payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				var payload createOrder.ReserveItemsCmd
 				err = json.Unmarshal(encodedPayload, &payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
-				require.EqualValues(s.T(), cmd, payload)
+				t.Require().EqualValues(cmd, payload)
 			},
 			expectedError: nil,
 		},
@@ -129,27 +129,28 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd() {
 
 	publisher := s.createTestPublisher()
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
+		tt := tt
+		t.Run(tt.name, func(t provider.T) {
 			err := publisher.PublishReserveItemsCmd(s.ctx, tt.cmd)
 
 			if tt.expectedError != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tt.expectedError)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tt.expectedError)
 			} else {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 				defer cancel()
 
 				message, err := s.warehouseReader.ReadMessage(ctx)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
 }
 
-func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd() {
+func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd(t provider.T) {
 	tests := []struct {
 		name            string
 		cmd             createOrder.ReleaseItemsCmd
@@ -170,16 +171,16 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd() {
 			validateMessage: func(cmd createOrder.ReleaseItemsCmd, message kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				encodedPayload, err := json.Marshal(cmdMessage.Payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				var payload createOrder.ReleaseItemsCmd
 				err = json.Unmarshal(encodedPayload, &payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
-				require.EqualValues(s.T(), cmd, payload)
+				t.Require().EqualValues(cmd, payload)
 			},
 			expectedError: nil,
 		},
@@ -187,27 +188,28 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd() {
 
 	publisher := s.createTestPublisher()
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
+		tt := tt
+		t.Run(tt.name, func(t provider.T) {
 			err := publisher.PublishReleaseItemsCmd(s.ctx, tt.cmd)
 
 			if tt.expectedError != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tt.expectedError)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tt.expectedError)
 			} else {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 				defer cancel()
 
 				message, err := s.warehouseReader.ReadMessage(ctx)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
 }
 
-func (s *CreateOrderPublisherTestSuite) TestPublishCancelOutOfStockCmd() {
+func (s *CreateOrderPublisherTestSuite) TestPublishCancelOutOfStockCmd(t provider.T) {
 	tests := []struct {
 		name            string
 		cmd             createOrder.CancelOutOfStockCmd
@@ -222,16 +224,16 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelOutOfStockCmd() {
 			validateMessage: func(cmd createOrder.CancelOutOfStockCmd, message kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				encodedPayload, err := json.Marshal(cmdMessage.Payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				var payload createOrder.CancelOutOfStockCmd
 				err = json.Unmarshal(encodedPayload, &payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
-				require.EqualValues(s.T(), cmd, payload)
+				t.Require().EqualValues(cmd, payload)
 			},
 			expectedError: nil,
 		},
@@ -239,27 +241,28 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelOutOfStockCmd() {
 
 	publisher := s.createTestPublisher()
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
+		tt := tt
+		t.Run(tt.name, func(t provider.T) {
 			err := publisher.PublishCancelOutOfStockCmd(s.ctx, tt.cmd)
 
 			if tt.expectedError != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tt.expectedError)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tt.expectedError)
 			} else {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 				defer cancel()
 
 				message, err := s.orderReader.ReadMessage(ctx)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
 }
 
-func (s *CreateOrderPublisherTestSuite) TestPublishAssignCourierCmd() {
+func (s *CreateOrderPublisherTestSuite) TestPublishAssignCourierCmd(t provider.T) {
 	tests := []struct {
 		name            string
 		cmd             createOrder.AssignCourierCmd
@@ -274,16 +277,16 @@ func (s *CreateOrderPublisherTestSuite) TestPublishAssignCourierCmd() {
 			validateMessage: func(cmd createOrder.AssignCourierCmd, message kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				encodedPayload, err := json.Marshal(cmdMessage.Payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				var payload createOrder.AssignCourierCmd
 				err = json.Unmarshal(encodedPayload, &payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
-				require.EqualValues(s.T(), cmd, payload)
+				t.Require().EqualValues(cmd, payload)
 			},
 			expectedError: nil,
 		},
@@ -291,27 +294,28 @@ func (s *CreateOrderPublisherTestSuite) TestPublishAssignCourierCmd() {
 
 	publisher := s.createTestPublisher()
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
+		tt := tt
+		t.Run(tt.name, func(t provider.T) {
 			err := publisher.PublishAssignCourierCmd(s.ctx, tt.cmd)
 
 			if tt.expectedError != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tt.expectedError)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tt.expectedError)
 			} else {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 				defer cancel()
 
 				message, err := s.courierReader.ReadMessage(ctx)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
 }
 
-func (s *CreateOrderPublisherTestSuite) TestPublishBeginDeliveryCmd() {
+func (s *CreateOrderPublisherTestSuite) TestPublishBeginDeliveryCmd(t provider.T) {
 	tests := []struct {
 		name            string
 		cmd             createOrder.BeginDeliveryCmd
@@ -327,16 +331,16 @@ func (s *CreateOrderPublisherTestSuite) TestPublishBeginDeliveryCmd() {
 			validateMessage: func(cmd createOrder.BeginDeliveryCmd, message kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				encodedPayload, err := json.Marshal(cmdMessage.Payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				var payload createOrder.BeginDeliveryCmd
 				err = json.Unmarshal(encodedPayload, &payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
-				require.EqualValues(s.T(), cmd, payload)
+				t.Require().EqualValues(cmd, payload)
 			},
 			expectedError: nil,
 		},
@@ -344,27 +348,28 @@ func (s *CreateOrderPublisherTestSuite) TestPublishBeginDeliveryCmd() {
 
 	publisher := s.createTestPublisher()
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
+		tt := tt
+		t.Run(tt.name, func(t provider.T) {
 			err := publisher.PublishBeginDeliveryCmd(s.ctx, tt.cmd)
 
 			if tt.expectedError != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tt.expectedError)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tt.expectedError)
 			} else {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 				defer cancel()
 
 				message, err := s.orderReader.ReadMessage(ctx)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 				tt.validateMessage(tt.cmd, message)
 			}
 		})
 	}
 }
 
-func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd() {
+func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd(t provider.T) {
 	tests := []struct {
 		name            string
 		cmd             createOrder.CancelCourierNotFoundCmd
@@ -379,16 +384,16 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd() {
 			validateMessage: func(cmd createOrder.CancelCourierNotFoundCmd, message kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				encodedPayload, err := json.Marshal(cmdMessage.Payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				var payload createOrder.CancelCourierNotFoundCmd
 				err = json.Unmarshal(encodedPayload, &payload)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
-				require.EqualValues(s.T(), cmd, payload)
+				t.Require().EqualValues(cmd, payload)
 			},
 			expectedError: nil,
 		},
@@ -396,20 +401,21 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd() {
 
 	publisher := s.createTestPublisher()
 	for _, tt := range tests {
-		s.Run(tt.name, func() {
+		tt := tt
+		t.Run(tt.name, func(t provider.T) {
 			err := publisher.PublishCancelCourierNotFoundCmd(s.ctx, tt.cmd)
 
 			if tt.expectedError != nil {
-				require.Error(s.T(), err)
-				require.ErrorIs(s.T(), err, tt.expectedError)
+				t.Require().Error(err)
+				t.Require().ErrorIs(err, tt.expectedError)
 			} else {
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 
 				ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 				defer cancel()
 
 				message, err := s.orderReader.ReadMessage(ctx)
-				require.NoError(s.T(), err)
+				t.Require().NoError(err)
 				tt.validateMessage(tt.cmd, message)
 			}
 		})
@@ -417,5 +423,5 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd() {
 }
 
 func TestCreateOrderPublisherTestSuite(t *testing.T) {
-	suite.Run(t, new(CreateOrderPublisherTestSuite))
+	suite.RunSuite(t, new(CreateOrderPublisherTestSuite))
 }
