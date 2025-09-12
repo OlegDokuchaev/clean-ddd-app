@@ -22,9 +22,9 @@ import (
 	orderv1 "order/internal/presentation/grpc"
 
 	"github.com/google/uuid"
+	"github.com/ozontech/allure-go/pkg/framework/provider"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -56,30 +56,30 @@ type CreateOrderE2ESuite struct {
 	testMessaging *testutils.TestMessaging
 }
 
-func (s *CreateOrderE2ESuite) SetupSuite() {
+func (s *CreateOrderE2ESuite) BeforeAll(t provider.T) {
 	config, err := migrations.NewConfig()
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 
 	s.ctx = context.Background()
 
 	// 1) MongoDB
 	s.db, err = testutils.NewTestDB(s.ctx, config)
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 
 	// 2) Kafka
 	testMessaging, err := testutils.NewTestMessaging(s.ctx)
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 	s.testMessaging = testMessaging
 
 	err = s.testMessaging.CreateTopics(s.ctx, WarehouseTopic, OrderTopic, CourierTopic)
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 
 	// 3) GRPC
 	grpcLn, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 
 	_, grpcPortStr, err := net.SplitHostPort(grpcLn.Addr().String())
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 
 	_ = grpcLn.Close()
 	s.grpcURL = net.JoinHostPort("127.0.0.1", grpcPortStr)
@@ -140,10 +140,12 @@ func (s *CreateOrderE2ESuite) SetupSuite() {
 
 	startCtx, cancel := context.WithTimeout(s.ctx, 30*time.Second)
 	defer cancel()
-	require.NoError(s.T(), s.app.Start(startCtx))
+
+	err = s.app.Start(startCtx)
+	t.Require().NoError(err)
 
 	// 6) Wait until gRPC is ready (TCP connect)
-	require.Eventually(s.T(), func() bool {
+	t.Require().Eventually(func() bool {
 		c, err := net.DialTimeout("tcp", s.grpcURL, 2*time.Second)
 		if err != nil {
 			return false
@@ -153,7 +155,7 @@ func (s *CreateOrderE2ESuite) SetupSuite() {
 	}, 10*time.Second, 200*time.Millisecond)
 }
 
-func (s *CreateOrderE2ESuite) TearDownSuite() {
+func (s *CreateOrderE2ESuite) AfterAll(t provider.T) {
 	if s.app != nil {
 		ctx, cancel := context.WithTimeout(s.ctx, 20*time.Second)
 		_ = s.app.Stop(ctx)
@@ -162,18 +164,18 @@ func (s *CreateOrderE2ESuite) TearDownSuite() {
 
 	if s.db != nil {
 		err := s.db.Close(s.ctx)
-		require.NoError(s.T(), err)
+		t.Require().NoError(err)
 	}
 	if s.testMessaging != nil {
 		err := s.testMessaging.Close(s.ctx)
-		require.NoError(s.T(), err)
+		t.Require().NoError(err)
 	}
 }
 
-func (s *CreateOrderE2ESuite) Test_CreateOrder_Success() {
+func (s *CreateOrderE2ESuite) Test_CreateOrder_Success(t provider.T) {
 	// 1) Dial gRPC client
 	conn, err := grpc.NewClient(s.grpcURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 	defer func() { _ = conn.Close() }()
 
 	client := orderv1.NewOrderServiceClient(conn)
@@ -195,8 +197,8 @@ func (s *CreateOrderE2ESuite) Test_CreateOrder_Success() {
 	res, err := client.CreateOrder(ctx, req)
 
 	// 5) Assert result
-	require.NoError(s.T(), err)
-	require.NotEmpty(s.T(), res.GetOrderId())
+	t.Require().NoError(err)
+	t.Require().NotEmpty(res.GetOrderId())
 
 	// 5) Assert DB contains the order
 	orders := s.db.DB.Collection(TestOrderCollectionName)
@@ -204,7 +206,7 @@ func (s *CreateOrderE2ESuite) Test_CreateOrder_Success() {
 	findCtx, findCancel := context.WithTimeout(s.ctx, 5*time.Second)
 	defer findCancel()
 	err = orders.FindOne(findCtx, bson.M{"_id": res.GetOrderId()}).Decode(&doc)
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 
 	// 6) Assert Kafka saga message (ReserveItemsCmd) published to warehouse-topic
 	reader := s.testMessaging.CreateReader(WarehouseTopic)
@@ -213,25 +215,25 @@ func (s *CreateOrderE2ESuite) Test_CreateOrder_Success() {
 	readCtx, readCancel := context.WithTimeout(s.ctx, 5*time.Second)
 	defer readCancel()
 	msg, err := reader.ReadMessage(readCtx)
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 
 	var cmdMessage createOrderPublisher.CmdMessage
-	require.NoError(s.T(), json.Unmarshal(msg.Value, &cmdMessage))
-	require.Equal(s.T(), createOrderPublisher.ReserveItemsCmdName, cmdMessage.Name)
+	t.Require().NoError(json.Unmarshal(msg.Value, &cmdMessage))
+	t.Require().Equal(createOrderPublisher.ReserveItemsCmdName, cmdMessage.Name)
 
 	payloadRaw, err := json.Marshal(cmdMessage.Payload)
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 	var payload createOrder.ReserveItemsCmd
-	require.NoError(s.T(), json.Unmarshal(payloadRaw, &payload))
+	t.Require().NoError(json.Unmarshal(payloadRaw, &payload))
 
 	createdID := uuid.MustParse(res.GetOrderId())
-	require.Equal(s.T(), createdID, payload.OrderID)
+	t.Require().Equal(createdID, payload.OrderID)
 }
 
-func (s *CreateOrderE2ESuite) Test_CreateOrder_InvalidData() {
+func (s *CreateOrderE2ESuite) Test_CreateOrder_InvalidData(t provider.T) {
 	// 1) Dial gRPC client
 	conn, err := grpc.NewClient(s.grpcURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(s.T(), err)
+	t.Require().NoError(err)
 	defer func() { _ = conn.Close() }()
 
 	client := orderv1.NewOrderServiceClient(conn)
@@ -253,12 +255,12 @@ func (s *CreateOrderE2ESuite) Test_CreateOrder_InvalidData() {
 	res, err := client.CreateOrder(ctx, req)
 
 	// 4) Assert result
-	require.Error(s.T(), err)
+	t.Require().Error(err)
 	_ = res
 	st, _ := status.FromError(err)
-	require.Equal(s.T(), codes.InvalidArgument, st.Code())
+	t.Require().Equal(codes.InvalidArgument, st.Code())
 }
 
 func Test_CreateOrderE2E(t *testing.T) {
-	suite.Run(t, new(CreateOrderE2ESuite))
+	suite.RunSuite(t, new(CreateOrderE2ESuite))
 }
