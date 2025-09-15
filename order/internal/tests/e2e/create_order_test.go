@@ -7,9 +7,7 @@ import (
 	"encoding/json"
 	"net"
 	createOrder "order/internal/application/order/saga/create_order"
-	"order/internal/infrastructure/db"
 	"order/internal/infrastructure/db/migrations"
-	"order/internal/infrastructure/messaging"
 	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
 	"order/internal/tests/testutils"
 	"testing"
@@ -33,16 +31,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	TestOrderCollectionName = "orders"
-	WarehouseTopic          = "warehouse-topic"
-	WarehouseResTopic       = "warehouse-topic-res"
-	OrderTopic              = "order-topic"
-	OrderResTopic           = "order-topic-res"
-	CourierTopic            = "courier-topic"
-	CourierResTopic         = "courier-topic-res"
-)
-
 type CreateOrderE2ESuite struct {
 	suite.Suite
 
@@ -51,9 +39,8 @@ type CreateOrderE2ESuite struct {
 	app     *fx.App
 	grpcURL string
 
-	db *testutils.TestDB
-
-	testMessaging *testutils.TestMessaging
+	db        *testutils.TestDB
+	messaging *testutils.TestMessaging
 }
 
 func (s *CreateOrderE2ESuite) BeforeAll(t provider.T) {
@@ -63,16 +50,13 @@ func (s *CreateOrderE2ESuite) BeforeAll(t provider.T) {
 	s.ctx = context.Background()
 
 	// 1) MongoDB
-	s.db, err = testutils.NewTestDB(s.ctx, config)
+	s.db, err = testutils.NewTestDB(s.ctx, config, nil)
 	t.Require().NoError(err)
 
 	// 2) Kafka
-	testMessaging, err := testutils.NewTestMessaging(s.ctx)
+	testMessaging, err := testutils.NewTestMessaging(s.ctx, nil)
 	t.Require().NoError(err)
-	s.testMessaging = testMessaging
-
-	err = s.testMessaging.CreateTopics(s.ctx, WarehouseTopic, OrderTopic, CourierTopic)
-	t.Require().NoError(err)
+	s.messaging = testMessaging
 
 	// 3) GRPC
 	grpcLn, err := net.Listen("tcp", "127.0.0.1:0")
@@ -84,32 +68,9 @@ func (s *CreateOrderE2ESuite) BeforeAll(t provider.T) {
 	_ = grpcLn.Close()
 	s.grpcURL = net.JoinHostPort("127.0.0.1", grpcPortStr)
 
-	// 4) Messaging/DB/GRPC configs
-	msgCfg := &messaging.Config{
-		Address: s.testMessaging.Address(),
-
-		OrderCmdTopic:           OrderTopic,
-		OrderCmdResTopic:        OrderResTopic,
-		OrderCmdConsumerGroupID: uuid.NewString(),
-
-		WarehouseCmdTopic:              WarehouseTopic,
-		WarehouseCmdResTopic:           WarehouseResTopic,
-		WarehouseCmdResConsumerGroupID: uuid.NewString(),
-
-		CourierCmdTopic:              CourierTopic,
-		CourierCmdResTopic:           CourierResTopic,
-		CourierCmdResConsumerGroupID: uuid.NewString(),
-	}
-
-	dbCfg := &db.Config{
-		URI:             "", // client & db will be replaced below
-		Database:        "name",
-		OrderCollection: TestOrderCollectionName,
-	}
-
 	grpcCfg := &orderv1.Config{Port: grpcPortStr}
 
-	// 5) Logrus
+	// 4) Logrus
 	log := logrus.New()
 	log.SetLevel(logrus.ErrorLevel)
 	log.SetFormatter(&logrus.JSONFormatter{})
@@ -124,9 +85,9 @@ func (s *CreateOrderE2ESuite) BeforeAll(t provider.T) {
 		appDI.UseCaseModule,
 		appDI.SagaModule,
 		presentationDI.GRPCModule,
-		fx.Replace(log),
-		fx.Replace(msgCfg),
-		fx.Replace(dbCfg),
+		fx.Replace(logrus.New()),
+		fx.Replace(s.messaging.Cfg),
+		fx.Replace(s.db.Cfg),
 		fx.Replace(grpcCfg),
 		fx.Replace(s.db.DB.Client()),
 		fx.Replace(s.db.DB),
@@ -166,10 +127,18 @@ func (s *CreateOrderE2ESuite) AfterAll(t provider.T) {
 		err := s.db.Close(s.ctx)
 		t.Require().NoError(err)
 	}
-	if s.testMessaging != nil {
-		err := s.testMessaging.Close(s.ctx)
+	if s.messaging != nil {
+		err := s.messaging.Close(s.ctx)
 		t.Require().NoError(err)
 	}
+}
+
+func (s *CreateOrderE2ESuite) AfterEach(t provider.T) {
+	err := s.db.Clear(s.ctx)
+	t.Require().NoError(err)
+
+	err = s.messaging.Clear(s.ctx)
+	t.Require().NoError(err)
 }
 
 func (s *CreateOrderE2ESuite) Test_CreateOrder_Success(t provider.T) {
@@ -201,7 +170,7 @@ func (s *CreateOrderE2ESuite) Test_CreateOrder_Success(t provider.T) {
 	t.Require().NotEmpty(res.GetOrderId())
 
 	// 5) Assert DB contains the order
-	orders := s.db.DB.Collection(TestOrderCollectionName)
+	orders := s.db.DB.Collection(s.db.Cfg.OrderCollection)
 	var doc bson.M
 	findCtx, findCancel := context.WithTimeout(s.ctx, 5*time.Second)
 	defer findCancel()
@@ -209,7 +178,7 @@ func (s *CreateOrderE2ESuite) Test_CreateOrder_Success(t provider.T) {
 	t.Require().NoError(err)
 
 	// 6) Assert Kafka saga message (ReserveItemsCmd) published to warehouse-topic
-	reader := s.testMessaging.CreateReader(WarehouseTopic)
+	reader := s.messaging.CreateReader(s.messaging.Cfg.WarehouseCmdTopic)
 	defer func() { _ = reader.Close() }()
 
 	readCtx, readCancel := context.WithTimeout(s.ctx, 5*time.Second)
