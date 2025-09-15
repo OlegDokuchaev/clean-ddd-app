@@ -10,15 +10,12 @@ import (
 	"order/internal/tests/testutils"
 	"order/internal/tests/testutils/mothers"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"go.mongodb.org/mongo-driver/mongo"
-)
-
-const (
-	TestOrderCollectionName = "orders"
 )
 
 type OrderRepositoryTestSuite struct {
@@ -36,10 +33,10 @@ func (s *OrderRepositoryTestSuite) BeforeAll(t provider.T) {
 
 	s.ctx = context.Background()
 
-	s.db, err = testutils.NewTestDB(s.ctx, config)
+	s.db, err = testutils.NewTestDB(s.ctx, config, nil)
 	t.Require().NoError(err)
 
-	s.orderCollection = s.db.DB.Collection(TestOrderCollectionName)
+	s.orderCollection = s.db.DB.Collection(s.db.Cfg.OrderCollection)
 }
 
 func (s *OrderRepositoryTestSuite) AfterAll(t provider.T) {
@@ -47,6 +44,14 @@ func (s *OrderRepositoryTestSuite) AfterAll(t provider.T) {
 		err := s.db.Close(s.ctx)
 		t.Require().NoError(err)
 	}
+}
+
+func (s *OrderRepositoryTestSuite) AfterEach(t provider.T) {
+	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
+	defer cancel()
+
+	err := s.db.Clear(ctx)
+	t.Require().NoError(err)
 }
 
 func (s *OrderRepositoryTestSuite) getRepo() orderDomain.Repository {
