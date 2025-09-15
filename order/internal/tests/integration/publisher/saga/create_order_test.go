@@ -17,17 +17,11 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-const (
-	WarehouseTopic = "warehouse-topic"
-	OrderTopic     = "order-topic"
-	CourierTopic   = "courier-topic"
-)
-
 type CreateOrderPublisherTestSuite struct {
 	suite.Suite
 	ctx context.Context
 
-	testMessaging *testutils.TestMessaging
+	messaging *testutils.TestMessaging
 
 	warehouseWriter *kafka.Writer
 	warehouseReader *kafka.Reader
@@ -42,24 +36,30 @@ type CreateOrderPublisherTestSuite struct {
 func (s *CreateOrderPublisherTestSuite) BeforeAll(t provider.T) {
 	s.ctx = context.Background()
 
-	testMessaging, err := testutils.NewTestMessaging(s.ctx)
+	testMessaging, err := testutils.NewTestMessaging(s.ctx, nil)
 	t.Require().NoError(err)
-	s.testMessaging = testMessaging
-
-	err = s.testMessaging.CreateTopics(s.ctx, WarehouseTopic, OrderTopic, CourierTopic)
-	t.Require().NoError(err)
-
-	s.warehouseWriter = s.testMessaging.CreateWriter(WarehouseTopic)
-	s.warehouseReader = s.testMessaging.CreateReader(WarehouseTopic)
-
-	s.orderWriter = s.testMessaging.CreateWriter(OrderTopic)
-	s.orderReader = s.testMessaging.CreateReader(OrderTopic)
-
-	s.courierWriter = s.testMessaging.CreateWriter(CourierTopic)
-	s.courierReader = s.testMessaging.CreateReader(CourierTopic)
+	s.messaging = testMessaging
 }
 
 func (s *CreateOrderPublisherTestSuite) AfterAll(t provider.T) {
+	if s.messaging != nil {
+		err := s.messaging.Close(s.ctx)
+		t.Require().NoError(err)
+	}
+}
+
+func (s *CreateOrderPublisherTestSuite) BeforeEach(_ provider.T) {
+	s.warehouseWriter = s.messaging.CreateWriter(s.messaging.Cfg.WarehouseCmdTopic)
+	s.warehouseReader = s.messaging.CreateReader(s.messaging.Cfg.WarehouseCmdTopic)
+
+	s.orderWriter = s.messaging.CreateWriter(s.messaging.Cfg.OrderCmdTopic)
+	s.orderReader = s.messaging.CreateReader(s.messaging.Cfg.OrderCmdTopic)
+
+	s.courierWriter = s.messaging.CreateWriter(s.messaging.Cfg.CourierCmdTopic)
+	s.courierReader = s.messaging.CreateReader(s.messaging.Cfg.CourierCmdTopic)
+}
+
+func (s *CreateOrderPublisherTestSuite) AfterEach(t provider.T) {
 	if s.warehouseWriter != nil {
 		err := s.warehouseWriter.Close()
 		t.Require().NoError(err)
@@ -81,10 +81,8 @@ func (s *CreateOrderPublisherTestSuite) AfterAll(t provider.T) {
 		t.Require().NoError(err)
 	}
 
-	if s.testMessaging != nil {
-		err := s.testMessaging.Close(s.ctx)
-		t.Require().NoError(err)
-	}
+	err := s.messaging.Clear(s.ctx)
+	t.Require().NoError(err)
 }
 
 func (s *CreateOrderPublisherTestSuite) createTestPublisher() createOrder.Publisher {
