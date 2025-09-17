@@ -61,6 +61,8 @@ func (s *CreateOrderE2ESuite) BeforeAll(t provider.T) {
 	t.Require().NoError(err)
 	s.messaging = testMessaging
 
+	s.clear(t)
+
 	// 3) GRPC
 	grpcLn, err := net.Listen("tcp", "127.0.0.1:0")
 	t.Require().NoError(err)
@@ -137,10 +139,17 @@ func (s *CreateOrderE2ESuite) AfterAll(t provider.T) {
 }
 
 func (s *CreateOrderE2ESuite) AfterEach(t provider.T) {
-	err := s.db.Clear(s.ctx)
+	s.clear(t)
+}
+
+func (s *CreateOrderE2ESuite) clear(t provider.T) {
+	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
+	defer cancel()
+
+	err := s.db.Clear(ctx)
 	t.Require().NoError(err)
 
-	err = s.messaging.Clear(s.ctx)
+	err = s.messaging.Clear(ctx)
 	t.Require().NoError(err)
 }
 
