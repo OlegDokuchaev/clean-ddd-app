@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"order/internal/infrastructure/db"
 	"order/internal/infrastructure/db/migrations"
-	"os"
-	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	migrateMongo "github.com/golang-migrate/migrate/v4/database/mongodb"
@@ -20,7 +18,6 @@ import (
 )
 
 const (
-	EnvDbMode               = "E2E_DB_MODE"
 	TestDbName              = "name"
 	TestOrderCollectionName = "order"
 )
@@ -137,11 +134,12 @@ func createDB(ctx context.Context, container testcontainers.Container, config *m
 	return client.Database(TestDbName), nil
 }
 
-func NewTestDB(ctx context.Context, config *migrations.Config, dbCfg *db.Config) (*TestDB, error) {
-	switch strings.ToLower(os.Getenv(EnvDbMode)) {
-	case "real":
-		if dbCfg == nil {
-			return nil, fmt.Errorf("db config URI must be set for real DB mode")
+func NewTestDB(ctx context.Context, tCfg *Config, mCfg *migrations.Config) (*TestDB, error) {
+	switch tCfg.Mode {
+	case ModeReal:
+		dbCfg, err := db.NewConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to load db config: %w", err)
 		}
 
 		client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbCfg.URI))
@@ -152,19 +150,18 @@ func NewTestDB(ctx context.Context, config *migrations.Config, dbCfg *db.Config)
 			return nil, fmt.Errorf("failed to ping real mongo: %w", err)
 		}
 
-		dbName := dbCfg.Database
-		if err = createMigrations(client, dbName, config); err != nil {
+		if err = createMigrations(client, dbCfg.Database, mCfg); err != nil {
 			return nil, err
 		}
 
-		return &TestDB{DB: client.Database(dbName), Cfg: dbCfg}, nil
+		return &TestDB{DB: client.Database(dbCfg.Database), Cfg: dbCfg}, nil
 	default:
 		container, err := setupDBContainer(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to setup database: %w", err)
 		}
 
-		mongoDB, err := createDB(ctx, container, config)
+		mongoDB, err := createDB(ctx, container, mCfg)
 		if err != nil {
 			if err := container.Terminate(ctx); err != nil {
 				return nil, fmt.Errorf("failed to terminate mongo: %w", err)
