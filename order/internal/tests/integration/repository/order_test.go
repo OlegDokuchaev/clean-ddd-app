@@ -28,12 +28,15 @@ type OrderRepositoryTestSuite struct {
 }
 
 func (s *OrderRepositoryTestSuite) BeforeAll(t provider.T) {
-	config, err := migrations.NewConfig()
+	tCfg, err := testutils.NewConfig()
+	t.Require().NoError(err)
+
+	mCfg, err := migrations.NewConfig()
 	t.Require().NoError(err)
 
 	s.ctx = context.Background()
 
-	s.db, err = testutils.NewTestDB(s.ctx, config, nil)
+	s.db, err = testutils.NewTestDB(s.ctx, tCfg, mCfg)
 	t.Require().NoError(err)
 
 	s.orderCollection = s.db.DB.Collection(s.db.Cfg.OrderCollection)
