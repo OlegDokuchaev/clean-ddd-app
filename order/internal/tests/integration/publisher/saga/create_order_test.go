@@ -42,6 +42,8 @@ func (s *CreateOrderPublisherTestSuite) BeforeAll(t provider.T) {
 	testMessaging, err := testutils.NewTestMessaging(s.ctx, tCfg)
 	t.Require().NoError(err)
 	s.messaging = testMessaging
+
+	s.clear(t)
 }
 
 func (s *CreateOrderPublisherTestSuite) AfterAll(t provider.T) {
@@ -63,6 +65,10 @@ func (s *CreateOrderPublisherTestSuite) BeforeEach(_ provider.T) {
 }
 
 func (s *CreateOrderPublisherTestSuite) AfterEach(t provider.T) {
+	s.clear(t)
+}
+
+func (s *CreateOrderPublisherTestSuite) clear(t provider.T) {
 	if s.warehouseWriter != nil {
 		err := s.warehouseWriter.Close()
 		t.Require().NoError(err)
