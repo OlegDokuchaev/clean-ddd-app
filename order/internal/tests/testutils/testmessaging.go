@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 	"strconv"
-	"strings"
 
 	"order/internal/infrastructure/messaging"
 
@@ -21,7 +19,6 @@ type TestMessaging struct {
 }
 
 const (
-	EnvMsgMode               = "E2E_MSG_MODE"
 	TestWarehouseTopic       = "warehouse-topic"
 	TestWarehouseResTopic    = "warehouse-topic-res"
 	TestWarehouseResGroupID  = "warehouse-res-consumer"
@@ -144,13 +141,14 @@ func createTopics(ctx context.Context, url string, topics ...string) error {
 	return controllerConn.CreateTopics(topicConfigs...)
 }
 
-func NewTestMessaging(ctx context.Context, cfg *messaging.Config) (*TestMessaging, error) {
-	switch strings.ToLower(os.Getenv(EnvMsgMode)) {
-	case "real":
-		if cfg == nil {
-			return nil, fmt.Errorf("messaging config Address must be set for real mode")
+func NewTestMessaging(ctx context.Context, tCfg *Config) (*TestMessaging, error) {
+	switch tCfg.Mode {
+	case ModeReal:
+		mCfg, err := messaging.NewConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to create new messaging config: %w", err)
 		}
-		return &TestMessaging{Cfg: cfg}, nil
+		return &TestMessaging{Cfg: mCfg}, nil
 	default:
 		container, err := setupKafkaContainer(ctx)
 		if err != nil {
@@ -170,7 +168,7 @@ func NewTestMessaging(ctx context.Context, cfg *messaging.Config) (*TestMessagin
 			return nil, fmt.Errorf("failed to create topics: %w", err)
 		}
 
-		cfg = &messaging.Config{
+		mCfg := &messaging.Config{
 			Address: url,
 
 			OrderCmdTopic:           TestOrderTopic,
@@ -186,6 +184,6 @@ func NewTestMessaging(ctx context.Context, cfg *messaging.Config) (*TestMessagin
 			CourierCmdResConsumerGroupID: TestCourierResGroupID,
 		}
 
-		return &TestMessaging{Cfg: cfg, container: container}, nil
+		return &TestMessaging{Cfg: mCfg, container: container}, nil
 	}
 }
