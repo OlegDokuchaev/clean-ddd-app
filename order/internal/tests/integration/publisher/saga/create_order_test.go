@@ -34,9 +34,12 @@ type CreateOrderPublisherTestSuite struct {
 }
 
 func (s *CreateOrderPublisherTestSuite) BeforeAll(t provider.T) {
+	tCfg, err := testutils.NewConfig()
+	t.Require().NoError(err)
+
 	s.ctx = context.Background()
 
-	testMessaging, err := testutils.NewTestMessaging(s.ctx, nil)
+	testMessaging, err := testutils.NewTestMessaging(s.ctx, tCfg)
 	t.Require().NoError(err)
 	s.messaging = testMessaging
 }
