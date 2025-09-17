@@ -15,7 +15,9 @@ update_allure_history:
 	if [ -d "$(ALLURE_REPORT_PATH)/history" ]; then \
 		cp -R "$(ALLURE_REPORT_PATH)/history" "$(ALLURE_RESULTS_PATH)/history"; \
 	fi
-	find $(ALLURE_RESULTS_PATH) -maxdepth 1 -type f -delete
+	if [ -d "$(ALLURE_RESULTS_PATH)" ]; then \
+    	find "$(ALLURE_RESULTS_PATH)" -maxdepth 1 -type f -delete; \
+    fi
 
 unit: update_allure_history
 	@bash -c 'set -a; source $(ENV_FILE); set +a; $(GO_TEST) -short ./...'
