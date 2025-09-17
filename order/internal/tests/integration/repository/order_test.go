@@ -39,6 +39,8 @@ func (s *OrderRepositoryTestSuite) BeforeAll(t provider.T) {
 	s.db, err = testutils.NewTestDB(s.ctx, tCfg, mCfg)
 	t.Require().NoError(err)
 
+	s.clear(t)
+
 	s.orderCollection = s.db.DB.Collection(s.db.Cfg.OrderCollection)
 }
 
@@ -50,6 +52,10 @@ func (s *OrderRepositoryTestSuite) AfterAll(t provider.T) {
 }
 
 func (s *OrderRepositoryTestSuite) AfterEach(t provider.T) {
+	s.clear(t)
+}
+
+func (s *OrderRepositoryTestSuite) clear(t provider.T) {
 	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 	defer cancel()
 
