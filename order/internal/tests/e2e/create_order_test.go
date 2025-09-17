@@ -44,17 +44,20 @@ type CreateOrderE2ESuite struct {
 }
 
 func (s *CreateOrderE2ESuite) BeforeAll(t provider.T) {
-	config, err := migrations.NewConfig()
+	tCfg, err := testutils.NewConfig()
+	t.Require().NoError(err)
+
+	mCfg, err := migrations.NewConfig()
 	t.Require().NoError(err)
 
 	s.ctx = context.Background()
 
 	// 1) MongoDB
-	s.db, err = testutils.NewTestDB(s.ctx, config, nil)
+	s.db, err = testutils.NewTestDB(s.ctx, tCfg, mCfg)
 	t.Require().NoError(err)
 
 	// 2) Kafka
-	testMessaging, err := testutils.NewTestMessaging(s.ctx, nil)
+	testMessaging, err := testutils.NewTestMessaging(s.ctx, tCfg)
 	t.Require().NoError(err)
 	s.messaging = testMessaging
 
