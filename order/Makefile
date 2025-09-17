@@ -12,7 +12,9 @@ ALLURE_RESULTS_PATH ?= internal/tests/allure
 
 update_allure_history:
 	rm -rf "$(ALLURE_RESULTS_PATH)/history"
-	cp -R "$(ALLURE_REPORT_PATH)/history" "$(ALLURE_RESULTS_PATH)/history"
+	if [ -d "$(ALLURE_REPORT_PATH)/history" ]; then \
+		cp -R "$(ALLURE_REPORT_PATH)/history" "$(ALLURE_RESULTS_PATH)/history"; \
+	fi
 	find $(ALLURE_RESULTS_PATH) -maxdepth 1 -type f -delete
 
 unit: update_allure_history
