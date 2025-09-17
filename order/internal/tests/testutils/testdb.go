@@ -150,10 +150,6 @@ func NewTestDB(ctx context.Context, tCfg *Config, mCfg *migrations.Config) (*Tes
 			return nil, fmt.Errorf("failed to ping real mongo: %w", err)
 		}
 
-		if err = createMigrations(client, dbCfg.Database, mCfg); err != nil {
-			return nil, err
-		}
-
 		return &TestDB{DB: client.Database(dbCfg.Database), Cfg: dbCfg}, nil
 	default:
 		container, err := setupDBContainer(ctx)
