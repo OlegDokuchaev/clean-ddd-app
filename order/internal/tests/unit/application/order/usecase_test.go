@@ -22,7 +22,7 @@ type OrderUseCaseTestSuite struct {
 	ctx context.Context
 }
 
-func (s *OrderUseCaseTestSuite) SetupTest() {
+func (s *OrderUseCaseTestSuite) BeforeEach(_ provider.T) {
 	s.ctx = context.Background()
 }
 

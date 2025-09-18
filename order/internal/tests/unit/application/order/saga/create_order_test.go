@@ -21,7 +21,7 @@ type CreateOrderSagaTestSuite struct {
 	ctx context.Context
 }
 
-func (s *CreateOrderSagaTestSuite) SetupTest() {
+func (s *CreateOrderSagaTestSuite) BeforeEach(_ provider.T) {
 	s.ctx = context.Background()
 }
 

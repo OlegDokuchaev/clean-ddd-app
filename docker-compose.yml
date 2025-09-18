@@ -114,7 +114,8 @@ services:
       - ./configs/elasticsearch/config.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - elasticsearch_data:/usr/share/elasticsearch/data
     environment:
-      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m -XX:UseSVE=0"
+      CLI_JAVA_OPTS: "-XX:UseSVE=0"
       discovery.type: single-node
     ports:
       - "9200:9200"
