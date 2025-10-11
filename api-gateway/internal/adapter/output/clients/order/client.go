@@ -79,8 +79,13 @@ func (c *ClientImpl) GetByCustomer(
 	return orders, nil
 }
 
-func (c *ClientImpl) GetCurrentByCourier(ctx context.Context, courierID uuid.UUID) ([]*orderDto.OrderDto, error) {
-	in := toGetCurrentByCourierRequest(courierID)
+func (c *ClientImpl) GetCurrentByCourier(
+	ctx context.Context,
+	courierID uuid.UUID,
+	limit int,
+	offset int,
+) ([]*orderDto.OrderDto, error) {
+	in := toGetCurrentByCourierRequest(courierID, limit, offset)
 
 	out, err := c.client.GetCurrentOrdersByCourier(ctx, in)
 	if err != nil {

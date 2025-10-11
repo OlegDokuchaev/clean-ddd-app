@@ -380,6 +380,8 @@ func (x *GetOrdersByCustomerResponse) GetOrders() []*Order {
 type GetCurrentOrdersByCourierRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CourierId     string                 `protobuf:"bytes,1,opt,name=courier_id,json=courierId,proto3" json:"courier_id,omitempty"`
+	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -419,6 +421,20 @@ func (x *GetCurrentOrdersByCourierRequest) GetCourierId() string {
 		return x.CourierId
 	}
 	return ""
+}
+
+func (x *GetCurrentOrdersByCourierRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetCurrentOrdersByCourierRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
 }
 
 type GetCurrentOrdersByCourierResponse struct {
@@ -699,10 +715,12 @@ const file_order_v1_service_proto_rawDesc = "" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x03 \x01(\x05R\x06offset\"F\n" +
 	"\x1bGetOrdersByCustomerResponse\x12'\n" +
-	"\x06orders\x18\x01 \x03(\v2\x0f.order.v1.OrderR\x06orders\"A\n" +
+	"\x06orders\x18\x01 \x03(\v2\x0f.order.v1.OrderR\x06orders\"o\n" +
 	" GetCurrentOrdersByCourierRequest\x12\x1d\n" +
 	"\n" +
-	"courier_id\x18\x01 \x01(\tR\tcourierId\"L\n" +
+	"courier_id\x18\x01 \x01(\tR\tcourierId\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"L\n" +
 	"!GetCurrentOrdersByCourierResponse\x12'\n" +
 	"\x06orders\x18\x01 \x03(\v2\x0f.order.v1.OrderR\x06orders\"\x9d\x02\n" +
 	"\x05Order\x12\x19\n" +

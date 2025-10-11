@@ -89,13 +89,13 @@ func (u *UseCaseImpl) GetByCustomer(ctx context.Context, limit int, offset int, 
 	return orders, nil
 }
 
-func (u *UseCaseImpl) GetCurrentByCourier(ctx context.Context, courierToken string) ([]*orderDto.OrderDto, error) {
+func (u *UseCaseImpl) GetCurrentByCourier(ctx context.Context, limit int, offset int, courierToken string) ([]*orderDto.OrderDto, error) {
 	courierID, err := u.courierClient.Authenticate(ctx, courierToken)
 	if err != nil {
 		return nil, err
 	}
 
-	orders, err := u.orderClient.GetCurrentByCourier(ctx, courierID)
+	orders, err := u.orderClient.GetCurrentByCourier(ctx, courierID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

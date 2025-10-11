@@ -11,5 +11,5 @@ type UseCase interface {
 	CancelByCustomer(ctx context.Context, orderID uuid.UUID, customerToken string) error
 	Complete(ctx context.Context, orderID uuid.UUID, courierToken string) error
 	GetByCustomer(ctx context.Context, limit int, offset int, customerToken string) ([]*orderDto.OrderDto, error)
-	GetCurrentByCourier(ctx context.Context, courierToken string) ([]*orderDto.OrderDto, error)
+	GetCurrentByCourier(ctx context.Context, limit int, offset int, courierToken string) ([]*orderDto.OrderDto, error)
 }

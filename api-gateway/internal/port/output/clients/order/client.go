@@ -12,5 +12,5 @@ type Client interface {
 	CancelByCustomer(ctx context.Context, orderID uuid.UUID, customerID uuid.UUID) error
 	Complete(ctx context.Context, orderID uuid.UUID, courierID uuid.UUID) error
 	GetByCustomer(ctx context.Context, customerID uuid.UUID, limit int, offset int) ([]*orderDto.OrderDto, error)
-	GetCurrentByCourier(ctx context.Context, courierID uuid.UUID) ([]*orderDto.OrderDto, error)
+	GetCurrentByCourier(ctx context.Context, courierID uuid.UUID, limit int, offset int) ([]*orderDto.OrderDto, error)
 }

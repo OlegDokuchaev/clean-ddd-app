@@ -135,19 +135,26 @@ func (h *Handler) GetCustomerOrders(c *gin.Context) {
 // @Tags couriers
 // @Accept json
 // @Produce json
+// @Param request query order_request.GetAllCourierOrdersRequest true "Pagination"
 // @Success 200 {object} order_response.OrdersResponse "List of orders"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid bearer token"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Security CourierBearerAuth
 // @Router /couriers/me/orders [get]
 func (h *Handler) GetCourierOrders(c *gin.Context) {
+	var req request.GetAllCourierOrdersRequest
+	if err := commonRequest.ParseInput(c, &req, binding.Query); err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
 	token, err := commonRequest.ParseBearerToken(c)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
 	}
 
-	orders, err := h.uc.GetCurrentByCourier(c, token)
+	orders, err := h.uc.GetCurrentByCourier(c, req.Limit, req.Offset, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
