@@ -5,6 +5,11 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type GetAllCustomerOrdersRequest struct {
+	Limit  int `form:"limit" binding:"required"`
+	Offset int `form:"offset" binding:"required"`
+}
+
 type CreateRequest struct {
 	Address string        `json:"address" binding:"required"`
 	Items   []*ItemSchema `json:"items" binding:"required,min=1,dive"`

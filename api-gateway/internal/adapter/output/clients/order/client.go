@@ -58,8 +58,13 @@ func (c *ClientImpl) Complete(ctx context.Context, orderID uuid.UUID, courierID 
 	return nil
 }
 
-func (c *ClientImpl) GetByCustomer(ctx context.Context, customerID uuid.UUID) ([]*orderDto.OrderDto, error) {
-	in := toGetByCustomerRequest(customerID)
+func (c *ClientImpl) GetByCustomer(
+	ctx context.Context,
+	customerID uuid.UUID,
+	limit int,
+	offset int,
+) ([]*orderDto.OrderDto, error) {
+	in := toGetByCustomerRequest(customerID, limit, offset)
 
 	out, err := c.client.GetOrdersByCustomer(ctx, in)
 	if err != nil {
