@@ -139,6 +139,37 @@ func (s *ProductRepositoryTestSuite) TestGetByID() {
 	}
 }
 
+func (s *ProductRepositoryTestSuite) TestGetAll() {
+	tests := []struct {
+		name          string
+		limit         int
+		offset        int
+		expectedError error
+	}{
+		{
+			name:          "Success",
+			limit:         10,
+			offset:        0,
+			expectedError: nil,
+		},
+	}
+
+	repo := s.getRepo()
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			products, err := repo.GetAll(s.ctx, tc.limit, tc.offset)
+
+			if tc.expectedError != nil {
+				require.Error(s.T(), err)
+				require.Equal(s.T(), tc.expectedError, err)
+			} else {
+				require.NoError(s.T(), err)
+				require.NotNil(s.T(), products)
+			}
+		})
+	}
+}
+
 func TestProductRepository(t *testing.T) {
 	suite.Run(t, new(ProductRepositoryTestSuite))
 }
