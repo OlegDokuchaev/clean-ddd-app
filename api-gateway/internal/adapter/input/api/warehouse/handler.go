@@ -149,20 +149,13 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 // @Router /items [get]
 func (h *Handler) GetAllItems(c *gin.Context) {
 	// Limit
-	limit, err := commonRequest.ParseParamInt(c, "limit")
-	if err != nil {
+	var req request.GetAllItemsRequest
+	if err := commonRequest.ParseInput(c, &req, binding.Query); err != nil {
 		commonResponse.HandleError(c, err)
 		return
 	}
 
-	// Offset
-	offset, err := commonRequest.ParseParamInt(c, "offset")
-	if err != nil {
-		commonResponse.HandleError(c, err)
-		return
-	}
-
-	items, err := h.uc.GetAllItems(c, limit, offset)
+	items, err := h.uc.GetAllItems(c, req.Limit, req.Offset)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return

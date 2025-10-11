@@ -11,8 +11,8 @@ type ItemInfoSchema struct {
 }
 
 type GetAllItemsRequest struct {
-	Limit  int `json:"limit" binding:"required"`
-	Offset int `json:"offset" binding:"required"`
+	Limit  int `form:"limit" binding:"required"`
+	Offset int `form:"offset" binding:"required"`
 }
 
 type CreateProductRequest struct {

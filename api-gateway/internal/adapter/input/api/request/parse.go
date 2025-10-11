@@ -4,7 +4,6 @@ import (
 	"api-gateway/internal/adapter/input/api/response"
 	"mime/multipart"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -17,14 +16,6 @@ func ParseParamUUID(c *gin.Context, key string) (uuid.UUID, error) {
 		return uuid.Nil, response.ErrInvalidId
 	} else {
 		return id, nil
-	}
-}
-
-func ParseParamInt(c *gin.Context, key string) (int, error) {
-	if n, err := strconv.Atoi(c.Param(key)); err != nil {
-		return 0, response.ErrInvalidId
-	} else {
-		return n, nil
 	}
 }
 
