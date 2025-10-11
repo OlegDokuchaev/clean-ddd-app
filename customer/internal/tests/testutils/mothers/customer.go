@@ -5,7 +5,6 @@ import (
 
 	customerDomain "customer/internal/domain/customer"
 	"customer/internal/tests/testutils/builders"
-	"github.com/google/uuid"
 )
 
 func DefaultCustomer() *customerDomain.Customer {
@@ -45,38 +44,14 @@ func LockedUntilCustomer(t time.Time) *customerDomain.Customer {
 		Build()
 }
 
-func CustomerWithFailedAttempts(n int) *customerDomain.Customer {
-	return builders.NewCustomerBuilder().
-		WithFailedCount(n).
-		Build()
-}
-
 func CustomerWithEmail(email string) *customerDomain.Customer {
 	return builders.NewCustomerBuilder().
 		WithEmail(email).
 		Build()
 }
 
-func ListOfCustomers(n int) []*customerDomain.Customer {
-	out := make([]*customerDomain.Customer, 0, n)
-	for i := 0; i < n; i++ {
-		out = append(out, DefaultCustomer())
-	}
-	return out
-}
-
-func TechnicalCustomer() *customerDomain.Customer {
+func CustomerWithPhone(phone string) *customerDomain.Customer {
 	return builders.NewCustomerBuilder().
-		WithName("Tech User").
-		WithEmail("tech@example.com").
-		WithPhone("+79990000000").
-		WithPassword("TechP@ssw0rd!").
-		Unlocked().
-		Build()
-}
-
-func CustomerWithId(id uuid.UUID) *customerDomain.Customer {
-	return builders.NewCustomerBuilder().
-		WithID(id).
+		WithPhone(phone).
 		Build()
 }

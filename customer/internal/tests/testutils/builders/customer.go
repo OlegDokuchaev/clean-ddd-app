@@ -1,6 +1,8 @@
 package builders
 
 import (
+	"fmt"
+	"math/rand"
 	"time"
 
 	customerDomain "customer/internal/domain/customer"
@@ -25,8 +27,8 @@ func NewCustomerBuilder() *CustomerBuilder {
 	return &CustomerBuilder{
 		id:            uuid.New(),
 		name:          "John Doe",
-		phone:         "+79991234567",
-		email:         "john.doe@example.com",
+		phone:         createPhone(),
+		email:         createEmail(),
 		passwordPlain: "P@ssw0rd!",
 		created:       time.Now(),
 		failedCount:   0,
@@ -110,4 +112,28 @@ func (b *CustomerBuilder) Build() *customerDomain.Customer {
 	}
 
 	return c
+}
+
+func createPhone() string {
+	phone := "+"
+	for i := 0; i < 10; i++ {
+		phone += fmt.Sprintf("%d", rand.Intn(10))
+	}
+	return phone
+}
+
+func createEmail() string {
+	const letters = "abcdefghijklmnopqrstuvwxyz"
+	name := ""
+	domain := ""
+
+	for i := 0; i < rand.Intn(6)+5; i++ {
+		name += string(letters[rand.Intn(len(letters))])
+	}
+
+	for i := 0; i < rand.Intn(5)+3; i++ {
+		domain += string(letters[rand.Intn(len(letters))])
+	}
+
+	return fmt.Sprintf("%s@%s.com", name, domain)
 }
