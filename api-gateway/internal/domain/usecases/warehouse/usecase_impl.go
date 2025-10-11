@@ -64,8 +64,8 @@ func (u *UseCaseImpl) CreateProduct(ctx context.Context, data warehouseDto.Creat
 	return productID, nil
 }
 
-func (u *UseCaseImpl) GetAllItems(ctx context.Context) ([]*warehouseDto.ItemDto, error) {
-	items, err := u.warehouseClient.GetAllItems(ctx)
+func (u *UseCaseImpl) GetAllItems(ctx context.Context, limit int, offset int) ([]*warehouseDto.ItemDto, error) {
+	items, err := u.warehouseClient.GetAllItems(ctx, limit, offset)
 	if err != nil {
 		return nil, err
 	}

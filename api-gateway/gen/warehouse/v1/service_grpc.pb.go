@@ -4,7 +4,7 @@
 // - protoc             v5.29.3
 // source: warehouse/v1/service.proto
 
-package warehouse_v1
+package v1
 
 import (
 	context "context"
@@ -33,7 +33,7 @@ const (
 type ItemServiceClient interface {
 	ReserveItem(ctx context.Context, in *ReserveItemRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ReleaseItem(ctx context.Context, in *ReleaseItemRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	GetAllItems(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAllItemsResponse, error)
+	GetAllItems(ctx context.Context, in *GetAllItemsRequest, opts ...grpc.CallOption) (*GetAllItemsResponse, error)
 }
 
 type itemServiceClient struct {
@@ -64,7 +64,7 @@ func (c *itemServiceClient) ReleaseItem(ctx context.Context, in *ReleaseItemRequ
 	return out, nil
 }
 
-func (c *itemServiceClient) GetAllItems(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAllItemsResponse, error) {
+func (c *itemServiceClient) GetAllItems(ctx context.Context, in *GetAllItemsRequest, opts ...grpc.CallOption) (*GetAllItemsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetAllItemsResponse)
 	err := c.cc.Invoke(ctx, ItemService_GetAllItems_FullMethodName, in, out, cOpts...)
@@ -82,7 +82,7 @@ func (c *itemServiceClient) GetAllItems(ctx context.Context, in *emptypb.Empty, 
 type ItemServiceServer interface {
 	ReserveItem(context.Context, *ReserveItemRequest) (*emptypb.Empty, error)
 	ReleaseItem(context.Context, *ReleaseItemRequest) (*emptypb.Empty, error)
-	GetAllItems(context.Context, *emptypb.Empty) (*GetAllItemsResponse, error)
+	GetAllItems(context.Context, *GetAllItemsRequest) (*GetAllItemsResponse, error)
 	mustEmbedUnimplementedItemServiceServer()
 }
 
@@ -99,7 +99,7 @@ func (UnimplementedItemServiceServer) ReserveItem(context.Context, *ReserveItemR
 func (UnimplementedItemServiceServer) ReleaseItem(context.Context, *ReleaseItemRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReleaseItem not implemented")
 }
-func (UnimplementedItemServiceServer) GetAllItems(context.Context, *emptypb.Empty) (*GetAllItemsResponse, error) {
+func (UnimplementedItemServiceServer) GetAllItems(context.Context, *GetAllItemsRequest) (*GetAllItemsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllItems not implemented")
 }
 func (UnimplementedItemServiceServer) mustEmbedUnimplementedItemServiceServer() {}
@@ -160,7 +160,7 @@ func _ItemService_ReleaseItem_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _ItemService_GetAllItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(GetAllItemsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func _ItemService_GetAllItems_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: ItemService_GetAllItems_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemServiceServer).GetAllItems(ctx, req.(*emptypb.Empty))
+		return srv.(ItemServiceServer).GetAllItems(ctx, req.(*GetAllItemsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

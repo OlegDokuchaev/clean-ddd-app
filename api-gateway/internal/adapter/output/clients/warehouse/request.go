@@ -38,3 +38,10 @@ func toCreateProductRequest(data warehouseDto.CreateProductDto) *warehouseGRPC.C
 		Price: data.Price.InexactFloat64(),
 	}
 }
+
+func toGetAllItemsRequest(limit int, offset int) *warehouseGRPC.GetAllItemsRequest {
+	return &warehouseGRPC.GetAllItemsRequest{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	}
+}
