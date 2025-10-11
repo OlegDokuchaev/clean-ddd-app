@@ -9,7 +9,8 @@ import (
 
 type Config struct {
 	SigningKey string        `envconfig:"JWT_SIGNING_KEY" required:"true"`
-	TokenTTL   time.Duration `envconfig:"JWT_TOKEN_TTL" required:"true"`
+	AccessTTL  time.Duration `envconfig:"JWT_TOKEN_TTL" required:"true"`
+	ResetTTL   time.Duration `envconfig:"JWT_RESET_TTL" required:"true"`
 }
 
 func NewConfig() (*Config, error) {
