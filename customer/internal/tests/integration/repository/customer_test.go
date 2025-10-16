@@ -19,29 +19,47 @@ import (
 
 type CustomerRepositoryTestSuite struct {
 	suite.Suite
-	ctx    context.Context
-	testDB *testutils.TestDB
+
+	ctx context.Context
+	db  *testutils.TestDB
 }
 
 func (s *CustomerRepositoryTestSuite) SetupSuite() {
-	cfg, err := migrations.NewConfig()
+	tCfg, err := testutils.NewConfig()
+	require.NoError(s.T(), err)
+
+	mCfg, err := migrations.NewConfig()
 	require.NoError(s.T(), err)
 
 	s.ctx = context.Background()
 
-	s.testDB, err = testutils.NewTestDB(s.ctx, cfg)
+	s.db, err = testutils.NewTestDB(s.ctx, tCfg, mCfg)
 	require.NoError(s.T(), err)
+
+	s.clear()
 }
 
 func (s *CustomerRepositoryTestSuite) TearDownSuite() {
-	if s.testDB != nil {
-		err := s.testDB.Close(s.ctx)
+	if s.db != nil {
+		err := s.db.Close(s.ctx)
 		require.NoError(s.T(), err)
 	}
 }
 
+func (s *CustomerRepositoryTestSuite) AfterTest(_, _ string) {
+	s.clear()
+}
+
+func (s *CustomerRepositoryTestSuite) clear() {
+	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
+	defer cancel()
+
+	err := s.db.Clear(ctx)
+	require.NoError(s.T(), err)
+}
+
 func (s *CustomerRepositoryTestSuite) getRepo() customerDomain.Repository {
-	return customerRepository.New(s.testDB.DB)
+	return customerRepository.New(s.db.DB)
 }
 
 func (s *CustomerRepositoryTestSuite) TestCreate() {
