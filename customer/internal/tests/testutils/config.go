@@ -15,6 +15,11 @@ const (
 
 type Config struct {
 	Mode Mode `envconfig:"TEST_MODE" default:"container"`
+
+	ImapHost     string `envconfig:"IMAP_HOST"`
+	ImapPort     string `envconfig:"IMAP_PORT"`
+	ImapUsername string `envconfig:"IMAP_USERNAME"`
+	ImapPassword string `envconfig:"IMAP_PASSWORD"`
 }
 
 func NewConfig() (*Config, error) {

@@ -120,19 +120,6 @@ func createMigrations(db *gorm.DB, config *migrations.Config) error {
 	return nil
 }
 
-func createDB(dbCfg *db.Config, mCfg *migrations.Config) (*gorm.DB, error) {
-	sqlDB, err := createGORM(dbCfg)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = createMigrations(sqlDB, mCfg); err != nil {
-		return nil, err
-	}
-
-	return sqlDB, nil
-}
-
 func NewTestDB(ctx context.Context, tCfg *Config, mCfg *migrations.Config) (*TestDB, error) {
 	switch tCfg.Mode {
 	case ModeReal:
@@ -141,9 +128,9 @@ func NewTestDB(ctx context.Context, tCfg *Config, mCfg *migrations.Config) (*Tes
 			return nil, fmt.Errorf("unable to load db config: %w", err)
 		}
 
-		sqlDB, err := createDB(dbCfg, mCfg)
+		sqlDB, err := createGORM(dbCfg)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to create gorm db: %w", err)
 		}
 
 		return &TestDB{
@@ -174,12 +161,13 @@ func NewTestDB(ctx context.Context, tCfg *Config, mCfg *migrations.Config) (*Tes
 			Password: TestDbPass,
 		}
 
-		sqlDB, err := createDB(dbCfg, mCfg)
+		sqlDB, err := createGORM(dbCfg)
 		if err != nil {
-			if err := container.Terminate(ctx); err != nil {
-				return nil, fmt.Errorf("failed to terminate database: %w", err)
-			}
-			return nil, err
+			return nil, fmt.Errorf("unable to create gorm db: %w", err)
+		}
+
+		if err = createMigrations(sqlDB, mCfg); err != nil {
+			return nil, fmt.Errorf("unable to create migrations: %w", err)
 		}
 
 		return &TestDB{
