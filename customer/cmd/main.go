@@ -22,6 +22,9 @@ func main() {
 		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
 		infraDI.TokenManagerModule,
+		infraDI.MailSenderModule,
+		infraDI.OtpStoreModule,
+		infraDI.AuthPoliciesModule,
 
 		// Application modules
 		appDI.UseCaseModule,
