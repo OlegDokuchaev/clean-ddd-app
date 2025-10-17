@@ -5,6 +5,7 @@ package e2e
 import (
 	"context"
 	"crypto/tls"
+	"customer/internal/infrastructure/auth"
 	"customer/internal/tests/testutils/mothers"
 	"net"
 	"testing"
@@ -63,7 +64,7 @@ func (s *LoginE2ESuite) SetupSuite() {
 
 	s.clear()
 
-	// 2) GRPC
+	// 3) GRPC
 	grpcLn, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(s.T(), err)
 
@@ -80,7 +81,18 @@ func (s *LoginE2ESuite) SetupSuite() {
 	log.SetLevel(logrus.ErrorLevel)
 	log.SetFormatter(&logrus.JSONFormatter{})
 
-	// 5) FX app
+	// 5) Auth config
+	aCfg := &auth.Config{
+		SigningKey:       "test-signing-key",
+		AccessTTL:        15 * time.Minute,
+		ResetTTL:         1 * time.Hour,
+		LockoutMaxFailed: 5,
+		LockoutLockFor:   30 * time.Minute,
+		OtpTTL:           5 * time.Minute,
+		OtpMaxAttempts:   3,
+	}
+
+	// 6) FX app
 	s.app = fx.New(
 		infraDI.LoggerModule,
 		infraDI.DatabaseModule,
@@ -97,6 +109,7 @@ func (s *LoginE2ESuite) SetupSuite() {
 		fx.Replace(s.redis.Cfg),
 		fx.Replace(s.redis.Client),
 		fx.Replace(grpcCfg),
+		fx.Replace(aCfg),
 		fx.Invoke(func(lc fx.Lifecycle, l logger.Logger) {
 			lc.Append(fx.Hook{
 				OnStart: func(context.Context) error { return nil },
@@ -111,7 +124,7 @@ func (s *LoginE2ESuite) SetupSuite() {
 	err = s.app.Start(startCtx)
 	require.NoError(s.T(), err)
 
-	// 6) Wait until gRPC is ready (TCP connect)
+	// 7) Wait until gRPC is ready (TCP connect)
 	require.Eventually(s.T(), func() bool {
 		c, err := net.DialTimeout("tcp", s.grpcURL, 2*time.Second)
 		if err != nil {
