@@ -1,0 +1,107 @@
+name: Customer CI
+
+on:
+  push:
+    paths:
+      - 'customer/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'customer/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: customer-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Tests environment variables
+  DB_MIGRATIONS_PATH: ${{ github.workspace }}/customer/internal/infrastructure/db/migrations
+  TEST_MODE: container
+
+  # Mail sender (SMTP)
+  MAIL_HOST: ${{ secrets.MAIL_HOST }}
+  MAIL_PORT: ${{ secrets.MAIL_PORT }}
+  MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+  MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+  MAIL_FROM_NAME: ${{ secrets.MAIL_FROM_NAME }}
+  MAIL_FROM_ADDRESS: ${{ secrets.MAIL_FROM_ADDRESS }}
+
+  # IMAP
+  IMAP_HOST: ${{ secrets.IMAP_HOST }}
+  IMAP_PORT: ${{ secrets.IMAP_PORT }}
+  IMAP_USERNAME: ${{ secrets.IMAP_USERNAME }}
+  IMAP_PASSWORD: ${{ secrets.IMAP_PASSWORD }}
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: customer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: customer/go.mod
+          cache: true
+          cache-dependency-path: customer/go.sum
+
+      - name: Run unit tests
+        run: make unit
+
+  integration:
+    name: Integration tests
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+    needs: unit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: customer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: customer/go.mod
+          cache: true
+          cache-dependency-path: customer/go.sum
+
+      - name: Ensure Docker is available
+        run: docker version
+  
+      - name: Run integration tests (make integration)
+        run: make integration
+
+  e2e:
+    name: E2E tests
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+    needs: integration
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: customer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: customer/go.mod
+          cache: true
+          cache-dependency-path: customer/go.sum
+
+      - name: Ensure Docker is available
+        run: docker version
+
+      - name: Run e2e tests
+        run: make e2e
