@@ -5,6 +5,8 @@ import (
 )
 
 type TokenManager interface {
-	Generate(customerID uuid.UUID) (string, error)
-	Decode(token string) (uuid.UUID, error)
+	GenerateAccess(customerID uuid.UUID) (string, error)
+	ParseAndValidateAccess(token string) (uuid.UUID, error)
+	GenerateReset(customerID uuid.UUID) (string, error)
+	ParseAndValidateReset(token string) (uuid.UUID, error)
 }

@@ -4,7 +4,7 @@
 // 	protoc        v5.29.3
 // source: order/v1/service.proto
 
-package order_v1
+package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -276,6 +276,8 @@ func (x *CompleteDeliveryRequest) GetOrderId() string {
 type GetOrdersByCustomerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CustomerId    string                 `protobuf:"bytes,1,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`
+	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -315,6 +317,20 @@ func (x *GetOrdersByCustomerRequest) GetCustomerId() string {
 		return x.CustomerId
 	}
 	return ""
+}
+
+func (x *GetOrdersByCustomerRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetOrdersByCustomerRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
 }
 
 type GetOrdersByCustomerResponse struct {
@@ -364,6 +380,8 @@ func (x *GetOrdersByCustomerResponse) GetOrders() []*Order {
 type GetCurrentOrdersByCourierRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CourierId     string                 `protobuf:"bytes,1,opt,name=courier_id,json=courierId,proto3" json:"courier_id,omitempty"`
+	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -403,6 +421,20 @@ func (x *GetCurrentOrdersByCourierRequest) GetCourierId() string {
 		return x.CourierId
 	}
 	return ""
+}
+
+func (x *GetCurrentOrdersByCourierRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetCurrentOrdersByCourierRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
 }
 
 type GetCurrentOrdersByCourierResponse struct {
@@ -676,15 +708,19 @@ const file_order_v1_service_proto_rawDesc = "" +
 	"\x1cCancelOrderByCustomerRequest\x12\x19\n" +
 	"\border_id\x18\x01 \x01(\tR\aorderId\"4\n" +
 	"\x17CompleteDeliveryRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId\"=\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\"k\n" +
 	"\x1aGetOrdersByCustomerRequest\x12\x1f\n" +
 	"\vcustomer_id\x18\x01 \x01(\tR\n" +
-	"customerId\"F\n" +
+	"customerId\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"F\n" +
 	"\x1bGetOrdersByCustomerResponse\x12'\n" +
-	"\x06orders\x18\x01 \x03(\v2\x0f.order.v1.OrderR\x06orders\"A\n" +
+	"\x06orders\x18\x01 \x03(\v2\x0f.order.v1.OrderR\x06orders\"o\n" +
 	" GetCurrentOrdersByCourierRequest\x12\x1d\n" +
 	"\n" +
-	"courier_id\x18\x01 \x01(\tR\tcourierId\"L\n" +
+	"courier_id\x18\x01 \x01(\tR\tcourierId\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"L\n" +
 	"!GetCurrentOrdersByCourierResponse\x12'\n" +
 	"\x06orders\x18\x01 \x03(\v2\x0f.order.v1.OrderR\x06orders\"\x9d\x02\n" +
 	"\x05Order\x12\x19\n" +

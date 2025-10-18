@@ -37,4 +37,18 @@ func (r *RepositoryImpl) GetByID(ctx context.Context, productID uuid.UUID) (*pro
 	return ToDomain(&productModel), nil
 }
 
+func (r *RepositoryImpl) GetAll(ctx context.Context, limit, offset int) ([]*productDomain.Product, error) {
+	var productModels []*tables.Product
+
+	res := r.db.WithContext(ctx).
+		Limit(limit).
+		Offset(offset).
+		Find(&productModels)
+	if res.Error != nil {
+		return nil, ParseError(res.Error)
+	}
+
+	return ToDomains(productModels), nil
+}
+
 var _ productDomain.Repository = (*RepositoryImpl)(nil)

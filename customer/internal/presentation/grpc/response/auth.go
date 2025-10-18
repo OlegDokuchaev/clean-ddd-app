@@ -12,8 +12,14 @@ func ToRegisterResponse(customerID uuid.UUID) *customerv1.RegisterResponse {
 	}
 }
 
-func ToLoginResponse(token string) *customerv1.LoginResponse {
+func ToLoginResponse(challengeID string) *customerv1.LoginResponse {
 	return &customerv1.LoginResponse{
+		ChallengeId: challengeID,
+	}
+}
+
+func ToVerifyOtpResponse(token string) *customerv1.VerifyOtpResponse {
+	return &customerv1.VerifyOtpResponse{
 		Token: token,
 	}
 }

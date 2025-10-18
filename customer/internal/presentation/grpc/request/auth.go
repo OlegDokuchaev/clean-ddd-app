@@ -19,3 +19,10 @@ func ToLoginDto(req *customerv1.LoginRequest) (customerAuthApplication.LoginDto,
 		Password: req.Password,
 	}, nil
 }
+
+func ToVerifyOtpDto(req *customerv1.VerifyOtpRequest) (customerAuthApplication.VerifyOtpDto, error) {
+	return customerAuthApplication.VerifyOtpDto{
+		ChallengeID: req.ChallengeId,
+		Code:        req.Code,
+	}, nil
+}

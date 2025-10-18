@@ -2,6 +2,7 @@ package auth
 
 import (
 	customerApplication "customer/internal/application/customer"
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -16,32 +17,46 @@ func NewTokenManager(config *Config) *TokenManagerImpl {
 	return &TokenManagerImpl{config: config}
 }
 
-func (m *TokenManagerImpl) Generate(customerID uuid.UUID) (string, error) {
-	claims := m.createTokenClaims(customerID)
+func (m *TokenManagerImpl) GenerateAccess(customerID uuid.UUID) (string, error) {
+	claims := m.createTokenClaims(AccessToken, customerID, m.config.AccessTTL)
 	return m.createToken(claims)
 }
 
-func (m *TokenManagerImpl) Decode(tokenString string) (uuid.UUID, error) {
-	token, err := m.parseToken(tokenString)
+func (m *TokenManagerImpl) ParseAndValidateAccess(token string) (uuid.UUID, error) {
+	c, err := m.parse(token)
 	if err != nil {
 		return uuid.Nil, err
 	}
-
-	claims, err := m.parseTokenClaims(token)
-	if err != nil {
-		return uuid.Nil, err
+	if c.Type != AccessToken {
+		return uuid.Nil, ErrInvalidToken
 	}
-
-	return claims.CustomerID, nil
+	return c.CustomerID, nil
 }
 
-func (m *TokenManagerImpl) createTokenClaims(customerID uuid.UUID) *tokenClaims {
-	expirationTime := time.Now().Add(m.config.TokenTTL)
+func (m *TokenManagerImpl) GenerateReset(customerID uuid.UUID) (string, error) {
+	claims := m.createTokenClaims(ResetToken, customerID, m.config.ResetTTL)
+	return m.createToken(claims)
+}
+
+func (m *TokenManagerImpl) ParseAndValidateReset(token string) (uuid.UUID, error) {
+	c, err := m.parse(token)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	if c.Type != ResetToken {
+		return uuid.Nil, ErrInvalidToken
+	}
+	return c.CustomerID, nil
+}
+
+func (m *TokenManagerImpl) createTokenClaims(type_ TokenType, customerID uuid.UUID, ttl time.Duration) *tokenClaims {
+	expirationTime := time.Now().Add(ttl)
 	return &tokenClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
+		Type:       type_,
 		CustomerID: customerID,
 	}
 }
@@ -51,9 +66,9 @@ func (m *TokenManagerImpl) createToken(claims *tokenClaims) (string, error) {
 	return token.SignedString([]byte(m.config.SigningKey))
 }
 
-func (m *TokenManagerImpl) parseToken(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.ParseWithClaims(
-		tokenString,
+func (m *TokenManagerImpl) parse(raw string) (*tokenClaims, error) {
+	tok, err := jwt.ParseWithClaims(
+		raw,
 		&tokenClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -64,20 +79,16 @@ func (m *TokenManagerImpl) parseToken(tokenString string) (*jwt.Token, error) {
 	)
 
 	if err != nil {
-		if jwt.ErrTokenExpired.Error() == err.Error() {
+		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, ErrTokenExpired
 		}
 		return nil, ErrInvalidToken
 	}
-
-	return token, nil
-}
-
-func (m *TokenManagerImpl) parseTokenClaims(token *jwt.Token) (*tokenClaims, error) {
-	if claims, ok := token.Claims.(*tokenClaims); ok && token.Valid {
-		return claims, nil
+	claims, ok := tok.Claims.(*tokenClaims)
+	if !ok || !tok.Valid {
+		return nil, ErrInvalidToken
 	}
-	return nil, ErrInvalidToken
+	return claims, nil
 }
 
 var _ customerApplication.TokenManager = (*TokenManagerImpl)(nil)

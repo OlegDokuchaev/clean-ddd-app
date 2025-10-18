@@ -95,62 +95,32 @@ func (h *Handler) CancelOrder(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// CompleteDelivery godoc
-// @Summary Complete order
-// @Description Mark an order as delivered (completed)
-// @Tags orders
-// @Accept json
-// @Produce json
-// @Param id path string true "Order ID"
-// @Success 200 "" "OK"
-// @Failure 400 {object} response.ErrorResponseDetail "Invalid request"
-// @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid bearer token"
-// @Failure 404 {object} response.ErrorResponseDetail "Order not found"
-// @Failure 422 {object} response.ErrorResponseDetail "Invalid order ID format"
-// @Failure 500 {object} response.ErrorResponseDetail "Server error"
-// @Security CourierBearerAuth
-// @Router /orders/{id}/complete [patch]
-func (h *Handler) CompleteDelivery(c *gin.Context) {
-	orderID, err := commonRequest.ParseParamUUID(c, "id")
-	if err != nil {
-		commonResponse.HandleError(c, err)
-		return
-	}
-
-	token, err := commonRequest.ParseBearerToken(c)
-	if err != nil {
-		commonResponse.HandleError(c, err)
-		return
-	}
-
-	err = h.uc.Complete(c, orderID, token)
-	if err != nil {
-		commonResponse.HandleError(c, err)
-		return
-	}
-
-	c.Status(http.StatusOK)
-}
-
 // GetCustomerOrders godoc
 // @Summary Get customer orders
 // @Description Get all orders for the authenticated customer
 // @Tags orders
 // @Accept json
 // @Produce json
+// @Param request query order_request.GetAllCustomerOrdersRequest true "Pagination"
 // @Success 200 {object} order_response.OrdersResponse "List of orders"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid bearer token"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Security CustomerBearerAuth
 // @Router /orders [get]
 func (h *Handler) GetCustomerOrders(c *gin.Context) {
+	var req request.GetAllCustomerOrdersRequest
+	if err := commonRequest.ParseInput(c, &req, binding.Query); err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
 	token, err := commonRequest.ParseBearerToken(c)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
 	}
 
-	orders, err := h.uc.GetByCustomer(c, token)
+	orders, err := h.uc.GetByCustomer(c, req.Limit, req.Offset, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -165,19 +135,26 @@ func (h *Handler) GetCustomerOrders(c *gin.Context) {
 // @Tags couriers
 // @Accept json
 // @Produce json
+// @Param request query order_request.GetAllCourierOrdersRequest true "Pagination"
 // @Success 200 {object} order_response.OrdersResponse "List of orders"
 // @Failure 401 {object} response.ErrorResponseDetail "Missing or invalid bearer token"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Security CourierBearerAuth
 // @Router /couriers/me/orders [get]
 func (h *Handler) GetCourierOrders(c *gin.Context) {
+	var req request.GetAllCourierOrdersRequest
+	if err := commonRequest.ParseInput(c, &req, binding.Query); err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
 	token, err := commonRequest.ParseBearerToken(c)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
 	}
 
-	orders, err := h.uc.GetCurrentByCourier(c, token)
+	orders, err := h.uc.GetCurrentByCourier(c, req.Limit, req.Offset, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return

@@ -47,6 +47,8 @@ message CompleteDeliveryRequest {
 
 message GetOrdersByCustomerRequest {
   string customer_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
 }
 
 message GetOrdersByCustomerResponse {
@@ -55,6 +57,8 @@ message GetOrdersByCustomerResponse {
 
 message GetCurrentOrdersByCourierRequest {
   string courier_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
 }
 
 message GetCurrentOrdersByCourierResponse {

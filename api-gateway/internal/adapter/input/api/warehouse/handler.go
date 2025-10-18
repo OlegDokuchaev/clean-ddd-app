@@ -143,11 +143,19 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 // @Tags items
 // @Accept json
 // @Produce json
+// @Param request query warehouse_request.GetAllItemsRequest true "Pagination"
 // @Success 200 {object} warehouse_response.ItemsResponse "List of items"
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /items [get]
 func (h *Handler) GetAllItems(c *gin.Context) {
-	items, err := h.uc.GetAllItems(c)
+	// Limit
+	var req request.GetAllItemsRequest
+	if err := commonRequest.ParseInput(c, &req, binding.Query); err != nil {
+		commonResponse.HandleError(c, err)
+		return
+	}
+
+	items, err := h.uc.GetAllItems(c, req.Limit, req.Offset)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return

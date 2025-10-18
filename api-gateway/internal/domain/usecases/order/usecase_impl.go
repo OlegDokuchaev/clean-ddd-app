@@ -75,13 +75,13 @@ func (u *UseCaseImpl) Complete(ctx context.Context, orderID uuid.UUID, courierTo
 	return nil
 }
 
-func (u *UseCaseImpl) GetByCustomer(ctx context.Context, customerToken string) ([]*orderDto.OrderDto, error) {
+func (u *UseCaseImpl) GetByCustomer(ctx context.Context, limit int, offset int, customerToken string) ([]*orderDto.OrderDto, error) {
 	customerID, err := u.customerClient.Authenticate(ctx, customerToken)
 	if err != nil {
 		return nil, err
 	}
 
-	orders, err := u.orderClient.GetByCustomer(ctx, customerID)
+	orders, err := u.orderClient.GetByCustomer(ctx, customerID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -89,13 +89,13 @@ func (u *UseCaseImpl) GetByCustomer(ctx context.Context, customerToken string) (
 	return orders, nil
 }
 
-func (u *UseCaseImpl) GetCurrentByCourier(ctx context.Context, courierToken string) ([]*orderDto.OrderDto, error) {
+func (u *UseCaseImpl) GetCurrentByCourier(ctx context.Context, limit int, offset int, courierToken string) ([]*orderDto.OrderDto, error) {
 	courierID, err := u.courierClient.Authenticate(ctx, courierToken)
 	if err != nil {
 		return nil, err
 	}
 
-	orders, err := u.orderClient.GetCurrentByCourier(ctx, courierID)
+	orders, err := u.orderClient.GetCurrentByCourier(ctx, courierID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

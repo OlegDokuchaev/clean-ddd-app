@@ -7,7 +7,12 @@ import (
 
 type ItemInfoSchema struct {
 	ProductID uuid.UUID `json:"product_id" binding:"required"`
-	Count     int       `json:"count" binding:"required,min=1"`
+	Count     int       `json:"count" binding:"required"`
+}
+
+type GetAllItemsRequest struct {
+	Limit  int `form:"limit" binding:"required"`
+	Offset int `form:"offset" binding:"required"`
 }
 
 type CreateProductRequest struct {

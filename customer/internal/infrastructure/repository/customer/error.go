@@ -10,6 +10,7 @@ import (
 var (
 	ErrCustomerAlreadyExists      = errors.New("customer already exists")
 	ErrCustomerPhoneAlreadyExists = errors.New("customer phone already exists")
+	ErrCustomerEmailAlreadyExists = errors.New("customer email already exists")
 	ErrCustomerNotFound           = errors.New("customer not found")
 )
 
@@ -30,9 +31,10 @@ func parsePgError(err *pgconn.PgError) error {
 	switch err.ConstraintName {
 	case "customers_pkey":
 		return ErrCustomerAlreadyExists
-
 	case "customers_phone_key":
 		return ErrCustomerPhoneAlreadyExists
+	case "customers_email_key":
+		return ErrCustomerEmailAlreadyExists
 
 	default:
 		return fmt.Errorf("customer not saved: %v", err)

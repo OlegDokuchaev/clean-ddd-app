@@ -6,6 +6,7 @@ import (
 	customerv1 "customer/internal/presentation/grpc"
 	"customer/internal/presentation/grpc/request"
 	"customer/internal/presentation/grpc/response"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type CustomerAuthServiceHandler struct {
@@ -46,12 +47,53 @@ func (h *CustomerAuthServiceHandler) Login(
 		return nil, err
 	}
 
-	token, err := h.usecase.Login(ctx, data)
+	challengeID, err := h.usecase.Login(ctx, data)
 	if err != nil {
 		return nil, response.ParseError(err)
 	}
 
-	return response.ToLoginResponse(token), nil
+	return response.ToLoginResponse(challengeID), nil
+}
+
+func (h *CustomerAuthServiceHandler) VerifyOtp(
+	ctx context.Context,
+	req *customerv1.VerifyOtpRequest,
+) (*customerv1.VerifyOtpResponse, error) {
+	data, err := request.ToVerifyOtpDto(req)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := h.usecase.VerifyOtp(ctx, data)
+	if err != nil {
+		return nil, response.ParseError(err)
+	}
+
+	return response.ToVerifyOtpResponse(token), nil
+}
+
+func (h *CustomerAuthServiceHandler) RequestPasswordReset(
+	ctx context.Context,
+	req *customerv1.RequestPasswordResetRequest,
+) (*emptypb.Empty, error) {
+	err := h.usecase.RequestPasswordReset(ctx, req.Email)
+	if err != nil {
+		return nil, response.ParseError(err)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (h *CustomerAuthServiceHandler) CompletePasswordReset(
+	ctx context.Context,
+	req *customerv1.CompletePasswordResetRequest,
+) (*emptypb.Empty, error) {
+	err := h.usecase.CompletePasswordReset(ctx, req.Token, req.NewPassword)
+	if err != nil {
+		return nil, response.ParseError(err)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (h *CustomerAuthServiceHandler) Authenticate(

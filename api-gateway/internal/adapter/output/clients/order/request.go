@@ -44,14 +44,18 @@ func toCompleteDeliveryRequest(orderID uuid.UUID) *orderGRPC.CompleteDeliveryReq
 	}
 }
 
-func toGetByCustomerRequest(customerID uuid.UUID) *orderGRPC.GetOrdersByCustomerRequest {
+func toGetByCustomerRequest(customerID uuid.UUID, limit int, offset int) *orderGRPC.GetOrdersByCustomerRequest {
 	return &orderGRPC.GetOrdersByCustomerRequest{
 		CustomerId: customerID.String(),
+		Limit:      int32(limit),
+		Offset:     int32(offset),
 	}
 }
 
-func toGetCurrentByCourierRequest(courierID uuid.UUID) *orderGRPC.GetCurrentOrdersByCourierRequest {
+func toGetCurrentByCourierRequest(courierID uuid.UUID, limit int, offset int) *orderGRPC.GetCurrentOrdersByCourierRequest {
 	return &orderGRPC.GetCurrentOrdersByCourierRequest{
 		CourierId: courierID.String(),
+		Limit:     int32(limit),
+		Offset:    int32(offset),
 	}
 }

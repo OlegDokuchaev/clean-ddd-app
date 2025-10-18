@@ -12,7 +12,7 @@ type UseCase interface {
 	ReserveItems(ctx context.Context, items []warehouseDto.ItemInfoDto, adminToken string) error
 	ReleaseItems(ctx context.Context, items []warehouseDto.ItemInfoDto, adminToken string) error
 	CreateProduct(ctx context.Context, data warehouseDto.CreateProductDto, adminToken string) (uuid.UUID, error)
-	GetAllItems(ctx context.Context) ([]*warehouseDto.ItemDto, error)
+	GetAllItems(ctx context.Context, limit int, offset int) ([]*warehouseDto.ItemDto, error)
 	UpdateProductImage(ctx context.Context, productID uuid.UUID, fileReader io.Reader, contentType string, adminToken string) error
 	GetProductImage(ctx context.Context, productID uuid.UUID, adminToken string) (fileReader io.Reader, contentType string, err error)
 }

@@ -2,7 +2,9 @@ package testutils
 
 import (
 	"context"
+	"customer/internal/infrastructure/db"
 	"customer/internal/infrastructure/db/migrations"
+	"customer/internal/infrastructure/db/tables"
 	"fmt"
 	"time"
 
@@ -24,12 +26,25 @@ const (
 )
 
 type TestDB struct {
-	DB        *gorm.DB
+	DB  *gorm.DB
+	Cfg *db.Config
+
 	container testcontainers.Container
 }
 
+func (d *TestDB) Clear(ctx context.Context) error {
+	return d.DB.
+		WithContext(ctx).
+		Session(&gorm.Session{AllowGlobalUpdate: true}).
+		Delete(&tables.Customer{}).
+		Error
+}
+
 func (d *TestDB) Close(ctx context.Context) error {
-	return d.container.Terminate(ctx)
+	if d.container != nil {
+		return d.container.Terminate(ctx)
+	}
+	return nil
 }
 
 func setupDBContainer(ctx context.Context) (testcontainers.Container, error) {
@@ -45,21 +60,15 @@ func setupDBContainer(ctx context.Context) (testcontainers.Container, error) {
 	)
 }
 
-func createDSN(ctx context.Context, container testcontainers.Container) (string, error) {
-	host, err := container.Host(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	port, err := container.MappedPort(ctx, "5432/tcp")
-	if err != nil {
-		return "", err
-	}
-
+func createDSN(c *db.Config) string {
 	return fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port.Int(), TestDbUser, TestDbPass, TestDbName,
-	), nil
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		c.Host,
+		c.Port,
+		c.Username,
+		c.Password,
+		c.Database,
+	)
 }
 
 func initGORM(dsn string) (*gorm.DB, error) {
@@ -71,18 +80,15 @@ func initGORM(dsn string) (*gorm.DB, error) {
 	)
 }
 
-func createGORM(ctx context.Context, container testcontainers.Container) (*gorm.DB, error) {
-	dsn, err := createDSN(ctx, container)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create DSN: %w", err)
-	}
+func createGORM(dbCfg *db.Config) (*gorm.DB, error) {
+	dsn := createDSN(dbCfg)
 
-	db, err := initGORM(dsn)
+	sqlDB, err := initGORM(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init GORM: %w", err)
 	}
 
-	return db, nil
+	return sqlDB, nil
 }
 
 func setupMigrations(db *gorm.DB, config *migrations.Config) (*migrate.Migrate, error) {
@@ -114,35 +120,60 @@ func createMigrations(db *gorm.DB, config *migrations.Config) error {
 	return nil
 }
 
-func createDB(ctx context.Context, container testcontainers.Container, config *migrations.Config) (*gorm.DB, error) {
-	db, err := createGORM(ctx, container)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = createMigrations(db, config); err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
-func NewTestDB(ctx context.Context, config *migrations.Config) (*TestDB, error) {
-	container, err := setupDBContainer(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup database: %w", err)
-	}
-
-	db, err := createDB(ctx, container, config)
-	if err != nil {
-		if err := container.Terminate(ctx); err != nil {
-			return nil, fmt.Errorf("failed to terminate database: %w", err)
+func NewTestDB(ctx context.Context, tCfg *Config, mCfg *migrations.Config) (*TestDB, error) {
+	switch tCfg.Mode {
+	case ModeReal:
+		dbCfg, err := db.NewConfig()
+		if err != nil {
+			return nil, fmt.Errorf("unable to load db config: %w", err)
 		}
-		return nil, err
-	}
 
-	return &TestDB{
-		DB:        db,
-		container: container,
-	}, nil
+		sqlDB, err := createGORM(dbCfg)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create gorm db: %w", err)
+		}
+
+		return &TestDB{
+			DB:  sqlDB,
+			Cfg: dbCfg,
+		}, nil
+	default:
+		container, err := setupDBContainer(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to setup database: %w", err)
+		}
+
+		host, err := container.Host(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get database host: %w", err)
+		}
+
+		port, err := container.MappedPort(ctx, "5432/tcp")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get database port: %w", err)
+		}
+
+		dbCfg := &db.Config{
+			Host:     host,
+			Port:     port.Port(),
+			Database: TestDbName,
+			Username: TestDbUser,
+			Password: TestDbPass,
+		}
+
+		sqlDB, err := createGORM(dbCfg)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create gorm db: %w", err)
+		}
+
+		if err = createMigrations(sqlDB, mCfg); err != nil {
+			return nil, fmt.Errorf("unable to create migrations: %w", err)
+		}
+
+		return &TestDB{
+			DB:        sqlDB,
+			Cfg:       dbCfg,
+			container: container,
+		}, nil
+	}
 }
