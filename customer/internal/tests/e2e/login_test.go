@@ -5,15 +5,12 @@ package e2e
 import (
 	"context"
 	"crypto/tls"
-	"customer/internal/infrastructure/auth"
-	"customer/internal/tests/testutils/mothers"
 	"net"
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	appDI "customer/internal/application/di"
+	"customer/internal/infrastructure/auth"
 	"customer/internal/infrastructure/db/migrations"
 	infraDI "customer/internal/infrastructure/di"
 	"customer/internal/infrastructure/logger"
@@ -21,20 +18,23 @@ import (
 	presentationDI "customer/internal/presentation/di"
 	customerv1 "customer/internal/presentation/grpc"
 	"customer/internal/tests/testutils"
+	"customer/internal/tests/testutils/mothers"
 
 	"github.com/emersion/go-imap"
 	imapclient "github.com/emersion/go-imap/client"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/sirupsen/logrus"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type LoginE2ESuite struct {
-	suite.Suite
-
-	ctx context.Context
+// ---- Global test fixtures (equivalent to testify's suite fields) ----
+var (
+	testCtx context.Context
 
 	app     *fx.App
 	tCfg    *testutils.Config
@@ -42,41 +42,96 @@ type LoginE2ESuite struct {
 
 	db    *testutils.TestDB
 	redis *testutils.TestRedis
+)
+
+// ---- Helpers (equivalent to clear/waitForIMAPSent) ----
+
+// clearAll wipes test DB and Redis between specs and during suite teardown.
+// It mirrors the behavior of your previous clear() helper.
+func clearAll(ctx context.Context) {
+	if db != nil {
+		Expect(db.Clear(ctx)).To(Succeed())
+	}
+	if redis != nil {
+		Expect(redis.Clear(ctx)).To(Succeed())
+	}
 }
 
-func (s *LoginE2ESuite) SetupSuite() {
-	tCfg, err := testutils.NewConfig()
-	require.NoError(s.T(), err)
-	s.tCfg = tCfg
+// waitForIMAPSent polls the IMAP inbox for a message with the given subject
+// addressed to tCfg.ImapUsername. Returns true if found before the deadline.
+// This function keeps the original behavior and timing from your suite.
+func waitForIMAPSent(subject string) bool {
+	Expect(tCfg.ImapHost).NotTo(BeEmpty())
+	Expect(tCfg.ImapPort).NotTo(BeEmpty())
+	Expect(tCfg.ImapUsername).NotTo(BeEmpty())
+	Expect(tCfg.ImapPassword).NotTo(BeEmpty())
+
+	addr := net.JoinHostPort(tCfg.ImapHost, tCfg.ImapPort)
+
+	// Use TLS with SNI set to the IMAP host.
+	c, err := imapclient.DialTLS(addr, &tls.Config{ServerName: tCfg.ImapHost})
+	if err != nil {
+		return false
+	}
+	defer func() { _ = c.Logout() }()
+
+	if err := c.Login(tCfg.ImapUsername, tCfg.ImapPassword); err != nil {
+		return false
+	}
+	if _, err := c.Select("INBOX", false); err != nil {
+		return false
+	}
+
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		crit := imap.NewSearchCriteria()
+		crit.Since = time.Now().Add(-1 * time.Minute)
+		crit.Header.Add("Subject", subject)
+		crit.Header.Add("To", tCfg.ImapUsername)
+
+		ids, err := c.Search(crit)
+		if err == nil && len(ids) > 0 {
+			return true
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	return false
+}
+
+// ---- Suite lifecycle (Ginkgo equivalents of SetupSuite/TearDownSuite/AfterTest) ----
+
+var _ = BeforeSuite(func(ctx SpecContext) {
+	testCtx = context.Background()
+
+	// 1) Load configs
+	var err error
+	tCfg, err = testutils.NewConfig()
+	Expect(err).NotTo(HaveOccurred())
 
 	mCfg, err := migrations.NewConfig()
-	require.NoError(s.T(), err)
+	Expect(err).NotTo(HaveOccurred())
 
-	s.ctx = context.Background()
+	// 2) Test db
+	db, err = testutils.NewTestDB(testCtx, tCfg, mCfg)
+	Expect(err).NotTo(HaveOccurred())
 
-	// 1) Test db
-	s.db, err = testutils.NewTestDB(s.ctx, s.tCfg, mCfg)
-	require.NoError(s.T(), err)
+	// 3) Test redis
+	redis, err = testutils.NewTestRedis(testCtx, tCfg)
+	Expect(err).NotTo(HaveOccurred())
 
-	// 2) Test redis
-	s.redis, err = testutils.NewTestRedis(s.ctx, s.tCfg)
-	require.NoError(s.T(), err)
+	clearAll(testCtx)
 
-	s.clear()
-
-	// 3) GRPC
-	grpcLn, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(s.T(), err)
-
-	_, grpcPortStr, err := net.SplitHostPort(grpcLn.Addr().String())
-	require.NoError(s.T(), err)
-
-	_ = grpcLn.Close()
-	s.grpcURL = net.JoinHostPort("127.0.0.1", grpcPortStr)
+	// 4) GRPC
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	Expect(err).NotTo(HaveOccurred())
+	_, grpcPortStr, err := net.SplitHostPort(ln.Addr().String())
+	Expect(err).NotTo(HaveOccurred())
+	_ = ln.Close()
+	grpcURL = net.JoinHostPort("127.0.0.1", grpcPortStr)
 
 	grpcCfg := &customerv1.Config{Port: grpcPortStr}
 
-	// 4) Logrus
+	// 5) Logrus
 	log := logrus.New()
 	log.SetLevel(logrus.ErrorLevel)
 	log.SetFormatter(&logrus.JSONFormatter{})
@@ -92,8 +147,8 @@ func (s *LoginE2ESuite) SetupSuite() {
 		OtpMaxAttempts:   3,
 	}
 
-	// 6) FX app
-	s.app = fx.New(
+	// 7) FX app
+	app = fx.New(
 		infraDI.LoggerModule,
 		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
@@ -103,13 +158,17 @@ func (s *LoginE2ESuite) SetupSuite() {
 		infraDI.AuthPoliciesModule,
 		appDI.UseCaseModule,
 		presentationDI.GRPCModule,
+
+		// Replace infra with test instances/configs.
 		fx.Replace(logrus.New()),
-		fx.Replace(s.db.Cfg),
-		fx.Replace(s.db.DB),
-		fx.Replace(s.redis.Cfg),
-		fx.Replace(s.redis.Client),
+		fx.Replace(db.Cfg),
+		fx.Replace(db.DB),
+		fx.Replace(redis.Cfg),
+		fx.Replace(redis.Client),
 		fx.Replace(grpcCfg),
 		fx.Replace(aCfg),
+
+		// No-op lifecycle hooks to maintain parity with the original code.
 		fx.Invoke(func(lc fx.Lifecycle, l logger.Logger) {
 			lc.Append(fx.Hook{
 				OnStart: func(context.Context) error { return nil },
@@ -118,118 +177,65 @@ func (s *LoginE2ESuite) SetupSuite() {
 		}),
 	)
 
-	startCtx, cancel := context.WithTimeout(s.ctx, time.Minute)
+	startCtx, cancel := context.WithTimeout(testCtx, time.Minute)
 	defer cancel()
+	Expect(app.Start(startCtx)).To(Succeed())
 
-	err = s.app.Start(startCtx)
-	require.NoError(s.T(), err)
-
-	// 7) Wait until gRPC is ready (TCP connect)
-	require.Eventually(s.T(), func() bool {
-		c, err := net.DialTimeout("tcp", s.grpcURL, 2*time.Second)
+	// 8) Wait until gRPC is ready
+	Eventually(func() error {
+		c, err := net.DialTimeout("tcp", grpcURL, 2*time.Second)
 		if err != nil {
-			return false
+			return err
 		}
 		_ = c.Close()
-		return true
-	}, 10*time.Second, 200*time.Millisecond)
-}
+		return nil
+	}).WithTimeout(10 * time.Second).WithPolling(200 * time.Millisecond).Should(Succeed())
+})
 
-func (s *LoginE2ESuite) TearDownSuite() {
-	if s.app != nil {
-		ctx, cancel := context.WithTimeout(s.ctx, 20*time.Second)
-		_ = s.app.Stop(ctx)
+var _ = AfterEach(func(ctx SpecContext) {
+	clearAll(testCtx)
+})
+
+var _ = AfterSuite(func() {
+	if app != nil {
+		ctx, cancel := context.WithTimeout(testCtx, 20*time.Second)
+		_ = app.Stop(ctx)
 		cancel()
 	}
+	clearAll(testCtx)
+})
 
-	s.clear()
-}
+var _ = Describe("Login E2E", func() {
+	It("sends a real email and returns a challenge", func(ctx SpecContext) {
+		customer := mothers.CustomerWithPassword(tCfg.ImapPassword)
+		customer.Email = tCfg.ImapUsername
 
-func (s *LoginE2ESuite) AfterTest(_, _ string) {
-	s.clear()
-}
+		r := customerRepository.New(db.DB)
+		Expect(r.Create(testCtx, customer)).To(Succeed())
 
-func (s *LoginE2ESuite) clear() {
-	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
-	defer cancel()
+		conn, err := grpc.NewClient(grpcURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		Expect(err).NotTo(HaveOccurred())
+		defer func() { _ = conn.Close() }()
 
-	if s.db != nil {
-		err := s.db.Clear(ctx)
-		require.NoError(s.T(), err)
-	}
+		client := customerv1.NewCustomerAuthServiceClient(conn)
 
-	if s.redis != nil {
-		err := s.redis.Clear(ctx)
-		require.NoError(s.T(), err)
-	}
-}
-
-func (s *LoginE2ESuite) Test_Login_SendsRealEmailAndReturnsChallenge() {
-	// Prepare customer in DB
-	customer := mothers.CustomerWithPassword("P@ssw0rd!")
-	customer.Email = s.tCfg.ImapUsername
-
-	r := customerRepository.New(s.db.DB)
-	require.NoError(s.T(), r.Create(s.ctx, customer))
-
-	// 1) Dial gRPC client
-	conn, err := grpc.NewClient(s.grpcURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(s.T(), err)
-	defer func() { _ = conn.Close() }()
-
-	client := customerv1.NewCustomerAuthServiceClient(conn)
-
-	// 2) Build request
-	req := &customerv1.LoginRequest{Phone: customer.Phone, Password: "P@ssw0rd!"}
-
-	// 3) Call Login
-	ctx, cancel := context.WithTimeout(s.ctx, 30*time.Second)
-	defer cancel()
-	res, err := client.Login(ctx, req)
-
-	require.NoError(s.T(), err)
-	require.NotEmpty(s.T(), res.GetChallengeId())
-
-	ok := s.waitForIMAPSent("Your OTP Code")
-	require.True(s.T(), ok)
-}
-
-func (s *LoginE2ESuite) waitForIMAPSent(subject string) bool {
-	require.NotEmpty(s.T(), s.tCfg.ImapHost)
-	require.NotEmpty(s.T(), s.tCfg.ImapPort)
-	require.NotEmpty(s.T(), s.tCfg.ImapUsername)
-	require.NotEmpty(s.T(), s.tCfg.ImapPassword)
-
-	deadline := time.Now().Add(10 * time.Second)
-	addr := net.JoinHostPort(s.tCfg.ImapHost, s.tCfg.ImapPort)
-
-	c, err := imapclient.DialTLS(addr, &tls.Config{ServerName: s.tCfg.ImapHost})
-	require.NoError(s.T(), err)
-
-	err = c.Login(s.tCfg.ImapUsername, s.tCfg.ImapPassword)
-	require.NoError(s.T(), err)
-	defer func() { _ = c.Logout() }()
-
-	_, err = c.Select("INBOX", false)
-	require.NoError(s.T(), err)
-
-	for time.Now().Before(deadline) {
-		crit := imap.NewSearchCriteria()
-		crit.Since = time.Now().Add(-1 * time.Minute)
-		crit.Header.Add("Subject", subject)
-		crit.Header.Add("To", s.tCfg.ImapUsername)
-
-		ids, err := c.Search(crit)
-		s.T().Log("ids", ids)
-		if err == nil && len(ids) > 0 {
-			return true
+		req := &customerv1.LoginRequest{
+			Phone:    customer.Phone,
+			Password: tCfg.ImapPassword,
 		}
-		time.Sleep(500 * time.Millisecond)
-	}
 
-	return false
-}
+		callCtx, cancel := context.WithTimeout(testCtx, 30*time.Second)
+		defer cancel()
 
-func Test_LoginE2E(t *testing.T) {
-	suite.Run(t, new(LoginE2ESuite))
+		res, err := client.Login(callCtx, req)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(res.GetChallengeId()).NotTo(BeEmpty())
+
+		Expect(waitForIMAPSent("Your OTP Code")).To(BeTrue())
+	}, NodeTimeout(60*time.Second))
+})
+
+func TestE2E(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Customer Auth E2E Suite")
 }
