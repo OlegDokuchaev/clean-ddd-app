@@ -18,13 +18,15 @@ func NewAPI(
 	courierHandler *courierApi.Handler,
 	warehouseHandler *warehouseApi.Handler,
 	log logger.Logger,
+	cfg *Config,
 ) *gin.Engine {
 	r := gin.New()
 
 	r.Use(middleware.GinLoggingMiddleware(log))
 	r.Use(gin.Recovery())
 
-	api := r.Group("")
+	docs.SwaggerInfo.BasePath = cfg.BasePath
+	api := r.Group(cfg.BasePath)
 	{
 		orderApi.RegisterRoutes(api, orderHandler)
 		customerApi.RegisterRoutes(api, customerHandler)
