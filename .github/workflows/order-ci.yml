@@ -61,13 +61,14 @@ jobs:
           cache: true
           cache-dependency-path: order/go.sum
 
-      - name: Run complexity
-        uses: shoooooman/go-complexity-analysis-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          cycloover: 10
-          maintunder: 20
-          workdir: order/
+      - name: Install complexity tool
+        run: go install github.com/shoooooman/go-complexity-analysis/cmd/complexity@latest
+
+      - name: Run cycloover complexity
+        run: make cycloover
+
+      - name: Run maintunder complexity
+        run: make maintunder
 
   unit:
     name: Unit tests
