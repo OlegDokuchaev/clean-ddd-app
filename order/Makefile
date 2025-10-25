@@ -1,4 +1,4 @@
-# Path to the environment file
+# Environment file
 ENV_FILE := .env
 
 # Base commands
