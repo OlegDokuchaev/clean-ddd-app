@@ -60,6 +60,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           cycloover: 10
           maintunder: 20
+          workdir: order/
 
   unit:
     name: Unit tests
