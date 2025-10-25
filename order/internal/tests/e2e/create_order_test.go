@@ -136,15 +136,12 @@ func (s *CreateOrderE2ESuite) AfterEach(t provider.T) {
 }
 
 func (s *CreateOrderE2ESuite) clear(t provider.T) {
-	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
-	defer cancel()
-
 	if s.db != nil {
-		err := s.db.Close(ctx)
+		err := s.db.Close(s.ctx)
 		t.Require().NoError(err)
 	}
 	if s.messaging != nil {
-		err := s.messaging.Close(ctx)
+		err := s.messaging.Close(s.ctx)
 		t.Require().NoError(err)
 	}
 }
