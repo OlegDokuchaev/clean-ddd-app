@@ -6,28 +6,36 @@ import (
 
 func NewOrderCommandWriter(config *Config) *kafka.Writer {
 	return &kafka.Writer{
-		Addr:  kafka.TCP(config.Address),
-		Topic: config.OrderCmdTopic,
+		Addr:                   kafka.TCP(config.Address),
+		Topic:                  config.OrderCmdTopic,
+		RequiredAcks:           kafka.RequireOne,
+		AllowAutoTopicCreation: false,
 	}
 }
 
 func NewWarehouseCommandWriter(config *Config) *kafka.Writer {
 	return &kafka.Writer{
-		Addr:  kafka.TCP(config.Address),
-		Topic: config.WarehouseCmdTopic,
+		Addr:                   kafka.TCP(config.Address),
+		Topic:                  config.WarehouseCmdTopic,
+		RequiredAcks:           kafka.RequireOne,
+		AllowAutoTopicCreation: false,
 	}
 }
 
 func NewCourierCommandWriter(config *Config) *kafka.Writer {
 	return &kafka.Writer{
-		Addr:  kafka.TCP(config.Address),
-		Topic: config.CourierCmdTopic,
+		Addr:                   kafka.TCP(config.Address),
+		Topic:                  config.CourierCmdTopic,
+		RequiredAcks:           kafka.RequireOne,
+		AllowAutoTopicCreation: false,
 	}
 }
 
 func NewOrderCommandResWriter(config *Config) *kafka.Writer {
 	return &kafka.Writer{
-		Addr:  kafka.TCP(config.Address),
-		Topic: config.OrderCmdResTopic,
+		Addr:                   kafka.TCP(config.Address),
+		Topic:                  config.OrderCmdResTopic,
+		RequiredAcks:           kafka.RequireOne,
+		AllowAutoTopicCreation: false,
 	}
 }

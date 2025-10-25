@@ -1,11 +1,9 @@
+version: "2"
+
 run:
   timeout: 5m
   tests: true
   modules-download-mode: readonly
-
-output:
-  formats:
-    - format: github-actions
 
 issues:
   exclude-use-default: false
@@ -16,9 +14,11 @@ linters:
   enable:
     - govet
     - staticcheck
-    - revive
-    - gosimple
     - ineffassign
-    - typecheck
     - errcheck
     - gosec
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
