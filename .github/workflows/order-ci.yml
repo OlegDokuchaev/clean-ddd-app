@@ -54,6 +54,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: order/go.mod
+          cache: true
+          cache-dependency-path: order/go.sum
+
       - name: Run complexity
         uses: shoooooman/go-complexity-analysis-action@v1
         with:
