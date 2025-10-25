@@ -45,7 +45,6 @@ jobs:
 
   complexity:
     name: Complexity
-    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
     needs: lint
     runs-on: ubuntu-latest
     defaults:
