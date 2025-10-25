@@ -4,6 +4,7 @@ ENV_FILE := .env
 # Base command for running tests
 GO_TEST := go test -v
 GO_VET := go vet
+GO_LINT := golangci-lint
 
 # Allure
 ALLURE := allure
@@ -18,7 +19,7 @@ MAINT_LIMIT ?= 20
 # Tools detection
 COMPLEXITY := $(shell command -v complexity)
 
-.PHONY: unit integration e2e allure cycloover maintunder
+.PHONY: unit integration e2e allure cycloover maintunder lint
 
 update_allure_history:
 	rm -rf "$(ALLURE_RESULTS_PATH)/history"
@@ -47,3 +48,6 @@ cycloover:
 
 maintunder:
 	$(GO_VET) -vettool="$(COMPLEXITY)" --maintunder $(MAINT_LIMIT) ./...
+
+lint:
+	$(GO_LINT) run
