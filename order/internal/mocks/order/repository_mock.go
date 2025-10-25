@@ -2,9 +2,10 @@ package order
 
 import (
 	"context"
+	orderDomain "order/internal/domain/order"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
-	orderDomain "order/internal/domain/order"
 )
 
 type RepositoryMock struct {

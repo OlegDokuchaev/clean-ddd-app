@@ -1,8 +1,9 @@
 package usecase
 
 import (
-	"github.com/google/uuid"
 	orderDomain "order/internal/domain/order"
+
+	"github.com/google/uuid"
 )
 
 type CreateDto struct {

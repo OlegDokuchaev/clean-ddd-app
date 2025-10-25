@@ -58,7 +58,7 @@ func (r *RepositoryImpl) GetAllByCustomer(ctx context.Context, customerID uuid.U
 	if err != nil {
 		return nil, ParseError(err)
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	var docs []documents.Order
 	if err := cursor.All(ctx, &docs); err != nil {
@@ -73,7 +73,7 @@ func (r *RepositoryImpl) GetCurrentByCourier(ctx context.Context, courierID uuid
 	if err != nil {
 		return nil, ParseError(err)
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	var docs []documents.Order
 	if err := cursor.All(ctx, &docs); err != nil {

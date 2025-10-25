@@ -1,9 +1,10 @@
 package request
 
 import (
+	"order/internal/presentation/grpc/response"
+
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"order/internal/presentation/grpc/response"
 )
 
 func ParseUUID(key string) (uuid.UUID, error) {

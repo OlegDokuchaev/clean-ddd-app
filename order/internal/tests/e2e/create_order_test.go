@@ -128,14 +128,7 @@ func (s *CreateOrderE2ESuite) AfterAll(t provider.T) {
 		cancel()
 	}
 
-	if s.db != nil {
-		err := s.db.Close(s.ctx)
-		t.Require().NoError(err)
-	}
-	if s.messaging != nil {
-		err := s.messaging.Close(s.ctx)
-		t.Require().NoError(err)
-	}
+	s.clear(t)
 }
 
 func (s *CreateOrderE2ESuite) AfterEach(t provider.T) {
@@ -146,11 +139,14 @@ func (s *CreateOrderE2ESuite) clear(t provider.T) {
 	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
 	defer cancel()
 
-	err := s.db.Clear(ctx)
-	t.Require().NoError(err)
-
-	err = s.messaging.Clear(ctx)
-	t.Require().NoError(err)
+	if s.db != nil {
+		err := s.db.Close(ctx)
+		t.Require().NoError(err)
+	}
+	if s.messaging != nil {
+		err := s.messaging.Close(ctx)
+		t.Require().NoError(err)
+	}
 }
 
 func (s *CreateOrderE2ESuite) Test_CreateOrder_Success(t provider.T) {

@@ -2,9 +2,10 @@ package create_order
 
 import (
 	"context"
-	"github.com/stretchr/testify/mock"
 	createOrder "order/internal/application/order/saga/create_order"
 	orderDomain "order/internal/domain/order"
+
+	"github.com/stretchr/testify/mock"
 )
 
 type ManagerMock struct {

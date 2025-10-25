@@ -3,8 +3,9 @@ package create_order
 import (
 	"context"
 	"encoding/json"
-	"github.com/segmentio/kafka-go"
 	createOrder "order/internal/application/order/saga/create_order"
+
+	"github.com/segmentio/kafka-go"
 )
 
 type PublisherImpl struct {

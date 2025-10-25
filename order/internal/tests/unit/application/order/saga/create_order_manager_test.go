@@ -3,14 +3,15 @@ package saga
 import (
 	"context"
 	"errors"
-	"github.com/ozontech/allure-go/pkg/framework/provider"
-	"github.com/ozontech/allure-go/pkg/framework/suite"
-	"github.com/stretchr/testify/mock"
 	createOrder "order/internal/application/order/saga/create_order"
 	orderDomain "order/internal/domain/order"
 	createOrderMock "order/internal/mocks/order/saga/create_order"
 	"order/internal/tests/testutils/mothers"
 	"testing"
+
+	"github.com/ozontech/allure-go/pkg/framework/provider"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
+	"github.com/stretchr/testify/mock"
 )
 
 type CreateOrderSagaManagerTestSuite struct {

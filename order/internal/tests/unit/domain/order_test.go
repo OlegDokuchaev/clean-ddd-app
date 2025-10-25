@@ -1,11 +1,12 @@
 package domain
 
 import (
-	"github.com/ozontech/allure-go/pkg/framework/provider"
 	orderDomain "order/internal/domain/order"
 	"order/internal/tests/testutils/mothers"
 	"testing"
 	"time"
+
+	"github.com/ozontech/allure-go/pkg/framework/provider"
 
 	"github.com/google/uuid"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
