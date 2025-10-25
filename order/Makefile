@@ -1,7 +1,7 @@
 # Path to the environment file
 ENV_FILE := .env
 
-# Base command for running tests
+# Base commands
 GO_TEST := go test -v
 GO_VET := go vet
 GO_LINT := golangci-lint
