@@ -2,6 +2,7 @@
 ENV_FILE := .env
 
 # Base commands
+GOBIN ?= $(shell go env GOPATH)/bin
 GO_TEST := go test -v
 GO_VET := go vet
 GO_LINT := golangci-lint
@@ -18,7 +19,7 @@ CYCLO_LIMIT ?= 10
 MAINT_LIMIT ?= 20
 
 # Tools detection
-COMPLEXITY := $(shell command -v complexity)
+COMPLEXITY ?= $(shell command -v complexity 2>/dev/null || echo $(GOBIN)/complexity)
 
 .PHONY: unit integration e2e allure cycloover maintunder lint imports
 

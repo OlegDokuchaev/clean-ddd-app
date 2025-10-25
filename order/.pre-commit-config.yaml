@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: make lint
+        language: system
+        entry: make -C order lint
+        pass_filenames: false
+
+      - id: cycloover
+        name: make cycloover
+        language: system
+        entry: make -C order cycloover
+        pass_filenames: false
+
+      - id: maintunder
+        name: make maintunder
+        language: system
+        entry: make -C order maintunder
+        pass_filenames: false
