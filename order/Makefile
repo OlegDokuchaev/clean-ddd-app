@@ -1,14 +1,24 @@
 # Path to the environment file
 ENV_FILE := .env
+
 # Base command for running tests
 GO_TEST := go test -v
+GO_VET := go vet
+
 # Allure
 ALLURE := allure
 ALLURE_OUTPUT_PATH  ?= /
 ALLURE_REPORT_PATH  ?= internal/tests/allure-report
 ALLURE_RESULTS_PATH ?= internal/tests/allure
 
-.PHONY: unit integration e2e allure
+# Thresholds
+CYCLO_LIMIT ?= 10
+MAINT_LIMIT ?= 20
+
+# Tools detection
+COMPLEXITY := $(shell command -v complexity)
+
+.PHONY: unit integration e2e allure cycloover maintunder
 
 update_allure_history:
 	rm -rf "$(ALLURE_RESULTS_PATH)/history"
@@ -31,3 +41,9 @@ e2e: update_allure_history
 allure:
 	$(ALLURE) generate $(ALLURE_RESULTS_PATH) --clean -o $(ALLURE_REPORT_PATH)
 	$(ALLURE) open $(ALLURE_REPORT_PATH)
+
+cycloover:
+	$(GO_VET) -vettool="$(COMPLEXITY)" --cycloover $(CYCLO_LIMIT) ./...
+
+maintunder:
+	$(GO_VET) -vettool="$(COMPLEXITY)" --maintunder $(MAINT_LIMIT) ./...
