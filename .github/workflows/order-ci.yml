@@ -20,8 +20,51 @@ env:
   DB_MIGRATIONS_PATH: ${{ github.workspace }}/order/internal/infrastructure/db/migrations
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: order
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: order/go.mod
+          cache: true
+          cache-dependency-path: order/go.sum
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: order
+
+  complexity:
+    name: Complexity
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+    needs: lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: order
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run complexity
+        uses: shoooooman/go-complexity-analysis-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          cycloover: 10
+          maintunder: 20
+
   unit:
     name: Unit tests
+    needs: complexity
     runs-on: ubuntu-latest
     defaults:
       run:
