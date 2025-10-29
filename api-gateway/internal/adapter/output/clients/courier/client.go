@@ -6,6 +6,7 @@ import (
 	courierDto "api-gateway/internal/domain/dtos/courier"
 	courierClient "api-gateway/internal/port/output/clients/courier"
 	"context"
+	"go.opentelemetry.io/otel"
 
 	"github.com/google/uuid"
 )
@@ -21,6 +22,9 @@ func NewClient(client courierGRPC.CourierAuthServiceClient) courierClient.Client
 }
 
 func (c *ClientImpl) Register(ctx context.Context, data courierDto.RegisterDto) (uuid.UUID, error) {
+	ctx, span := otel.Tracer("api-gateway.courier").Start(ctx, "Register")
+	defer span.End()
+
 	request := toRegisterRequest(data)
 
 	resp, err := c.client.Register(ctx, request)
@@ -37,6 +41,9 @@ func (c *ClientImpl) Register(ctx context.Context, data courierDto.RegisterDto) 
 }
 
 func (c *ClientImpl) Login(ctx context.Context, data courierDto.LoginDto) (string, error) {
+	ctx, span := otel.Tracer("api-gateway.courier").Start(ctx, "Login")
+	defer span.End()
+
 	request := toLoginRequest(data)
 
 	resp, err := c.client.Login(ctx, request)
@@ -48,6 +55,9 @@ func (c *ClientImpl) Login(ctx context.Context, data courierDto.LoginDto) (strin
 }
 
 func (c *ClientImpl) Authenticate(ctx context.Context, token string) (uuid.UUID, error) {
+	ctx, span := otel.Tracer("api-gateway.courier").Start(ctx, "Authenticate")
+	defer span.End()
+
 	request := toAuthenticateRequest(token)
 
 	resp, err := c.client.Authenticate(ctx, request)
