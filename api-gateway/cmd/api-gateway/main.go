@@ -29,6 +29,7 @@ import (
 func main() {
 	fx.New(
 		di.ConfigModule,
+		di.TelemetryModule,
 		di.ClientsModule,
 		di.AuthModule,
 		di.UseCasesModule,
