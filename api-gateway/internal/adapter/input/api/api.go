@@ -10,6 +10,7 @@ import (
 	"api-gateway/internal/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 func NewAPI(
@@ -22,8 +23,10 @@ func NewAPI(
 ) *gin.Engine {
 	r := gin.New()
 
+	r.Use(otelgin.Middleware("api-gateway"))
 	r.Use(middleware.GinLoggingMiddleware(log))
 	r.Use(gin.Recovery())
+	r.Use(middleware.TraceIDHeader())
 
 	docs.SwaggerInfo.BasePath = cfg.BasePath
 	api := r.Group(cfg.BasePath)
