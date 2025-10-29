@@ -17,6 +17,7 @@ import (
 	warehouseUseCase "api-gateway/internal/domain/usecases/warehouse"
 	"api-gateway/internal/infrastructure/config"
 	"api-gateway/internal/infrastructure/logger"
+	"api-gateway/internal/infrastructure/telemetry"
 	"context"
 	"errors"
 	"fmt"
@@ -113,6 +114,15 @@ var LoggerModule = fx.Provide(
 var ConfigModule = fx.Provide(
 	// Streaming config
 	config.NewStreamingConfig,
+)
+
+var TelemetryModule = fx.Options(
+	fx.Provide(
+		// Telemetry config
+		telemetry.NewConfig,
+	),
+
+	fx.Invoke(telemetry.Init),
 )
 
 func RunServer(lc fx.Lifecycle, router *gin.Engine, config *api.Config, log logger.Logger) {
