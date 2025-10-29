@@ -148,7 +148,6 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /items [get]
 func (h *Handler) GetAllItems(c *gin.Context) {
-	// Limit
 	var req request.GetAllItemsRequest
 	if err := commonRequest.ParseInput(c, &req, binding.Query); err != nil {
 		commonResponse.HandleError(c, err)
