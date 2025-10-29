@@ -91,6 +91,20 @@ const docTemplate = `{
                     "couriers"
                 ],
                 "summary": "Get courier orders",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of orders",
@@ -300,6 +314,20 @@ const docTemplate = `{
                     "items"
                 ],
                 "summary": "Get all warehouse items",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of items",
@@ -466,6 +494,20 @@ const docTemplate = `{
                     "orders"
                 ],
                 "summary": "Get customer orders",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of orders",
@@ -546,14 +588,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/orders/{id}/cancel": {
+        "/orders/{id}/status/{status}": {
             "patch": {
                 "security": [
                     {
                         "CustomerBearerAuth": []
                     }
                 ],
-                "description": "Cancel an order by its ID",
+                "description": "Update order status by its ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -563,12 +605,19 @@ const docTemplate = `{
                 "tags": [
                     "orders"
                 ],
-                "summary": "Cancel an order",
+                "summary": "Update order status",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "Order ID",
                         "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status",
+                        "name": "status",
                         "in": "path",
                         "required": true
                     }
@@ -576,70 +625,6 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": " \"No Content"
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponseDetail"
-                        }
-                    },
-                    "401": {
-                        "description": "Missing or invalid bearer token",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponseDetail"
-                        }
-                    },
-                    "404": {
-                        "description": "Order not found",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponseDetail"
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid order ID format",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponseDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponseDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/orders/{id}/complete": {
-            "patch": {
-                "security": [
-                    {
-                        "CourierBearerAuth": []
-                    }
-                ],
-                "description": "Mark an order as delivered (completed)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "orders"
-                ],
-                "summary": "Complete order",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Order ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": " \"OK"
                     },
                     "400": {
                         "description": "Invalid request",
@@ -1105,8 +1090,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "count": {
-                    "type": "integer",
-                    "minimum": 1
+                    "type": "integer"
                 },
                 "product_id": {
                     "type": "string"
@@ -1223,7 +1207,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Clean DDD App API Gateway",
 	Description:      "This is the API Gateway for the Clean DDD application.",
