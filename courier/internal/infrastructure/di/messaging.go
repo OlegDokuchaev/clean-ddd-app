@@ -5,6 +5,7 @@ import (
 	"courier/internal/infrastructure/logger"
 	"courier/internal/infrastructure/messaging"
 	"errors"
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
 
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/fx"
@@ -39,10 +40,10 @@ func setupMessagingLifecycle(in struct {
 	Logger    logger.Logger
 
 	// Readers
-	CourierCmdReader *kafka.Reader `name:"courierCmdReader"`
+	CourierCmdReader *otelkafkakonsumer.Reader `name:"courierCmdReader"`
 
 	// Writers
-	CourierCmdResWriter *kafka.Writer `name:"courierCmdResWriter"`
+	CourierCmdResWriter *otelkafkakonsumer.Writer `name:"courierCmdResWriter"`
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
@@ -55,12 +56,12 @@ func setupMessagingLifecycle(in struct {
 			var errs []error
 
 			// Close readers
-			if err := closeReader("courier command reader", in.CourierCmdReader, in.Logger); err != nil {
+			if err := closeReader("courier command reader", in.CourierCmdReader.R, in.Logger); err != nil {
 				errs = append(errs, err)
 			}
 
 			// Close writers
-			if err := closeWriter("courier command result writer", in.CourierCmdResWriter, in.Logger); err != nil {
+			if err := closeWriter("courier command result writer", in.CourierCmdResWriter.W, in.Logger); err != nil {
 				errs = append(errs, err)
 			}
 
