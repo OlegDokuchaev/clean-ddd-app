@@ -4,13 +4,14 @@
 // - protoc             v5.29.3
 // source: customer/v1/service.proto
 
-package customer_v1
+package v1
 
 import (
 	context "context"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,9 +20,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CustomerAuthService_Register_FullMethodName     = "/customer.v1.CustomerAuthService/Register"
-	CustomerAuthService_Login_FullMethodName        = "/customer.v1.CustomerAuthService/Login"
-	CustomerAuthService_Authenticate_FullMethodName = "/customer.v1.CustomerAuthService/Authenticate"
+	CustomerAuthService_Register_FullMethodName              = "/customer.v1.CustomerAuthService/Register"
+	CustomerAuthService_Login_FullMethodName                 = "/customer.v1.CustomerAuthService/Login"
+	CustomerAuthService_VerifyOtp_FullMethodName             = "/customer.v1.CustomerAuthService/VerifyOtp"
+	CustomerAuthService_RequestPasswordReset_FullMethodName  = "/customer.v1.CustomerAuthService/RequestPasswordReset"
+	CustomerAuthService_CompletePasswordReset_FullMethodName = "/customer.v1.CustomerAuthService/CompletePasswordReset"
+	CustomerAuthService_Authenticate_FullMethodName          = "/customer.v1.CustomerAuthService/Authenticate"
 )
 
 // CustomerAuthServiceClient is the client API for CustomerAuthService service.
@@ -33,6 +37,9 @@ const (
 type CustomerAuthServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	VerifyOtp(ctx context.Context, in *VerifyOtpRequest, opts ...grpc.CallOption) (*VerifyOtpResponse, error)
+	RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CompletePasswordReset(ctx context.Context, in *CompletePasswordResetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
 }
 
@@ -64,6 +71,36 @@ func (c *customerAuthServiceClient) Login(ctx context.Context, in *LoginRequest,
 	return out, nil
 }
 
+func (c *customerAuthServiceClient) VerifyOtp(ctx context.Context, in *VerifyOtpRequest, opts ...grpc.CallOption) (*VerifyOtpResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VerifyOtpResponse)
+	err := c.cc.Invoke(ctx, CustomerAuthService_VerifyOtp_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *customerAuthServiceClient) RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, CustomerAuthService_RequestPasswordReset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *customerAuthServiceClient) CompletePasswordReset(ctx context.Context, in *CompletePasswordResetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, CustomerAuthService_CompletePasswordReset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *customerAuthServiceClient) Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthenticateResponse)
@@ -83,6 +120,9 @@ func (c *customerAuthServiceClient) Authenticate(ctx context.Context, in *Authen
 type CustomerAuthServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	VerifyOtp(context.Context, *VerifyOtpRequest) (*VerifyOtpResponse, error)
+	RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*emptypb.Empty, error)
+	CompletePasswordReset(context.Context, *CompletePasswordResetRequest) (*emptypb.Empty, error)
 	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
 	mustEmbedUnimplementedCustomerAuthServiceServer()
 }
@@ -99,6 +139,15 @@ func (UnimplementedCustomerAuthServiceServer) Register(context.Context, *Registe
 }
 func (UnimplementedCustomerAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedCustomerAuthServiceServer) VerifyOtp(context.Context, *VerifyOtpRequest) (*VerifyOtpResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyOtp not implemented")
+}
+func (UnimplementedCustomerAuthServiceServer) RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestPasswordReset not implemented")
+}
+func (UnimplementedCustomerAuthServiceServer) CompletePasswordReset(context.Context, *CompletePasswordResetRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CompletePasswordReset not implemented")
 }
 func (UnimplementedCustomerAuthServiceServer) Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
@@ -160,6 +209,60 @@ func _CustomerAuthService_Login_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CustomerAuthService_VerifyOtp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyOtpRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CustomerAuthServiceServer).VerifyOtp(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CustomerAuthService_VerifyOtp_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CustomerAuthServiceServer).VerifyOtp(ctx, req.(*VerifyOtpRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CustomerAuthService_RequestPasswordReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestPasswordResetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CustomerAuthServiceServer).RequestPasswordReset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CustomerAuthService_RequestPasswordReset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CustomerAuthServiceServer).RequestPasswordReset(ctx, req.(*RequestPasswordResetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CustomerAuthService_CompletePasswordReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompletePasswordResetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CustomerAuthServiceServer).CompletePasswordReset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CustomerAuthService_CompletePasswordReset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CustomerAuthServiceServer).CompletePasswordReset(ctx, req.(*CompletePasswordResetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CustomerAuthService_Authenticate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AuthenticateRequest)
 	if err := dec(in); err != nil {
@@ -192,6 +295,18 @@ var CustomerAuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _CustomerAuthService_Login_Handler,
+		},
+		{
+			MethodName: "VerifyOtp",
+			Handler:    _CustomerAuthService_VerifyOtp_Handler,
+		},
+		{
+			MethodName: "RequestPasswordReset",
+			Handler:    _CustomerAuthService_RequestPasswordReset_Handler,
+		},
+		{
+			MethodName: "CompletePasswordReset",
+			Handler:    _CustomerAuthService_CompletePasswordReset_Handler,
 		},
 		{
 			MethodName: "Authenticate",

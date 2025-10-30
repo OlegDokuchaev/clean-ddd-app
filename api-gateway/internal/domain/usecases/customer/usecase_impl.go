@@ -12,30 +12,28 @@ type UseCaseImpl struct {
 	customerClient customerClient.Client
 }
 
-func NewUseCase(
-	customerClient customerClient.Client,
-) UseCase {
-	return &UseCaseImpl{
-		customerClient: customerClient,
-	}
+func NewUseCase(customerClient customerClient.Client) UseCase {
+	return &UseCaseImpl{customerClient: customerClient}
 }
 
 func (u *UseCaseImpl) Register(ctx context.Context, data customerDto.RegisterDto) (uuid.UUID, error) {
-	customerID, err := u.customerClient.Register(ctx, data)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	return customerID, nil
+	return u.customerClient.Register(ctx, data)
 }
 
 func (u *UseCaseImpl) Login(ctx context.Context, data customerDto.LoginDto) (string, error) {
-	token, err := u.customerClient.Login(ctx, data)
-	if err != nil {
-		return "", err
-	}
+	return u.customerClient.Login(ctx, data)
+}
 
-	return token, nil
+func (u *UseCaseImpl) VerifyOtp(ctx context.Context, data customerDto.VerifyOtpDto) (string, error) {
+	return u.customerClient.VerifyOtp(ctx, data)
+}
+
+func (u *UseCaseImpl) RequestPasswordReset(ctx context.Context, email string) error {
+	return u.customerClient.RequestPasswordReset(ctx, email)
+}
+
+func (u *UseCaseImpl) CompletePasswordReset(ctx context.Context, token string, newPassword string) error {
+	return u.customerClient.CompletePasswordReset(ctx, token, newPassword)
 }
 
 var _ UseCase = (*UseCaseImpl)(nil)

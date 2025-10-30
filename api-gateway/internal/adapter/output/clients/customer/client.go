@@ -51,7 +51,49 @@ func (c *ClientImpl) Login(ctx context.Context, data customerDto.LoginDto) (stri
 		return "", response.ParseGRPCError(err)
 	}
 
+	return resp.ChallengeId, nil
+}
+
+func (c *ClientImpl) VerifyOtp(ctx context.Context, data customerDto.VerifyOtpDto) (string, error) {
+	ctx, span := otel.Tracer("api-gateway.customer").Start(ctx, "VerifyOtp")
+	defer span.End()
+
+	request := toVerifyOtpRequest(data)
+
+	resp, err := c.client.VerifyOtp(ctx, request)
+	if err != nil {
+		return "", response.ParseGRPCError(err)
+	}
+
 	return resp.Token, nil
+}
+
+func (c *ClientImpl) RequestPasswordReset(ctx context.Context, email string) error {
+	ctx, span := otel.Tracer("api-gateway.customer").Start(ctx, "RequestPasswordReset")
+	defer span.End()
+
+	request := toRequestPasswordResetRequest(email)
+
+	_, err := c.client.RequestPasswordReset(ctx, request)
+	if err != nil {
+		return response.ParseGRPCError(err)
+	}
+
+	return nil
+}
+
+func (c *ClientImpl) CompletePasswordReset(ctx context.Context, token string, newPassword string) error {
+	ctx, span := otel.Tracer("api-gateway.customer").Start(ctx, "CompletePasswordReset")
+	defer span.End()
+
+	request := toCompletePasswordResetRequest(token, newPassword)
+
+	_, err := c.client.CompletePasswordReset(ctx, request)
+	if err != nil {
+		return response.ParseGRPCError(err)
+	}
+
+	return nil
 }
 
 func (c *ClientImpl) Authenticate(ctx context.Context, token string) (uuid.UUID, error) {

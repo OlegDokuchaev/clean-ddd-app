@@ -20,6 +20,26 @@ func toLoginRequest(data customerDto.LoginDto) *customerGRPC.LoginRequest {
 	}
 }
 
+func toVerifyOtpRequest(data customerDto.VerifyOtpDto) *customerGRPC.VerifyOtpRequest {
+	return &customerGRPC.VerifyOtpRequest{
+		ChallengeId: data.ChallengeID,
+		Code:        data.Code,
+	}
+}
+
+func toRequestPasswordResetRequest(email string) *customerGRPC.RequestPasswordResetRequest {
+	return &customerGRPC.RequestPasswordResetRequest{
+		Email: email,
+	}
+}
+
+func toCompletePasswordResetRequest(token string, newPassword string) *customerGRPC.CompletePasswordResetRequest {
+	return &customerGRPC.CompletePasswordResetRequest{
+		Token:       token,
+		NewPassword: newPassword,
+	}
+}
+
 func toAuthenticateRequest(token string) *customerGRPC.AuthenticateRequest {
 	return &customerGRPC.AuthenticateRequest{
 		Token: token,

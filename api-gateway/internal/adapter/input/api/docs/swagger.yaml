@@ -32,6 +32,13 @@ definitions:
       courier_id:
         type: string
     type: object
+  customer_request.CompletePasswordReset:
+    properties:
+      new_password:
+        type: string
+    required:
+    - new_password
+    type: object
   customer_request.LoginRequest:
     properties:
       password:
@@ -55,14 +62,33 @@ definitions:
     - password
     - phone
     type: object
+  customer_request.RequestPasswordResetRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  customer_request.VerifyOtpRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
   customer_response.LoginResponse:
     properties:
-      token:
+      challenge_id:
         type: string
     type: object
   customer_response.RegisterResponse:
     properties:
       customer_id:
+        type: string
+    type: object
+  customer_response.VerifyOtpResponse:
+    properties:
+      token:
         type: string
     type: object
   order_request.CreateRequest:
@@ -330,6 +356,53 @@ paths:
       summary: Register new courier
       tags:
       - couriers
+  /customers/auth-challenges/{challenge_id}:
+    patch:
+      consumes:
+      - application/json
+      description: Verify OTP code for the authentication challenge
+      parameters:
+      - description: Challenge ID
+        in: path
+        name: challenge_id
+        required: true
+        type: string
+      - description: OTP verification data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/customer_request.VerifyOtpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP verified
+          schema:
+            $ref: '#/definitions/customer_response.VerifyOtpResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Invalid or expired code
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Challenge not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid data format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      summary: Verify OTP code
+      tags:
+      - customers
   /customers/login:
     post:
       consumes:
@@ -366,6 +439,87 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponseDetail'
       summary: Customer login
+      tags:
+      - customers
+  /customers/password-resets:
+    post:
+      consumes:
+      - application/json
+      description: Send password reset email to customer
+      parameters:
+      - description: Password reset request data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/customer_request.RequestPasswordResetRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Password reset email sent
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Customer not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid data format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      summary: Request password reset
+      tags:
+      - customers
+  /customers/password-resets/{token}:
+    patch:
+      consumes:
+      - application/json
+      description: Reset customer password using token
+      parameters:
+      - description: Password reset token
+        in: path
+        name: token
+        required: true
+        type: string
+      - description: New password data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/customer_request.CompletePasswordReset'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Password reset completed
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "401":
+          description: Invalid or expired token
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "404":
+          description: Token not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "422":
+          description: Invalid data format
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDetail'
+      summary: Complete password reset
       tags:
       - customers
   /customers/register:

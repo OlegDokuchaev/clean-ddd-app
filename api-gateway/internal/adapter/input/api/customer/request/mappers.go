@@ -18,3 +18,10 @@ func ToLoginDto(req *LoginRequest) customerDto.LoginDto {
 		Password: req.Password,
 	}
 }
+
+func ToVerifyOtp(challengeID string, req *VerifyOtpRequest) customerDto.VerifyOtpDto {
+	return customerDto.VerifyOtpDto{
+		ChallengeID: challengeID,
+		Code:        req.Code,
+	}
+}
