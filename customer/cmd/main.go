@@ -25,12 +25,14 @@ func main() {
 		infraDI.MailSenderModule,
 		infraDI.OtpStoreModule,
 		infraDI.AuthPoliciesModule,
+		infraDI.TelemetryModule,
 
 		// Application modules
 		appDI.UseCaseModule,
 
 		// Presentation modules
 		presentationDI.GRPCModule,
+		presentationDI.TelemetryModule,
 
 		// Add logging for application startup and shutdown
 		fx.Invoke(func(lc fx.Lifecycle, logger logger.Logger) {
