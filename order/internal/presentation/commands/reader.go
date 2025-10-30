@@ -8,18 +8,20 @@ import (
 	"order/internal/infrastructure/logger"
 	"sync"
 
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
+
 	"github.com/segmentio/kafka-go"
 )
 
 type Reader interface {
 	Start(ctx context.Context) error
-	Read(ctx context.Context) (*CmdMessage, error)
+	Read(ctx context.Context) (*CmdEnvelope, error)
 	Stop() error
 }
 
 type ReaderImpl struct {
-	reader      *kafka.Reader
-	commandChan chan *CmdMessage
+	reader      *otelkafkakonsumer.Reader
+	commandChan chan *CmdEnvelope
 	errorChan   chan error
 
 	cancelCtx  context.Context
@@ -32,7 +34,7 @@ type ReaderImpl struct {
 	logger logger.Logger
 }
 
-func NewReader(reader *kafka.Reader, logger logger.Logger) *ReaderImpl {
+func NewReader(reader *otelkafkakonsumer.Reader, logger logger.Logger) *ReaderImpl {
 	return &ReaderImpl{
 		reader: reader,
 		logger: logger,
@@ -43,7 +45,7 @@ func (r *ReaderImpl) log(level logger.Level, action, message string, extraFields
 	fields := map[string]any{
 		"component": "command_reader",
 		"action":    action,
-		"topic":     r.reader.Config().Topic,
+		"topic":     r.reader.R.Config().Topic,
 	}
 	for k, v := range extraFields {
 		fields[k] = v
@@ -70,7 +72,7 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 		return errors.New("command reader is already started")
 	}
 
-	r.commandChan = make(chan *CmdMessage, 1)
+	r.commandChan = make(chan *CmdEnvelope, 1)
 	r.errorChan = make(chan error, 1)
 
 	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
@@ -114,46 +116,49 @@ func (r *ReaderImpl) readCommands(ctx context.Context) {
 			return
 
 		default:
-			// Read message
-			msg, err := r.reader.ReadMessage(ctx)
-			if ctx.Err() != nil {
-				continue
-			}
-			if err != nil {
-				r.sendError(err, "read_message")
-				continue
-			}
-
-			// Parse the command message
-			cmdMsg, err := parseCommandMessage(msg.Value)
-			if err != nil {
-				r.log(logger.Error, "parse_error", "Failed to parse command message", map[string]any{
-					"error":    err.Error(),
-					"raw_data": msg.Value,
-				})
-				r.sendError(err, "parse_error")
-				continue
-			}
-			r.log(logger.Info, "command_parsed", "Command parsed successfully", map[string]any{
-				"command":   cmdMsg,
-				"partition": msg.Partition,
-				"offset":    msg.Offset,
-			})
-
-			// Send the command to the command channel
-			select {
-			case r.commandChan <- cmdMsg:
-				r.log(logger.Info, "command_queued", "Command queued for processing", map[string]any{
-					"command_id": cmdMsg.ID,
-				})
-			case <-ctx.Done():
-				continue
-			}
+			r.readCommand(ctx)
 		}
 	}
 }
 
-func (r *ReaderImpl) Read(ctx context.Context) (*CmdMessage, error) {
+func (r *ReaderImpl) readCommand(ctx context.Context) {
+	// Read message
+	msg, err := r.reader.ReadMessage(ctx)
+	if ctx.Err() != nil {
+		return
+	}
+	if err != nil {
+		r.sendError(err, "read_message")
+		return
+	}
+
+	// Parse the command message
+	cmdEnv, err := r.parseCommandEnvelope(ctx, msg)
+	if err != nil {
+		r.log(logger.Error, "parse_error", "Failed to parse command message", map[string]any{
+			"error":    err.Error(),
+			"raw_data": msg.Value,
+		})
+		r.sendError(err, "parse_error")
+		return
+	}
+	r.log(logger.Info, "command_parsed", "Command parsed successfully", map[string]any{
+		"command":   cmdEnv.Cmd,
+		"partition": msg.Partition,
+		"offset":    msg.Offset,
+	})
+
+	// Send the command to the command channel
+	select {
+	case r.commandChan <- cmdEnv:
+		r.log(logger.Info, "command_queued", "Command queued for processing", map[string]any{
+			"command_id": cmdEnv.Cmd.ID,
+		})
+	case <-ctx.Done():
+	}
+}
+
+func (r *ReaderImpl) Read(ctx context.Context) (*CmdEnvelope, error) {
 	select {
 	case cmd, ok := <-r.commandChan:
 		if !ok {
@@ -168,6 +173,20 @@ func (r *ReaderImpl) Read(ctx context.Context) (*CmdMessage, error) {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
+}
+
+func (r *ReaderImpl) parseCommandEnvelope(ctx context.Context, msg *kafka.Message) (*CmdEnvelope, error) {
+	cmdMsg, err := parseCommandMessage(msg.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = r.reader.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(msg))
+
+	return &CmdEnvelope{
+		Ctx: ctx,
+		Cmd: cmdMsg,
+	}, nil
 }
 
 var _ Reader = (*ReaderImpl)(nil)

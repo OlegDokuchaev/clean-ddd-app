@@ -72,7 +72,7 @@ func (p *Processor) processCommands(ctx context.Context) {
 
 		default:
 			// Read the command
-			cmd, err := p.reader.Read(ctx)
+			envelope, err := p.reader.Read(ctx)
 			if ctx.Err() != nil {
 				continue
 			}
@@ -83,12 +83,12 @@ func (p *Processor) processCommands(ctx context.Context) {
 
 			// Handle the command
 			startTime := time.Now()
-			res, err := p.handler.Handle(ctx, cmd)
+			res, err := p.handler.Handle(envelope.Ctx, envelope.Cmd)
 			duration := time.Since(startTime)
 
 			if err != nil {
 				p.log(logger.Error, "process_error", "Command processing failed", map[string]any{
-					"command_id":  cmd.ID,
+					"command_id":  envelope.Cmd.ID,
 					"error":       err.Error(),
 					"duration_ms": duration.Milliseconds(),
 				})
@@ -96,16 +96,16 @@ func (p *Processor) processCommands(ctx context.Context) {
 			}
 
 			p.log(logger.Info, "process_success", "Command processed successfully", map[string]any{
-				"command_id":   cmd.ID,
+				"command_id":   envelope.Cmd.ID,
 				"duration_ms":  duration.Milliseconds(),
 				"has_response": res != nil,
 			})
 
 			// Write the response
 			if res != nil {
-				if err := p.writer.Write(ctx, res); err != nil {
+				if err := p.writer.Write(envelope.Ctx, res); err != nil {
 					p.log(logger.Error, "write_error", "Error sending response", map[string]any{
-						"command_id":  cmd.ID,
+						"command_id":  envelope.Cmd.ID,
 						"response_id": res.ID,
 						"error":       err.Error(),
 					})

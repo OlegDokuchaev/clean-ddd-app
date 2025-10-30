@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/google/uuid"
@@ -19,6 +20,11 @@ type (
 		ID      uuid.UUID
 		Name    CmdMessageName
 		Payload json.RawMessage
+	}
+
+	CmdEnvelope struct {
+		Ctx context.Context
+		Cmd *CmdMessage
 	}
 )
 
