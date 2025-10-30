@@ -34,6 +34,8 @@ func NewHandler(customerUseCase customerUseCase.UseCase) *Handler {
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /customers/register [post]
 func (h *Handler) Register(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req request.RegisterRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
@@ -41,7 +43,7 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 
 	data := request.ToRegisterDto(&req)
-	customerID, err := h.uc.Register(c, data)
+	customerID, err := h.uc.Register(ctx, data)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -66,6 +68,8 @@ func (h *Handler) Register(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /customers/login [post]
 func (h *Handler) Login(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req request.LoginRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
@@ -73,7 +77,7 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	data := request.ToLoginDto(&req)
-	challengeID, err := h.uc.Login(c, data)
+	challengeID, err := h.uc.Login(ctx, data)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -100,6 +104,7 @@ func (h *Handler) Login(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /customers/auth-challenges/{challenge_id} [patch]
 func (h *Handler) VerifyOtp(c *gin.Context) {
+	ctx := c.Request.Context()
 	challengeID := c.Param("challenge_id")
 
 	var req request.VerifyOtpRequest
@@ -109,7 +114,7 @@ func (h *Handler) VerifyOtp(c *gin.Context) {
 	}
 
 	data := request.ToVerifyOtp(challengeID, &req)
-	token, err := h.uc.VerifyOtp(c, data)
+	token, err := h.uc.VerifyOtp(ctx, data)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -134,13 +139,15 @@ func (h *Handler) VerifyOtp(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /customers/password-resets [post]
 func (h *Handler) RequestPasswordReset(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req request.RequestPasswordResetRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
 		return
 	}
 
-	err := h.uc.RequestPasswordReset(c, req.Email)
+	err := h.uc.RequestPasswordReset(ctx, req.Email)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -165,6 +172,7 @@ func (h *Handler) RequestPasswordReset(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /customers/password-resets/{token} [patch]
 func (h *Handler) CompletePasswordReset(c *gin.Context) {
+	ctx := c.Request.Context()
 	token := c.Param("token")
 
 	var req request.CompletePasswordReset
@@ -173,7 +181,7 @@ func (h *Handler) CompletePasswordReset(c *gin.Context) {
 		return
 	}
 
-	err := h.uc.CompletePasswordReset(c, token, req.NewPassword)
+	err := h.uc.CompletePasswordReset(ctx, token, req.NewPassword)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return

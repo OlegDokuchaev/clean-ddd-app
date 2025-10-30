@@ -34,6 +34,8 @@ func NewHandler(courierUseCase courierUseCase.UseCase) *Handler {
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /couriers/register [post]
 func (h *Handler) Register(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req request.RegisterRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
@@ -41,7 +43,7 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 
 	data := request.ToRegisterDto(&req)
-	courierID, err := h.uc.Register(c, data)
+	courierID, err := h.uc.Register(ctx, data)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -66,6 +68,8 @@ func (h *Handler) Register(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /couriers/login [post]
 func (h *Handler) Login(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req request.LoginRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
@@ -73,7 +77,7 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	data := request.ToLoginDto(&req)
-	token, err := h.uc.Login(c, data)
+	token, err := h.uc.Login(ctx, data)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
