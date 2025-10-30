@@ -6,24 +6,24 @@ import (
 	"context"
 	"encoding/json"
 	"net"
+	appDI "order/internal/application/di"
 	createOrder "order/internal/application/order/saga/create_order"
 	"order/internal/infrastructure/db/migrations"
+	infraDI "order/internal/infrastructure/di"
+	"order/internal/infrastructure/logger"
 	createOrderPublisher "order/internal/infrastructure/publisher/saga/create_order"
+	presentationDI "order/internal/presentation/di"
+	orderv1 "order/internal/presentation/grpc"
 	"order/internal/tests/testutils"
 	"testing"
 	"time"
-
-	appDI "order/internal/application/di"
-	infraDI "order/internal/infrastructure/di"
-	"order/internal/infrastructure/logger"
-	presentationDI "order/internal/presentation/di"
-	orderv1 "order/internal/presentation/grpc"
 
 	"github.com/google/uuid"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -80,17 +80,23 @@ func (s *CreateOrderE2ESuite) BeforeAll(t provider.T) {
 	log.SetLevel(logrus.ErrorLevel)
 	log.SetFormatter(&logrus.JSONFormatter{})
 
-	// 5) FX app
+	// 5) Telemetry
+	tp := sdktrace.NewTracerProvider()
+
+	// 6) FX app
 	s.app = fx.New(
 		infraDI.LoggerModule,
 		infraDI.MessagingModule,
 		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
 		infraDI.PublisherModule,
+		infraDI.TelemetryModule,
 		appDI.UseCaseModule,
 		appDI.SagaModule,
 		presentationDI.GRPCModule,
-		fx.Replace(logrus.New()),
+		presentationDI.TelemetryModule,
+		fx.Replace(log),
+		fx.Replace(tp),
 		fx.Replace(s.messaging.Cfg),
 		fx.Replace(s.db.Cfg),
 		fx.Replace(grpcCfg),
@@ -110,7 +116,7 @@ func (s *CreateOrderE2ESuite) BeforeAll(t provider.T) {
 	err = s.app.Start(startCtx)
 	t.Require().NoError(err)
 
-	// 6) Wait until gRPC is ready (TCP connect)
+	// 7) Wait until gRPC is ready (TCP connect)
 	t.Require().Eventually(func() bool {
 		c, err := net.DialTimeout("tcp", s.grpcURL, 2*time.Second)
 		if err != nil {
@@ -127,15 +133,6 @@ func (s *CreateOrderE2ESuite) AfterAll(t provider.T) {
 		_ = s.app.Stop(ctx)
 		cancel()
 	}
-
-	s.clear(t)
-}
-
-func (s *CreateOrderE2ESuite) AfterEach(t provider.T) {
-	s.clear(t)
-}
-
-func (s *CreateOrderE2ESuite) clear(t provider.T) {
 	if s.db != nil {
 		err := s.db.Close(s.ctx)
 		t.Require().NoError(err)
@@ -144,6 +141,18 @@ func (s *CreateOrderE2ESuite) clear(t provider.T) {
 		err := s.messaging.Close(s.ctx)
 		t.Require().NoError(err)
 	}
+}
+
+func (s *CreateOrderE2ESuite) AfterEach(t provider.T) {
+	s.clear(t)
+}
+
+func (s *CreateOrderE2ESuite) clear(t provider.T) {
+	err := s.db.Clear(s.ctx)
+	t.Require().NoError(err)
+
+	err = s.messaging.Clear(s.ctx)
+	t.Require().NoError(err)
 }
 
 func (s *CreateOrderE2ESuite) Test_CreateOrder_Success(t provider.T) {
@@ -183,7 +192,8 @@ func (s *CreateOrderE2ESuite) Test_CreateOrder_Success(t provider.T) {
 	t.Require().NoError(err)
 
 	// 6) Assert Kafka saga message (ReserveItemsCmd) published to warehouse-topic
-	reader := s.messaging.CreateReader(s.messaging.Cfg.WarehouseCmdTopic)
+	reader, err := s.messaging.CreateReader(s.messaging.Cfg.WarehouseCmdTopic)
+	t.Require().NoError(err)
 	defer func() { _ = reader.Close() }()
 
 	readCtx, readCancel := context.WithTimeout(s.ctx, 5*time.Second)
