@@ -21,13 +21,17 @@ func Init(cfg *Config) (func(context.Context) error, error) {
 		return nil, err
 	}
 
-	res, _ := resource.New(ctx,
+	res, err := resource.New(ctx,
 		resource.WithFromEnv(),
 		resource.WithTelemetrySDK(),
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String(cfg.ServiceName),
 		),
 	)
+	if err != nil {
+		return nil, err
+	}
+
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithResource(res),
 		sdktrace.WithSampler(sdktrace.ParentBased(
