@@ -6,8 +6,6 @@ import (
 	orderDto "api-gateway/internal/domain/dtos/order"
 	orderClient "api-gateway/internal/port/output/clients/order"
 	"context"
-	"go.opentelemetry.io/otel"
-
 	"github.com/google/uuid"
 )
 
@@ -22,9 +20,6 @@ func NewClient(client orderGRPC.OrderServiceClient) orderClient.Client {
 }
 
 func (c *ClientImpl) Create(ctx context.Context, data orderClient.CreateDto) (uuid.UUID, error) {
-	ctx, span := otel.Tracer("api-gateway.order").Start(ctx, "Create")
-	defer span.End()
-
 	in := toCreateRequest(data)
 
 	out, err := c.client.CreateOrder(ctx, in)
@@ -41,9 +36,6 @@ func (c *ClientImpl) Create(ctx context.Context, data orderClient.CreateDto) (uu
 }
 
 func (c *ClientImpl) CancelByCustomer(ctx context.Context, orderID uuid.UUID, customerID uuid.UUID) error {
-	ctx, span := otel.Tracer("api-gateway.order").Start(ctx, "CancelByCustomer")
-	defer span.End()
-
 	in := toCancelByCustomerRequest(orderID)
 
 	_, err := c.client.CancelOrderByCustomer(ctx, in)
@@ -55,9 +47,6 @@ func (c *ClientImpl) CancelByCustomer(ctx context.Context, orderID uuid.UUID, cu
 }
 
 func (c *ClientImpl) Complete(ctx context.Context, orderID uuid.UUID, courierID uuid.UUID) error {
-	ctx, span := otel.Tracer("api-gateway.order").Start(ctx, "Complete")
-	defer span.End()
-
 	in := toCompleteDeliveryRequest(orderID)
 
 	_, err := c.client.CompleteDelivery(ctx, in)
@@ -74,9 +63,6 @@ func (c *ClientImpl) GetByCustomer(
 	limit int,
 	offset int,
 ) ([]*orderDto.OrderDto, error) {
-	ctx, span := otel.Tracer("api-gateway.order").Start(ctx, "GetByCustomer")
-	defer span.End()
-
 	in := toGetByCustomerRequest(customerID, limit, offset)
 
 	out, err := c.client.GetOrdersByCustomer(ctx, in)
@@ -98,9 +84,6 @@ func (c *ClientImpl) GetCurrentByCourier(
 	limit int,
 	offset int,
 ) ([]*orderDto.OrderDto, error) {
-	ctx, span := otel.Tracer("api-gateway.order").Start(ctx, "GetCurrentByCourier")
-	defer span.End()
-
 	in := toGetCurrentByCourierRequest(courierID, limit, offset)
 
 	out, err := c.client.GetCurrentOrdersByCourier(ctx, in)
