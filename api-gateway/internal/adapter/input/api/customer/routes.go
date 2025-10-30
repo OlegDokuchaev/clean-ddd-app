@@ -12,13 +12,13 @@ func RegisterRoutes(router gin.IRouter, handler *Handler) {
 
 		challenges := customers.Group("/auth-challenges")
 		{
-			challenges.PATCH("/{challenge_id}", handler.VerifyOtp)
+			challenges.PATCH("/:challenge_id", handler.VerifyOtp)
 		}
 
 		passwordResets := customers.Group("/password-resets")
 		{
 			passwordResets.POST("", handler.RequestPasswordReset)
-			passwordResets.PATCH("/{token}", handler.CompletePasswordReset)
+			passwordResets.PATCH("/:token", handler.CompletePasswordReset)
 		}
 	}
 }
