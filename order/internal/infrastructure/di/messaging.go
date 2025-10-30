@@ -6,7 +6,8 @@ import (
 	"order/internal/infrastructure/logger"
 	"order/internal/infrastructure/messaging"
 
-	"github.com/segmentio/kafka-go"
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
+
 	"go.uber.org/fx"
 )
 
@@ -60,15 +61,15 @@ func setupMessagingLifecycle(in struct {
 	Logger    logger.Logger
 
 	// Readers
-	OrderCommandReader        *kafka.Reader `name:"orderCommandReader"`
-	WarehouseCommandResReader *kafka.Reader `name:"warehouseCommandResultReader"`
-	CourierCommandResReader   *kafka.Reader `name:"courierCommandResultReader"`
+	OrderCommandReader        *otelkafkakonsumer.Reader `name:"orderCommandReader"`
+	WarehouseCommandResReader *otelkafkakonsumer.Reader `name:"warehouseCommandResultReader"`
+	CourierCommandResReader   *otelkafkakonsumer.Reader `name:"courierCommandResultReader"`
 
 	// Writers
-	OrderCommandWriter     *kafka.Writer `name:"orderCommandWriter"`
-	WarehouseCommandWriter *kafka.Writer `name:"warehouseCommandWriter"`
-	CourierCommandWriter   *kafka.Writer `name:"courierCommandWriter"`
-	OrderCommandResWriter  *kafka.Writer `name:"orderCommandResWriter"`
+	OrderCommandWriter     *otelkafkakonsumer.Writer `name:"orderCommandWriter"`
+	WarehouseCommandWriter *otelkafkakonsumer.Writer `name:"warehouseCommandWriter"`
+	CourierCommandWriter   *otelkafkakonsumer.Writer `name:"courierCommandWriter"`
+	OrderCommandResWriter  *otelkafkakonsumer.Writer `name:"orderCommandResWriter"`
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
@@ -114,7 +115,7 @@ func setupMessagingLifecycle(in struct {
 	})
 }
 
-func closeReader(name string, reader *kafka.Reader, logger logger.Logger) error {
+func closeReader(name string, reader *otelkafkakonsumer.Reader, logger logger.Logger) error {
 	if reader == nil {
 		return nil
 	}
@@ -127,7 +128,7 @@ func closeReader(name string, reader *kafka.Reader, logger logger.Logger) error 
 	return nil
 }
 
-func closeWriter(name string, writer *kafka.Writer, logger logger.Logger) error {
+func closeWriter(name string, writer *otelkafkakonsumer.Writer, logger logger.Logger) error {
 	if writer == nil {
 		return nil
 	}
