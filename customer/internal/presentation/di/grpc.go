@@ -6,6 +6,7 @@ import (
 	customerv1 "customer/internal/presentation/grpc"
 	"customer/internal/presentation/grpc/handler"
 	"fmt"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"net"
 
 	"go.uber.org/fx"
@@ -35,6 +36,10 @@ var GRPCModule = fx.Options(
 
 func newGRPCServer(customerAuthHandler customerv1.CustomerAuthServiceServer, logger logger.Logger) *grpc.Server {
 	server := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler(
+			otelgrpc.WithMessageEvents(otelgrpc.SentEvents, otelgrpc.ReceivedEvents),
+		)),
+
 		grpc.UnaryInterceptor(customerv1.LoggingInterceptor(logger)),
 		grpc.StreamInterceptor(customerv1.StreamLoggingInterceptor(logger)),
 	)
