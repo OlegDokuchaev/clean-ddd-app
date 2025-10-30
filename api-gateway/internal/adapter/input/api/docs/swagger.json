@@ -6,7 +6,6 @@
         "contact": {},
         "version": "1.0"
     },
-    "basePath": "/",
     "paths": {
         "/couriers/login": {
             "post": {
@@ -84,6 +83,20 @@
                     "couriers"
                 ],
                 "summary": "Get courier orders",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of orders",
@@ -293,6 +306,20 @@
                     "items"
                 ],
                 "summary": "Get all warehouse items",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of items",
@@ -459,6 +486,20 @@
                     "orders"
                 ],
                 "summary": "Get customer orders",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of orders",
@@ -1098,8 +1139,7 @@
             ],
             "properties": {
                 "count": {
-                    "type": "integer",
-                    "minimum": 1
+                    "type": "integer"
                 },
                 "product_id": {
                     "type": "string"

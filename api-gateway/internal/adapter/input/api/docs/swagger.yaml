@@ -1,4 +1,3 @@
-basePath: /
 definitions:
   courier_request.LoginRequest:
     properties:
@@ -154,7 +153,6 @@ definitions:
   warehouse_request.ItemInfoSchema:
     properties:
       count:
-        minimum: 1
         type: integer
       product_id:
         type: string
@@ -265,6 +263,15 @@ paths:
       consumes:
       - application/json
       description: Get all current orders for the authenticated courier
+      parameters:
+      - in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - in: query
+        minimum: 0
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
@@ -404,6 +411,15 @@ paths:
       consumes:
       - application/json
       description: Get a list of all items available in the warehouse
+      parameters:
+      - in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - in: query
+        minimum: 0
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
@@ -507,6 +523,15 @@ paths:
       consumes:
       - application/json
       description: Get all orders for the authenticated customer
+      parameters:
+      - in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - in: query
+        minimum: 0
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
