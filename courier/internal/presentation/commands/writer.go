@@ -57,7 +57,7 @@ func (w *WriterImpl) Write(ctx context.Context, res *ResMessage) error {
 	kafkaMsg := kafka.Message{Value: msg}
 
 	// Write the message to Kafka
-	ctx = w.writer.TraceConfig.Propagator.Extract(context.Background(), otelkafkakonsumer.NewMessageCarrier(&kafkaMsg))
+	ctx = w.writer.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(&kafkaMsg))
 
 	if err = w.writer.WriteMessage(ctx, kafkaMsg); err != nil {
 		w.log(logger.Error, "kafka_write_error", "Failed to send response to Kafka", map[string]any{
