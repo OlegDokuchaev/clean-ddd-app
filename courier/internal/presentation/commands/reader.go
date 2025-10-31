@@ -142,7 +142,7 @@ func (r *ReaderImpl) readCommand(ctx context.Context) {
 		return
 	}
 	r.log(logger.Info, "command_parsed", "Command parsed successfully", map[string]any{
-		"command":   cmdEnv.Cmd,
+		"command":   cmdEnv.Msg,
 		"partition": msg.Partition,
 		"offset":    msg.Offset,
 	})
@@ -151,7 +151,7 @@ func (r *ReaderImpl) readCommand(ctx context.Context) {
 	select {
 	case r.commandChan <- cmdEnv:
 		r.log(logger.Info, "command_queued", "Command queued for processing", map[string]any{
-			"command_id": cmdEnv.Cmd.ID,
+			"command_id": cmdEnv.Msg.ID,
 		})
 	case <-ctx.Done():
 	}
@@ -183,8 +183,10 @@ func (r *ReaderImpl) parseCommandEnvelope(ctx context.Context, msg *kafka.Messag
 	ctx = r.reader.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(msg))
 
 	return &CmdEnvelope{
-		Ctx: ctx,
-		Cmd: cmdMsg,
+		Ctx:       ctx,
+		Msg:       cmdMsg,
+		Topic:     r.reader.R.Config().Topic,
+		Partition: msg.Partition,
 	}, nil
 }
 
