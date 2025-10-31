@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 	itemApplication "warehouse/internal/application/item"
 
@@ -19,6 +20,11 @@ type (
 		ID      uuid.UUID
 		Name    CmdMessageName
 		Payload json.RawMessage
+	}
+
+	CmdEnvelope struct {
+		Ctx context.Context
+		Msg *CmdMessage
 	}
 )
 

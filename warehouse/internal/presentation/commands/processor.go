@@ -83,12 +83,12 @@ func (p *Processor) processCommands(ctx context.Context) {
 
 			// Handle the command
 			startTime := time.Now()
-			res, err := p.handler.Handle(ctx, cmd)
+			res, err := p.handler.Handle(cmd.Ctx, cmd.Msg)
 			duration := time.Since(startTime)
 
 			if err != nil {
 				p.log(logger.Error, "process_error", "Command processing failed", map[string]any{
-					"command_id":  cmd.ID,
+					"command_id":  cmd.Msg.ID,
 					"error":       err.Error(),
 					"duration_ms": duration.Milliseconds(),
 				})
@@ -96,16 +96,16 @@ func (p *Processor) processCommands(ctx context.Context) {
 			}
 
 			p.log(logger.Info, "process_success", "Command processed successfully", map[string]any{
-				"command_id":   cmd.ID,
+				"command_id":   cmd.Msg.ID,
 				"duration_ms":  duration.Milliseconds(),
 				"has_response": res != nil,
 			})
 
 			// Write the response
 			if res != nil {
-				if err := p.writer.Write(ctx, res); err != nil {
+				if err := p.writer.Write(cmd.Ctx, res); err != nil {
 					p.log(logger.Error, "write_error", "Error sending response", map[string]any{
-						"command_id":  cmd.ID,
+						"command_id":  cmd.Msg.ID,
 						"response_id": res.ID,
 						"error":       err.Error(),
 					})
