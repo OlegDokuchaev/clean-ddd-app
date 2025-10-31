@@ -11,9 +11,10 @@ func Create(event domain.Event) (*Message, error) {
 		return nil, err
 	}
 	return &Message{
-		ID:      event.ID(),
-		Name:    event.Name(),
-		Payload: payload,
+		ID:       event.ID(),
+		Name:     event.Name(),
+		Payload:  payload,
+		Metadata: map[string]any{},
 	}, nil
 }
 
