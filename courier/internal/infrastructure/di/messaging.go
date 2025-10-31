@@ -7,7 +7,6 @@ import (
 	"errors"
 	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
 
-	"github.com/segmentio/kafka-go"
 	"go.uber.org/fx"
 )
 
@@ -56,12 +55,12 @@ func setupMessagingLifecycle(in struct {
 			var errs []error
 
 			// Close readers
-			if err := closeReader("courier command reader", in.CourierCmdReader.R, in.Logger); err != nil {
+			if err := closeReader("courier command reader", in.CourierCmdReader, in.Logger); err != nil {
 				errs = append(errs, err)
 			}
 
 			// Close writers
-			if err := closeWriter("courier command result writer", in.CourierCmdResWriter.W, in.Logger); err != nil {
+			if err := closeWriter("courier command result writer", in.CourierCmdResWriter, in.Logger); err != nil {
 				errs = append(errs, err)
 			}
 
@@ -75,7 +74,7 @@ func setupMessagingLifecycle(in struct {
 	})
 }
 
-func closeReader(name string, reader *kafka.Reader, logger logger.Logger) error {
+func closeReader(name string, reader *otelkafkakonsumer.Reader, logger logger.Logger) error {
 	if reader == nil {
 		return nil
 	}
@@ -88,7 +87,7 @@ func closeReader(name string, reader *kafka.Reader, logger logger.Logger) error 
 	return nil
 }
 
-func closeWriter(name string, writer *kafka.Writer, logger logger.Logger) error {
+func closeWriter(name string, writer *otelkafkakonsumer.Writer, logger logger.Logger) error {
 	if writer == nil {
 		return nil
 	}
