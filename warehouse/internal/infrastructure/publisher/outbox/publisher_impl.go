@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
+	"github.com/segmentio/kafka-go"
 	outboxDomain "warehouse/internal/domain/outbox"
 	productDomain "warehouse/internal/domain/product"
-
-	"github.com/segmentio/kafka-go"
 )
 
 type PublisherImpl struct {
@@ -55,7 +54,11 @@ func publishMessage(ctx context.Context, writer *otelkafkakonsumer.Writer, messa
 		return err
 	}
 
-	kafkaMsg := kafka.Message{Value: value}
+	headers, err := parseHeadersFromMessage(message)
+	if err != nil {
+		return err
+	}
+	kafkaMsg := kafka.Message{Value: value, Headers: headers}
 
 	ctx = writer.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(&kafkaMsg))
 
@@ -64,3 +67,24 @@ func publishMessage(ctx context.Context, writer *otelkafkakonsumer.Writer, messa
 }
 
 var _ outboxDomain.Publisher = (*PublisherImpl)(nil)
+
+func parseHeadersFromMessage(message *outboxDomain.Message) ([]kafka.Header, error) {
+	var headers []kafka.Header
+
+	for k, v := range message.Metadata {
+		switch vv := v.(type) {
+		case string:
+			headers = append(headers, kafka.Header{Key: k, Value: []byte(vv)})
+		case []byte:
+			headers = append(headers, kafka.Header{Key: k, Value: vv})
+		default:
+			if b, mErr := json.Marshal(v); mErr == nil {
+				headers = append(headers, kafka.Header{Key: k, Value: b})
+			} else {
+				return nil, parseError(mErr)
+			}
+		}
+	}
+
+	return headers, nil
+}
