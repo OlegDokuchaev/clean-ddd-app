@@ -8,7 +8,7 @@ import (
 )
 
 type Handler interface {
-	Handle(ctx context.Context, event *Event) error
+	Handle(ctx context.Context, event *EventMessage) error
 }
 
 type HandlerImpl struct {
@@ -19,7 +19,7 @@ func NewHandler(itemUseCase item.UseCase) *HandlerImpl {
 	return &HandlerImpl{itemUseCase: itemUseCase}
 }
 
-func (h *HandlerImpl) Handle(ctx context.Context, event *Event) error {
+func (h *HandlerImpl) Handle(ctx context.Context, event *EventMessage) error {
 	switch event.Name {
 	case ProductCreatedName:
 		var eventPayload ProductCreatedEvent

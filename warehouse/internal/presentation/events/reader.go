@@ -5,21 +5,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
+	"github.com/segmentio/kafka-go"
 	"sync"
 	"warehouse/internal/infrastructure/logger"
-
-	"github.com/segmentio/kafka-go"
 )
 
 type Reader interface {
 	Start(ctx context.Context) error
-	Read(ctx context.Context) (*Event, error)
+	Read(ctx context.Context) (*EventEnvelope, error)
 	Stop() error
 }
 
 type ReaderImpl struct {
-	reader    *kafka.Reader
-	eventChan chan *Event
+	reader    *otelkafkakonsumer.Reader
+	eventChan chan *EventEnvelope
 	errorChan chan error
 
 	cancelCtx  context.Context
@@ -32,7 +32,7 @@ type ReaderImpl struct {
 	logger logger.Logger
 }
 
-func NewReader(reader *kafka.Reader, logger logger.Logger) *ReaderImpl {
+func NewReader(reader *otelkafkakonsumer.Reader, logger logger.Logger) *ReaderImpl {
 	return &ReaderImpl{
 		reader: reader,
 		logger: logger,
@@ -43,7 +43,7 @@ func (r *ReaderImpl) log(level logger.Level, action, message string, extraFields
 	fields := map[string]any{
 		"component": "event_reader",
 		"action":    action,
-		"topic":     r.reader.Config().Topic,
+		"topic":     r.reader.R.Config().Topic,
 	}
 	for k, v := range extraFields {
 		fields[k] = v
@@ -70,7 +70,7 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 		return errors.New("event reader is already started")
 	}
 
-	r.eventChan = make(chan *Event, 1)
+	r.eventChan = make(chan *EventEnvelope, 1)
 	r.errorChan = make(chan error, 1)
 
 	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
@@ -102,17 +102,17 @@ func (r *ReaderImpl) Stop() error {
 	close(r.errorChan)
 	r.started = false
 
-	r.log(logger.Info, "stopped", "Event reader stopped", nil)
+	r.log(logger.Info, "stopped", "EventMessage reader stopped", nil)
 	return nil
 }
 
 func (r *ReaderImpl) readEvents(ctx context.Context) {
-	defer r.log(logger.Info, "goroutine_completed", "Event reader goroutine completed", nil)
+	defer r.log(logger.Info, "goroutine_completed", "EventMessage reader goroutine completed", nil)
 
 	for {
 		select {
 		case <-ctx.Done():
-			r.log(logger.Info, "stop", "Event reader stopping", map[string]any{"reason": ctx.Err().Error()})
+			r.log(logger.Info, "stop", "EventMessage reader stopping", map[string]any{"reason": ctx.Err().Error()})
 			return
 
 		default:
@@ -127,7 +127,7 @@ func (r *ReaderImpl) readEvents(ctx context.Context) {
 			}
 
 			// Parse the event
-			event, err := parseEvent(msg.Value)
+			event, err := r.parseCommandEnvelope(ctx, msg)
 			if err != nil {
 				r.log(logger.Error, "parse_error", "Failed to parse event", map[string]any{
 					"error":    err.Error(),
@@ -136,7 +136,7 @@ func (r *ReaderImpl) readEvents(ctx context.Context) {
 				r.sendError(err, "parse_error")
 				continue
 			}
-			r.log(logger.Info, "event_parsed", "Event parsed successfully", map[string]any{
+			r.log(logger.Info, "event_parsed", "EventMessage parsed successfully", map[string]any{
 				"event":     event,
 				"partition": msg.Partition,
 				"offset":    msg.Offset,
@@ -145,8 +145,8 @@ func (r *ReaderImpl) readEvents(ctx context.Context) {
 			// Send the command to the command channel
 			select {
 			case r.eventChan <- event:
-				r.log(logger.Info, "event_queued", "Event queued for processing", map[string]any{
-					"event_id": event.ID,
+				r.log(logger.Info, "event_queued", "EventMessage queued for processing", map[string]any{
+					"event_id": event.Msg.ID,
 				})
 			case <-ctx.Done():
 				continue
@@ -155,7 +155,7 @@ func (r *ReaderImpl) readEvents(ctx context.Context) {
 	}
 }
 
-func (r *ReaderImpl) Read(ctx context.Context) (*Event, error) {
+func (r *ReaderImpl) Read(ctx context.Context) (*EventEnvelope, error) {
 	select {
 	case cmd, ok := <-r.eventChan:
 		if !ok {
@@ -174,10 +174,24 @@ func (r *ReaderImpl) Read(ctx context.Context) (*Event, error) {
 	}
 }
 
+func (r *ReaderImpl) parseCommandEnvelope(ctx context.Context, msg *kafka.Message) (*EventEnvelope, error) {
+	eventMsg, err := parseEventMessage(msg.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = r.reader.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(msg))
+
+	return &EventEnvelope{
+		Ctx: ctx,
+		Msg: eventMsg,
+	}, nil
+}
+
 var _ Reader = (*ReaderImpl)(nil)
 
-func parseEvent(data []byte) (*Event, error) {
-	var msg Event
+func parseEventMessage(data []byte) (*EventMessage, error) {
+	var msg EventMessage
 	if err := json.Unmarshal(data, &msg); err != nil {
 		return nil, fmt.Errorf("error deserializing message: %w", err)
 	}

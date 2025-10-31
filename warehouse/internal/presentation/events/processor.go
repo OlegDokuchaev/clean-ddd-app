@@ -55,17 +55,17 @@ func (p *Processor) Start(ctx context.Context) error {
 
 	p.log(logger.Info, "start", "Starting event processor", nil)
 	p.wg.Add(1)
-	go p.processEvents(p.cancelCtx, "product", p.productReader)
+	go p.processEvents(p.cancelCtx, p.productReader)
 	return nil
 }
 
-func (p *Processor) processEvents(ctx context.Context, source string, reader Reader) {
+func (p *Processor) processEvents(ctx context.Context, reader Reader) {
 	defer p.wg.Done()
 
 	for {
 		select {
 		case <-ctx.Done():
-			p.log(logger.Info, "stop", "Event processor stopping", map[string]any{"reason": ctx.Err().Error()})
+			p.log(logger.Info, "stop", "EventMessage processor stopping", map[string]any{"reason": ctx.Err().Error()})
 			return
 
 		default:
@@ -81,20 +81,20 @@ func (p *Processor) processEvents(ctx context.Context, source string, reader Rea
 
 			// Handle the event
 			startTime := time.Now()
-			err = p.handler.Handle(ctx, event)
+			err = p.handler.Handle(event.Ctx, event.Msg)
 			duration := time.Since(startTime)
 
 			if err != nil {
-				p.log(logger.Error, "process_error", "Event processing failed", map[string]any{
-					"event_id":    event.ID,
+				p.log(logger.Error, "process_error", "EventMessage processing failed", map[string]any{
+					"event_id":    event.Msg.ID,
 					"error":       err.Error(),
 					"duration_ms": duration.Milliseconds(),
 				})
 				continue
 			}
 
-			p.log(logger.Info, "process_success", "Event processed successfully", map[string]any{
-				"event_id":    event.ID,
+			p.log(logger.Info, "process_success", "EventMessage processed successfully", map[string]any{
+				"event_id":    event.Msg.ID,
 				"duration_ms": duration.Milliseconds(),
 			})
 		}
@@ -114,6 +114,6 @@ func (p *Processor) Stop() error {
 	p.wg.Wait()
 	p.started = false
 
-	p.log(logger.Info, "stopped", "Event processor stopped", nil)
+	p.log(logger.Info, "stopped", "EventMessage processor stopped", nil)
 	return nil
 }
