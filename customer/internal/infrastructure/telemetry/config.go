@@ -9,11 +9,11 @@ import (
 
 type Config struct {
 	ServiceName        string        `envconfig:"OTEL_SERVICE_NAME" required:"true"`
-	OtlpEndpoint       string        `envconfig:"OTEL_OTLP_ENDPOINT" required:"true"`
-	SamplerRatio       float64       `envconfig:"OTEL_SAMPLER_ARG" required:"true"`
-	BatchTimeout       time.Duration `envconfig:"OTEL_BATCH_TIMEOUT" required:"true"`
-	MaxQueueSize       int           `envconfig:"OTEL_MAX_QUEUE_SIZE" required:"true"`
-	MaxExportBatchSize int           `envconfig:"OTEL_MAX_EXPORT_BATCH_SIZE" required:"true"`
+	OtlpEndpoint       string        `envconfig:"OTEL_OTLP_ENDPOINT" default:""`
+	SamplerRatio       float64       `envconfig:"OTEL_SAMPLER_ARG"`
+	BatchTimeout       time.Duration `envconfig:"OTEL_BATCH_TIMEOUT"`
+	MaxQueueSize       int           `envconfig:"OTEL_MAX_QUEUE_SIZE"`
+	MaxExportBatchSize int           `envconfig:"OTEL_MAX_EXPORT_BATCH_SIZE"`
 }
 
 func NewConfig() (*Config, error) {
