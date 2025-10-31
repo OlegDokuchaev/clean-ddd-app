@@ -76,7 +76,7 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 
 		default:
 			// Read the result
-			msg, err := receiver.Read(ctx)
+			res, err := receiver.Read(ctx)
 			if ctx.Err() != nil {
 				continue
 			}
@@ -90,12 +90,12 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 
 			// Handle the command
 			startTime := time.Now()
-			err = p.handler.Handle(ctx, msg)
+			err = p.handler.Handle(res.Ctx, res.Msg)
 			duration := time.Since(startTime)
 
 			if err != nil {
 				p.log(logger.Error, "process_error", "Result processing failed", map[string]any{
-					"result_id":   msg.ID,
+					"result_id":   res.Msg.ID,
 					"source":      source,
 					"error":       err.Error(),
 					"duration_ms": duration.Milliseconds(),
@@ -104,7 +104,7 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 			}
 
 			p.log(logger.Info, "process_success", "Result processed successfully", map[string]any{
-				"result_id":   msg.ID,
+				"result_id":   res.Msg.ID,
 				"source":      source,
 				"duration_ms": duration.Milliseconds(),
 			})
