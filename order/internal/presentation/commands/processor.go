@@ -6,6 +6,11 @@ import (
 	"order/internal/infrastructure/logger"
 	"sync"
 	"time"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Processor struct {
@@ -72,7 +77,7 @@ func (p *Processor) processCommands(ctx context.Context) {
 
 		default:
 			// Read the command
-			envelope, err := p.reader.Read(ctx)
+			cmd, err := p.reader.Read(ctx)
 			if ctx.Err() != nil {
 				continue
 			}
@@ -82,13 +87,17 @@ func (p *Processor) processCommands(ctx context.Context) {
 			}
 
 			// Handle the command
+			ctx, span := startProcessSpan(cmd)
 			startTime := time.Now()
-			res, err := p.handler.Handle(envelope.Ctx, envelope.Cmd)
+
+			res, err := p.handler.Handle(ctx, cmd.Msg)
+
 			duration := time.Since(startTime)
+			span.End()
 
 			if err != nil {
 				p.log(logger.Error, "process_error", "Command processing failed", map[string]any{
-					"command_id":  envelope.Cmd.ID,
+					"command_id":  cmd.Msg.ID,
 					"error":       err.Error(),
 					"duration_ms": duration.Milliseconds(),
 				})
@@ -96,16 +105,16 @@ func (p *Processor) processCommands(ctx context.Context) {
 			}
 
 			p.log(logger.Info, "process_success", "Command processed successfully", map[string]any{
-				"command_id":   envelope.Cmd.ID,
+				"command_id":   cmd.Msg.ID,
 				"duration_ms":  duration.Milliseconds(),
 				"has_response": res != nil,
 			})
 
 			// Write the response
 			if res != nil {
-				if err := p.writer.Write(envelope.Ctx, res); err != nil {
+				if err := p.writer.Write(ctx, res); err != nil {
 					p.log(logger.Error, "write_error", "Error sending response", map[string]any{
-						"command_id":  envelope.Cmd.ID,
+						"command_id":  cmd.Msg.ID,
 						"response_id": res.ID,
 						"error":       err.Error(),
 					})
@@ -130,4 +139,19 @@ func (p *Processor) Stop() error {
 
 	p.log(logger.Info, "stopped", "Command processor stopped", nil)
 	return nil
+}
+
+func startProcessSpan(cmd *CmdEnvelope) (context.Context, trace.Span) {
+	return otel.Tracer("order-service.commands").Start(
+		cmd.Ctx,
+		"kafka.process",
+		trace.WithSpanKind(trace.SpanKindConsumer),
+		trace.WithAttributes(
+			semconv.MessagingSystemKey.String("kafka"),
+			semconv.MessagingDestinationName(cmd.Topic),
+			semconv.MessagingKafkaDestinationPartition(cmd.Partition),
+			semconv.MessagingOperationKey.String("process"),
+			attribute.String("command.id", cmd.Msg.ID.String()),
+		),
+	)
 }
