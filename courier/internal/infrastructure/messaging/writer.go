@@ -20,7 +20,7 @@ func NewCourierCmdResWriter(config *Config, tp *sdktrace.TracerProvider) (*otelk
 		otelkafkakonsumer.WithAttributes(
 			[]attribute.KeyValue{
 				semconv.MessagingDestinationKindTopic,
-				semconv.MessagingKafkaClientIDKey.String("CourierCmdTopic"),
+				semconv.MessagingKafkaClientIDKey.String(config.CourierCmdResTopic),
 			},
 		),
 	)
