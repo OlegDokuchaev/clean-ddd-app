@@ -3,6 +3,7 @@ package outbox
 import (
 	"context"
 	"encoding/json"
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
 	outboxDomain "warehouse/internal/domain/outbox"
 	productDomain "warehouse/internal/domain/product"
 
@@ -10,10 +11,10 @@ import (
 )
 
 type PublisherImpl struct {
-	productWriter *kafka.Writer
+	productWriter *otelkafkakonsumer.Writer
 }
 
-func NewPublisher(productWriter *kafka.Writer) *PublisherImpl {
+func NewPublisher(productWriter *otelkafkakonsumer.Writer) *PublisherImpl {
 	return &PublisherImpl{productWriter: productWriter}
 }
 
@@ -25,7 +26,7 @@ func (p *PublisherImpl) Publish(ctx context.Context, message *outboxDomain.Messa
 	return publishMessage(ctx, writer, message)
 }
 
-func (p *PublisherImpl) getWriterByMessage(message *outboxDomain.Message) (*kafka.Writer, error) {
+func (p *PublisherImpl) getWriterByMessage(message *outboxDomain.Message) (*otelkafkakonsumer.Writer, error) {
 	switch message.Name {
 	case productDomain.CreatedEventName:
 		return p.productWriter, nil
@@ -48,16 +49,17 @@ func encodeMessage(message *outboxDomain.Message) ([]byte, error) {
 	return buf, nil
 }
 
-func publishMessage(ctx context.Context, writer *kafka.Writer, message *outboxDomain.Message) error {
+func publishMessage(ctx context.Context, writer *otelkafkakonsumer.Writer, message *outboxDomain.Message) error {
 	value, err := encodeMessage(message)
 	if err != nil {
 		return err
 	}
 
-	kafkaMsg := kafka.Message{
-		Value: value,
-	}
-	err = writer.WriteMessages(ctx, kafkaMsg)
+	kafkaMsg := kafka.Message{Value: value}
+
+	ctx = writer.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(&kafkaMsg))
+
+	err = writer.WriteMessage(ctx, kafkaMsg)
 	return parseError(err)
 }
 
