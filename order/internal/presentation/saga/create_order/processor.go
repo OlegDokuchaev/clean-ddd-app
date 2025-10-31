@@ -93,10 +93,10 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 			}
 
 			// Handle the command
-			ctx, span := startProcessSpan(res)
+			sCtx, span := startProcessSpan(res)
 			startTime := time.Now()
 
-			err = p.handler.Handle(ctx, res.Msg)
+			err = p.handler.Handle(sCtx, res.Msg)
 
 			duration := time.Since(startTime)
 			span.End()

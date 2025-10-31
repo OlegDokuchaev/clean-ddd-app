@@ -86,10 +86,10 @@ func (p *Processor) processCommands(ctx context.Context) {
 			}
 
 			// Handle the command
-			ctx, span := startProcessSpan(cmd)
+			sCtx, span := startProcessSpan(cmd)
 			startTime := time.Now()
 
-			res, err := p.handler.Handle(ctx, cmd.Msg)
+			res, err := p.handler.Handle(sCtx, cmd.Msg)
 
 			duration := time.Since(startTime)
 			span.End()
@@ -111,7 +111,7 @@ func (p *Processor) processCommands(ctx context.Context) {
 
 			// Write the response
 			if res != nil {
-				if err := p.writer.Write(ctx, res); err != nil {
+				if err := p.writer.Write(cmd.Ctx, res); err != nil {
 					p.log(logger.Error, "write_error", "Error sending response", map[string]any{
 						"command_id":  cmd.Msg.ID,
 						"response_id": res.ID,

@@ -84,10 +84,10 @@ func (p *Processor) processEvents(ctx context.Context, reader Reader) {
 			}
 
 			// Handle the event
-			ctx, span := startProcessSpan(event)
+			sCtx, span := startProcessSpan(event)
 			startTime := time.Now()
 
-			err = p.handler.Handle(ctx, event.Msg)
+			err = p.handler.Handle(sCtx, event.Msg)
 
 			duration := time.Since(startTime)
 			span.End()
