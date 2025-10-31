@@ -11,8 +11,8 @@ type Config struct {
 	ServiceName string `envconfig:"SERVICE_NAME" required:"true"`
 	LogLevel    string `envconfig:"LOG_LEVEL" required:"true"`
 
-	LogstashHost string `envconfig:"LOGSTASH_HOST" required:"true"`
-	LogstashPort string `envconfig:"LOGSTASH_PORT" required:"true"`
+	LogstashHost string `envconfig:"LOGSTASH_HOST" default:""`
+	LogstashPort string `envconfig:"LOGSTASH_PORT" default:""`
 }
 
 func NewConfig() (*Config, error) {
