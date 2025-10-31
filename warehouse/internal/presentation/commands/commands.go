@@ -23,8 +23,10 @@ type (
 	}
 
 	CmdEnvelope struct {
-		Ctx context.Context
-		Msg *CmdMessage
+		Ctx       context.Context
+		Msg       *CmdMessage
+		Topic     string
+		Partition int
 	}
 )
 
