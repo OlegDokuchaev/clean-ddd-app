@@ -9,7 +9,10 @@ import (
 func NewLogrus(config *Config, logstashHook logrus.Hook) *logrus.Logger {
 	log := logrus.New()
 
-	log.Hooks.Add(logstashHook)
+	if logstashHook != nil {
+		log.Hooks.Add(logstashHook)
+	}
+
 	log.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat: time.RFC3339,
 	})
