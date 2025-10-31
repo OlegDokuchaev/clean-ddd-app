@@ -5,6 +5,7 @@ go 1.23.0
 toolchain go1.24.2
 
 require (
+	github.com/Trendyol/otel-kafka-konsumer v0.0.7
 	github.com/bshuster-repo/logrus-logstash-hook v1.1.0
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/uuid v1.6.0
@@ -19,6 +20,9 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/kafka v0.35.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.36.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.36.0
+	go.opentelemetry.io/otel v1.38.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
+	go.opentelemetry.io/otel/sdk v1.38.0
 	go.uber.org/fx v1.23.0
 	golang.org/x/net v0.43.0
 	google.golang.org/grpc v1.75.0
@@ -86,11 +90,8 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
-	go.opentelemetry.io/otel v1.38.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.38.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
