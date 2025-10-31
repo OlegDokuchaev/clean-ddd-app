@@ -60,8 +60,6 @@ func publishMessage(ctx context.Context, writer *otelkafkakonsumer.Writer, messa
 	}
 	kafkaMsg := kafka.Message{Value: value, Headers: headers}
 
-	ctx = writer.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(&kafkaMsg))
-
 	err = writer.WriteMessage(ctx, kafkaMsg)
 	return parseError(err)
 }
