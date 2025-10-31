@@ -3,6 +3,7 @@ package testutils
 import (
 	"context"
 	"fmt"
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
 	"net"
 	"strconv"
 
@@ -21,9 +22,7 @@ func (m *TestMessaging) CreateTopics(ctx context.Context, topics ...string) erro
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = conn.Close()
-	}()
+	defer func() { _ = conn.Close() }()
 
 	controller, err := conn.Controller()
 	if err != nil {
@@ -34,9 +33,7 @@ func (m *TestMessaging) CreateTopics(ctx context.Context, topics ...string) erro
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = controllerConn.Close()
-	}()
+	defer func() { _ = controllerConn.Close() }()
 
 	topicConfigs := make([]kafka.TopicConfig, 0, len(topics))
 	for _, topic := range topics {
@@ -49,19 +46,22 @@ func (m *TestMessaging) CreateTopics(ctx context.Context, topics ...string) erro
 	return controllerConn.CreateTopics(topicConfigs...)
 }
 
-func (m *TestMessaging) CreateWriter(topic string) *kafka.Writer {
-	return &kafka.Writer{
-		Addr:     kafka.TCP(m.url),
-		Topic:    topic,
-		Balancer: &kafka.LeastBytes{},
-	}
+func (m *TestMessaging) CreateWriter(topic string) (*otelkafkakonsumer.Writer, error) {
+	return otelkafkakonsumer.NewWriter(
+		&kafka.Writer{
+			Addr:  kafka.TCP(m.url),
+			Topic: topic,
+		},
+	)
 }
 
-func (m *TestMessaging) CreateReader(topic string) *kafka.Reader {
-	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{m.url},
-		Topic:   topic,
-	})
+func (m *TestMessaging) CreateReader(topic string) (*otelkafkakonsumer.Reader, error) {
+	return otelkafkakonsumer.NewReader(
+		kafka.NewReader(kafka.ReaderConfig{
+			Brokers: []string{m.url},
+			Topic:   topic,
+		}),
+	)
 }
 
 func (m *TestMessaging) Close(ctx context.Context) error {

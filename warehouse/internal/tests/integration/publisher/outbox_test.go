@@ -5,6 +5,7 @@ package publisher
 import (
 	"context"
 	"encoding/json"
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
 	"testing"
 	"time"
 	domain "warehouse/internal/domain/common"
@@ -14,7 +15,6 @@ import (
 	"warehouse/internal/tests/testutils"
 
 	"github.com/google/uuid"
-	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -29,8 +29,8 @@ type OutboxTestSuite struct {
 
 	testMessaging *testutils.TestMessaging
 
-	productWriter *kafka.Writer
-	productReader *kafka.Reader
+	productWriter *otelkafkakonsumer.Writer
+	productReader *otelkafkakonsumer.Reader
 }
 
 func (s *OutboxTestSuite) SetupSuite() {
@@ -43,8 +43,11 @@ func (s *OutboxTestSuite) SetupSuite() {
 	err = s.testMessaging.CreateTopics(s.ctx, ProductTopic)
 	require.NoError(s.T(), err)
 
-	s.productWriter = s.testMessaging.CreateWriter(ProductTopic)
-	s.productReader = s.testMessaging.CreateReader(ProductTopic)
+	s.productWriter, err = s.testMessaging.CreateWriter(ProductTopic)
+	require.NoError(s.T(), err)
+
+	s.productReader, err = s.testMessaging.CreateReader(ProductTopic)
+	require.NoError(s.T(), err)
 }
 
 func (s *OutboxTestSuite) TearDownSuite() {
