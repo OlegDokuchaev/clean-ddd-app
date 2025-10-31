@@ -16,8 +16,10 @@ type (
 	}
 
 	EventEnvelope struct {
-		Ctx context.Context
-		Msg *EventMessage
+		Ctx       context.Context
+		Msg       *EventMessage
+		Topic     string
+		Partition int
 	}
 )
 

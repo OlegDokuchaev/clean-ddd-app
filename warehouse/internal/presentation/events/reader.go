@@ -183,8 +183,10 @@ func (r *ReaderImpl) parseCommandEnvelope(ctx context.Context, msg *kafka.Messag
 	ctx = r.reader.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(msg))
 
 	return &EventEnvelope{
-		Ctx: ctx,
-		Msg: eventMsg,
+		Ctx:       ctx,
+		Msg:       eventMsg,
+		Topic:     r.reader.R.Config().Topic,
+		Partition: msg.Partition,
 	}, nil
 }
 

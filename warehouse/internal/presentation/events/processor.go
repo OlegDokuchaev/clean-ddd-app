@@ -3,6 +3,10 @@ package events
 import (
 	"context"
 	"errors"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
 	"sync"
 	"time"
 	"warehouse/internal/infrastructure/logger"
@@ -80,9 +84,13 @@ func (p *Processor) processEvents(ctx context.Context, reader Reader) {
 			}
 
 			// Handle the event
+			ctx, span := startProcessSpan(event)
 			startTime := time.Now()
-			err = p.handler.Handle(event.Ctx, event.Msg)
+
+			err = p.handler.Handle(ctx, event.Msg)
+
 			duration := time.Since(startTime)
+			span.End()
 
 			if err != nil {
 				p.log(logger.Error, "process_error", "EventMessage processing failed", map[string]any{
@@ -116,4 +124,19 @@ func (p *Processor) Stop() error {
 
 	p.log(logger.Info, "stopped", "EventMessage processor stopped", nil)
 	return nil
+}
+
+func startProcessSpan(event *EventEnvelope) (context.Context, trace.Span) {
+	return otel.Tracer("warehouse-service.events").Start(
+		event.Ctx,
+		"kafka.process",
+		trace.WithSpanKind(trace.SpanKindConsumer),
+		trace.WithAttributes(
+			semconv.MessagingSystemKey.String("kafka"),
+			semconv.MessagingDestinationName(event.Topic),
+			semconv.MessagingKafkaDestinationPartition(event.Partition),
+			semconv.MessagingOperationKey.String("process"),
+			attribute.String("event.id", event.Msg.ID.String()),
+		),
+	)
 }
