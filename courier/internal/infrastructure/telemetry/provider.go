@@ -13,6 +13,16 @@ import (
 func NewProvider(cfg *Config) (*sdktrace.TracerProvider, error) {
 	ctx := context.Background()
 
+	if cfg.OtlpEndpoint == "" {
+		tp := sdktrace.NewTracerProvider()
+		otel.SetTracerProvider(tp)
+		otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+			propagation.Baggage{},
+		))
+		return tp, nil
+	}
+
 	exp, err := otlptracegrpc.New(ctx,
 		otlptracegrpc.WithEndpoint(cfg.OtlpEndpoint),
 		otlptracegrpc.WithInsecure(),
