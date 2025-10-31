@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
-
 	"github.com/segmentio/kafka-go"
 )
 
@@ -184,8 +183,10 @@ func (r *ReaderImpl) parseCommandEnvelope(ctx context.Context, msg *kafka.Messag
 	ctx = r.reader.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(msg))
 
 	return &CmdEnvelope{
-		Ctx: ctx,
-		Msg: cmdMsg,
+		Ctx:       ctx,
+		Msg:       cmdMsg,
+		Topic:     r.reader.R.Config().Topic,
+		Partition: msg.Partition,
 	}, nil
 }
 

@@ -25,7 +25,9 @@ type (
 	}
 
 	ResEnvelope struct {
-		Ctx context.Context
-		Msg *ResMessage
+		Ctx       context.Context
+		Msg       *ResMessage
+		Topic     string
+		Partition int
 	}
 )
