@@ -26,6 +26,7 @@ func main() {
 		infraDI.OutboxProcessorModule,
 		infraDI.UowModule,
 		infraDI.ImageModule,
+		infraDI.TelemetryModule,
 
 		// Application modules
 		appDI.UseCaseModule,
@@ -34,6 +35,7 @@ func main() {
 		presentationDI.GRPCModule,
 		presentationDI.CommandConsumerModule,
 		presentationDI.EventsModule,
+		presentationDI.TelemetryModule,
 
 		// Add logging for application startup and shutdown
 		fx.Invoke(func(lc fx.Lifecycle, logger logger.Logger) {
