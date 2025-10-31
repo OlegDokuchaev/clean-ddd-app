@@ -23,6 +23,7 @@ func main() {
 		infraDI.DatabaseModule,
 		infraDI.RepositoryModule,
 		infraDI.PublisherModule,
+		infraDI.TelemetryModule,
 
 		// Application modules
 		appDI.UseCaseModule,
@@ -32,6 +33,7 @@ func main() {
 		presentationDI.GRPCModule,
 		presentationDI.CommandConsumerModule,
 		presentationDI.SagaConsumerModule,
+		presentationDI.TelemetryModule,
 
 		// Add logging for application startup and shutdown
 		fx.Invoke(func(lc fx.Lifecycle, logger logger.Logger) {
