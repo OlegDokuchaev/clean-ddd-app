@@ -3,10 +3,10 @@ package outbox
 import (
 	"context"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/propagation"
+	"gorm.io/gorm"
 	outboxDomain "warehouse/internal/domain/outbox"
 	"warehouse/internal/infrastructure/db/tables"
-
-	"gorm.io/gorm"
 )
 
 type RepositoryImpl struct {
@@ -18,7 +18,17 @@ func New(db *gorm.DB) *RepositoryImpl {
 }
 
 func (r *RepositoryImpl) Create(ctx context.Context, message *outboxDomain.Message) error {
-	model := ToModel(message)
+	carrier := propagation.MapCarrier{}
+	propagation.TraceContext{}.Inject(ctx, carrier)
+	for k, v := range carrier {
+		message.Metadata[k] = v
+	}
+
+	model, err := ToModel(message)
+	if err != nil {
+		return err
+	}
+
 	res := r.db.WithContext(ctx).Create(model)
 	return ParseError(res.Error)
 }
@@ -29,7 +39,7 @@ func (r *RepositoryImpl) GetByID(ctx context.Context, messageID uuid.UUID) (*out
 	if res.Error != nil {
 		return nil, ParseError(res.Error)
 	}
-	return ToDomain(&model), nil
+	return ToDomain(&model)
 }
 
 func (r *RepositoryImpl) GetAll(ctx context.Context) ([]*outboxDomain.Message, error) {
@@ -38,14 +48,19 @@ func (r *RepositoryImpl) GetAll(ctx context.Context) ([]*outboxDomain.Message, e
 	if res.Error != nil {
 		return nil, ParseError(res.Error)
 	}
-	return ToDomains(models), nil
+	return ToDomains(models)
 }
 
 func (r *RepositoryImpl) Delete(ctx context.Context, message *outboxDomain.Message) error {
-	model := ToModel(message)
+	model, err := ToModel(message)
+	if err != nil {
+		return err
+	}
+
 	res := r.db.WithContext(ctx).Delete(model)
 	if res.RowsAffected == 0 {
 		return ErrOutboxMessageNotFound
 	}
+
 	return ParseError(res.Error)
 }
