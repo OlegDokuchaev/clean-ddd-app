@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	ServiceName        string        `envconfig:"OTEL_SERVICE_NAME" required:"true"`
-	OtlpEndpoint       string        `envconfig:"OTEL_OTLP_ENDPOINT" required:"true"`
+	OtlpEndpoint       string        `envconfig:"OTEL_OTLP_ENDPOINT" default:""`
 	SamplerRatio       float64       `envconfig:"OTEL_SAMPLER_ARG" required:"true"`
 	BatchTimeout       time.Duration `envconfig:"OTEL_BATCH_TIMEOUT" required:"true"`
 	MaxQueueSize       int           `envconfig:"OTEL_MAX_QUEUE_SIZE" required:"true"`
