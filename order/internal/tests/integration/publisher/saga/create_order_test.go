@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
+
 	"github.com/google/uuid"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/suite"
@@ -23,14 +25,14 @@ type CreateOrderPublisherTestSuite struct {
 
 	messaging *testutils.TestMessaging
 
-	warehouseWriter *kafka.Writer
-	warehouseReader *kafka.Reader
+	warehouseWriter *otelkafkakonsumer.Writer
+	warehouseReader *otelkafkakonsumer.Reader
 
-	orderWriter *kafka.Writer
-	orderReader *kafka.Reader
+	orderWriter *otelkafkakonsumer.Writer
+	orderReader *otelkafkakonsumer.Reader
 
-	courierWriter *kafka.Writer
-	courierReader *kafka.Reader
+	courierWriter *otelkafkakonsumer.Writer
+	courierReader *otelkafkakonsumer.Reader
 }
 
 func (s *CreateOrderPublisherTestSuite) BeforeAll(t provider.T) {
@@ -53,15 +55,23 @@ func (s *CreateOrderPublisherTestSuite) AfterAll(t provider.T) {
 	}
 }
 
-func (s *CreateOrderPublisherTestSuite) BeforeEach(_ provider.T) {
-	s.warehouseWriter = s.messaging.CreateWriter(s.messaging.Cfg.WarehouseCmdTopic)
-	s.warehouseReader = s.messaging.CreateReader(s.messaging.Cfg.WarehouseCmdTopic)
+func (s *CreateOrderPublisherTestSuite) BeforeEach(t provider.T) {
+	var err error
 
-	s.orderWriter = s.messaging.CreateWriter(s.messaging.Cfg.OrderCmdTopic)
-	s.orderReader = s.messaging.CreateReader(s.messaging.Cfg.OrderCmdTopic)
+	s.warehouseWriter, err = s.messaging.CreateWriter(s.messaging.Cfg.WarehouseCmdTopic)
+	t.Require().NoError(err)
+	s.warehouseReader, err = s.messaging.CreateReader(s.messaging.Cfg.WarehouseCmdTopic)
+	t.Require().NoError(err)
 
-	s.courierWriter = s.messaging.CreateWriter(s.messaging.Cfg.CourierCmdTopic)
-	s.courierReader = s.messaging.CreateReader(s.messaging.Cfg.CourierCmdTopic)
+	s.orderWriter, err = s.messaging.CreateWriter(s.messaging.Cfg.OrderCmdTopic)
+	t.Require().NoError(err)
+	s.orderReader, err = s.messaging.CreateReader(s.messaging.Cfg.OrderCmdTopic)
+	t.Require().NoError(err)
+
+	s.courierWriter, err = s.messaging.CreateWriter(s.messaging.Cfg.CourierCmdTopic)
+	t.Require().NoError(err)
+	s.courierReader, err = s.messaging.CreateReader(s.messaging.Cfg.CourierCmdTopic)
+	t.Require().NoError(err)
 }
 
 func (s *CreateOrderPublisherTestSuite) AfterEach(t provider.T) {
@@ -102,7 +112,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd(t provider.T)
 	tests := []struct {
 		name            string
 		cmd             createOrder.ReserveItemsCmd
-		validateMessage func(cmd createOrder.ReserveItemsCmd, message kafka.Message)
+		validateMessage func(cmd createOrder.ReserveItemsCmd, message *kafka.Message)
 		expectedError   error
 	}{
 		{
@@ -116,7 +126,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReserveItemsCmd(t provider.T)
 					},
 				},
 			},
-			validateMessage: func(cmd createOrder.ReserveItemsCmd, message kafka.Message) {
+			validateMessage: func(cmd createOrder.ReserveItemsCmd, message *kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
 				t.Require().NoError(err)
@@ -161,7 +171,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd(t provider.T)
 	tests := []struct {
 		name            string
 		cmd             createOrder.ReleaseItemsCmd
-		validateMessage func(cmd createOrder.ReleaseItemsCmd, message kafka.Message)
+		validateMessage func(cmd createOrder.ReleaseItemsCmd, message *kafka.Message)
 		expectedError   error
 	}{
 		{
@@ -175,7 +185,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishReleaseItemsCmd(t provider.T)
 					},
 				},
 			},
-			validateMessage: func(cmd createOrder.ReleaseItemsCmd, message kafka.Message) {
+			validateMessage: func(cmd createOrder.ReleaseItemsCmd, message *kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
 				t.Require().NoError(err)
@@ -220,7 +230,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelOutOfStockCmd(t provide
 	tests := []struct {
 		name            string
 		cmd             createOrder.CancelOutOfStockCmd
-		validateMessage func(cmd createOrder.CancelOutOfStockCmd, message kafka.Message)
+		validateMessage func(cmd createOrder.CancelOutOfStockCmd, message *kafka.Message)
 		expectedError   error
 	}{
 		{
@@ -228,7 +238,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelOutOfStockCmd(t provide
 			cmd: createOrder.CancelOutOfStockCmd{
 				OrderID: uuid.New(),
 			},
-			validateMessage: func(cmd createOrder.CancelOutOfStockCmd, message kafka.Message) {
+			validateMessage: func(cmd createOrder.CancelOutOfStockCmd, message *kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
 				t.Require().NoError(err)
@@ -273,7 +283,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishAssignCourierCmd(t provider.T
 	tests := []struct {
 		name            string
 		cmd             createOrder.AssignCourierCmd
-		validateMessage func(cmd createOrder.AssignCourierCmd, message kafka.Message)
+		validateMessage func(cmd createOrder.AssignCourierCmd, message *kafka.Message)
 		expectedError   error
 	}{
 		{
@@ -281,7 +291,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishAssignCourierCmd(t provider.T
 			cmd: createOrder.AssignCourierCmd{
 				OrderID: uuid.New(),
 			},
-			validateMessage: func(cmd createOrder.AssignCourierCmd, message kafka.Message) {
+			validateMessage: func(cmd createOrder.AssignCourierCmd, message *kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
 				t.Require().NoError(err)
@@ -326,7 +336,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishBeginDeliveryCmd(t provider.T
 	tests := []struct {
 		name            string
 		cmd             createOrder.BeginDeliveryCmd
-		validateMessage func(cmd createOrder.BeginDeliveryCmd, message kafka.Message)
+		validateMessage func(cmd createOrder.BeginDeliveryCmd, message *kafka.Message)
 		expectedError   error
 	}{
 		{
@@ -335,7 +345,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishBeginDeliveryCmd(t provider.T
 				OrderID:   uuid.New(),
 				CourierID: uuid.New(),
 			},
-			validateMessage: func(cmd createOrder.BeginDeliveryCmd, message kafka.Message) {
+			validateMessage: func(cmd createOrder.BeginDeliveryCmd, message *kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
 				t.Require().NoError(err)
@@ -380,7 +390,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd(t pr
 	tests := []struct {
 		name            string
 		cmd             createOrder.CancelCourierNotFoundCmd
-		validateMessage func(cmd createOrder.CancelCourierNotFoundCmd, message kafka.Message)
+		validateMessage func(cmd createOrder.CancelCourierNotFoundCmd, message *kafka.Message)
 		expectedError   error
 	}{
 		{
@@ -388,7 +398,7 @@ func (s *CreateOrderPublisherTestSuite) TestPublishCancelCourierNotFoundCmd(t pr
 			cmd: createOrder.CancelCourierNotFoundCmd{
 				OrderID: uuid.New(),
 			},
-			validateMessage: func(cmd createOrder.CancelCourierNotFoundCmd, message kafka.Message) {
+			validateMessage: func(cmd createOrder.CancelCourierNotFoundCmd, message *kafka.Message) {
 				var cmdMessage createOrderPublisher.CmdMessage
 				err := json.Unmarshal(message.Value, &cmdMessage)
 				t.Require().NoError(err)

@@ -3,10 +3,9 @@ package di
 import (
 	"context"
 	"fmt"
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
 	"warehouse/internal/infrastructure/logger"
 	"warehouse/internal/infrastructure/messaging"
-
-	"github.com/segmentio/kafka-go"
 
 	"go.uber.org/fx"
 )
@@ -50,12 +49,12 @@ func setupMessagingLifecycle(in struct {
 	Logger    logger.Logger
 
 	// Readers
-	WarehouseCmdReader *kafka.Reader `name:"warehouseCmdReader"`
-	ProductEventReader *kafka.Reader `name:"productEventReader"`
+	WarehouseCmdReader *otelkafkakonsumer.Reader `name:"warehouseCmdReader"`
+	ProductEventReader *otelkafkakonsumer.Reader `name:"productEventReader"`
 
 	// Writers
-	WarehouseCmdResWriter *kafka.Writer `name:"warehouseCmdResWriter"`
-	ProductEventWriter    *kafka.Writer `name:"productEventWriter"`
+	WarehouseCmdResWriter *otelkafkakonsumer.Writer `name:"warehouseCmdResWriter"`
+	ProductEventWriter    *otelkafkakonsumer.Writer `name:"productEventWriter"`
 }) {
 	in.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
@@ -94,7 +93,7 @@ func setupMessagingLifecycle(in struct {
 	})
 }
 
-func closeReader(name string, reader *kafka.Reader, logger logger.Logger) error {
+func closeReader(name string, reader *otelkafkakonsumer.Reader, logger logger.Logger) error {
 	if reader == nil {
 		return nil
 	}
@@ -107,7 +106,7 @@ func closeReader(name string, reader *kafka.Reader, logger logger.Logger) error 
 	return nil
 }
 
-func closeWriter(name string, writer *kafka.Writer, logger logger.Logger) error {
+func closeWriter(name string, writer *otelkafkakonsumer.Writer, logger logger.Logger) error {
 	if writer == nil {
 		return nil
 	}

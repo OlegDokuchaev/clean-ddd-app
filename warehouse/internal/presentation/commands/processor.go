@@ -3,6 +3,10 @@ package commands
 import (
 	"context"
 	"errors"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
 	"sync"
 	"time"
 	"warehouse/internal/infrastructure/logger"
@@ -82,13 +86,17 @@ func (p *Processor) processCommands(ctx context.Context) {
 			}
 
 			// Handle the command
+			sCtx, span := startProcessSpan(cmd)
 			startTime := time.Now()
-			res, err := p.handler.Handle(ctx, cmd)
+
+			res, err := p.handler.Handle(sCtx, cmd.Msg)
+
 			duration := time.Since(startTime)
+			span.End()
 
 			if err != nil {
 				p.log(logger.Error, "process_error", "Command processing failed", map[string]any{
-					"command_id":  cmd.ID,
+					"command_id":  cmd.Msg.ID,
 					"error":       err.Error(),
 					"duration_ms": duration.Milliseconds(),
 				})
@@ -96,16 +104,16 @@ func (p *Processor) processCommands(ctx context.Context) {
 			}
 
 			p.log(logger.Info, "process_success", "Command processed successfully", map[string]any{
-				"command_id":   cmd.ID,
+				"command_id":   cmd.Msg.ID,
 				"duration_ms":  duration.Milliseconds(),
 				"has_response": res != nil,
 			})
 
 			// Write the response
 			if res != nil {
-				if err := p.writer.Write(ctx, res); err != nil {
+				if err := p.writer.Write(cmd.Ctx, res); err != nil {
 					p.log(logger.Error, "write_error", "Error sending response", map[string]any{
-						"command_id":  cmd.ID,
+						"command_id":  cmd.Msg.ID,
 						"response_id": res.ID,
 						"error":       err.Error(),
 					})
@@ -130,4 +138,19 @@ func (p *Processor) Stop() error {
 
 	p.log(logger.Info, "stopped", "Command processor stopped", nil)
 	return nil
+}
+
+func startProcessSpan(cmd *CmdEnvelope) (context.Context, trace.Span) {
+	return otel.Tracer("warehouse-service.commands").Start(
+		cmd.Ctx,
+		"kafka.process",
+		trace.WithSpanKind(trace.SpanKindConsumer),
+		trace.WithAttributes(
+			semconv.MessagingSystemKey.String("kafka"),
+			semconv.MessagingDestinationName(cmd.Topic),
+			semconv.MessagingKafkaDestinationPartition(cmd.Partition),
+			semconv.MessagingOperationKey.String("process"),
+			attribute.String("command.id", cmd.Msg.ID.String()),
+		),
+	)
 }

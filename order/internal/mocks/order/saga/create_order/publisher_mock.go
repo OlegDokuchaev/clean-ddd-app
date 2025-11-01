@@ -2,8 +2,9 @@ package create_order
 
 import (
 	"context"
-	"github.com/stretchr/testify/mock"
 	createOrderSaga "order/internal/application/order/saga/create_order"
+
+	"github.com/stretchr/testify/mock"
 )
 
 type PublisherMock struct {

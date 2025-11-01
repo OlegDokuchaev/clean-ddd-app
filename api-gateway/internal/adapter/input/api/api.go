@@ -8,8 +8,10 @@ import (
 	orderApi "api-gateway/internal/adapter/input/api/order"
 	warehouseApi "api-gateway/internal/adapter/input/api/warehouse"
 	"api-gateway/internal/infrastructure/logger"
+	"api-gateway/internal/infrastructure/telemetry"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 func NewAPI(
@@ -18,13 +20,18 @@ func NewAPI(
 	courierHandler *courierApi.Handler,
 	warehouseHandler *warehouseApi.Handler,
 	log logger.Logger,
+	cfg *Config,
+	telemetryCfg *telemetry.Config,
 ) *gin.Engine {
 	r := gin.New()
 
+	r.Use(otelgin.Middleware(telemetryCfg.ServiceName))
 	r.Use(middleware.GinLoggingMiddleware(log))
 	r.Use(gin.Recovery())
+	r.Use(middleware.TraceIDHeader())
 
-	api := r.Group("")
+	docs.SwaggerInfo.BasePath = cfg.BasePath
+	api := r.Group(cfg.BasePath)
 	{
 		orderApi.RegisterRoutes(api, orderHandler)
 		customerApi.RegisterRoutes(api, customerHandler)

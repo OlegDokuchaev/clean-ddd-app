@@ -37,6 +37,8 @@ func NewHandler(warehouseUseCase warehouseUseCase.UseCase) *Handler {
 // @Security AdminAccessToken
 // @Router /items/increase [patch]
 func (h *Handler) IncreaseQuantity(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req request.ReleaseItemsRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
@@ -50,7 +52,7 @@ func (h *Handler) IncreaseQuantity(c *gin.Context) {
 	}
 
 	items := request.ToItemInfoDtoList(req.Items)
-	err = h.uc.ReleaseItems(c, items, token)
+	err = h.uc.ReleaseItems(ctx, items, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -75,6 +77,8 @@ func (h *Handler) IncreaseQuantity(c *gin.Context) {
 // @Security AdminAccessToken
 // @Router /items/decrease [patch]
 func (h *Handler) DecreaseQuantity(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req request.ReserveItemsRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
@@ -88,7 +92,7 @@ func (h *Handler) DecreaseQuantity(c *gin.Context) {
 	}
 
 	items := request.ToItemInfoDtoList(req.Items)
-	err = h.uc.ReserveItems(c, items, token)
+	err = h.uc.ReserveItems(ctx, items, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -113,6 +117,8 @@ func (h *Handler) DecreaseQuantity(c *gin.Context) {
 // @Security AdminAccessToken
 // @Router /products [post]
 func (h *Handler) CreateProduct(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req request.CreateProductRequest
 	if err := commonRequest.ParseInput(c, &req, binding.JSON); err != nil {
 		commonResponse.HandleError(c, err)
@@ -126,7 +132,7 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 	}
 
 	data := request.ToCreateProductDto(&req)
-	productID, err := h.uc.CreateProduct(c, data, token)
+	productID, err := h.uc.CreateProduct(ctx, data, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -148,14 +154,15 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponseDetail "Server error"
 // @Router /items [get]
 func (h *Handler) GetAllItems(c *gin.Context) {
-	// Limit
+	ctx := c.Request.Context()
+
 	var req request.GetAllItemsRequest
 	if err := commonRequest.ParseInput(c, &req, binding.Query); err != nil {
 		commonResponse.HandleError(c, err)
 		return
 	}
 
-	items, err := h.uc.GetAllItems(c, req.Limit, req.Offset)
+	items, err := h.uc.GetAllItems(ctx, req.Limit, req.Offset)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -180,6 +187,8 @@ func (h *Handler) GetAllItems(c *gin.Context) {
 // @Security     AdminAccessToken
 // @Router       /products/{id}/image [put]
 func (h *Handler) UpdateProductImage(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	// Product ID
 	productID, err := commonRequest.ParseParamUUID(c, "id")
 	if err != nil {
@@ -206,12 +215,12 @@ func (h *Handler) UpdateProductImage(c *gin.Context) {
 		commonResponse.HandleError(c, err)
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Content type
 	contentType := fileHeader.Header.Get("Content-Type")
 
-	err = h.uc.UpdateProductImage(c, productID, file, contentType, token)
+	err = h.uc.UpdateProductImage(ctx, productID, file, contentType, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return
@@ -234,6 +243,8 @@ func (h *Handler) UpdateProductImage(c *gin.Context) {
 // @Security     AdminAccessToken
 // @Router       /products/{id}/image [get]
 func (h *Handler) GetProductImage(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	productID, err := commonRequest.ParseParamUUID(c, "id")
 	if err != nil {
 		commonResponse.HandleError(c, err)
@@ -246,7 +257,7 @@ func (h *Handler) GetProductImage(c *gin.Context) {
 		return
 	}
 
-	reader, contentType, err := h.uc.GetProductImage(c, productID, token)
+	reader, contentType, err := h.uc.GetProductImage(ctx, productID, token)
 	if err != nil {
 		commonResponse.HandleError(c, err)
 		return

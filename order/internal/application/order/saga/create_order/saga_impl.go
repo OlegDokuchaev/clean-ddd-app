@@ -18,16 +18,12 @@ func New(publisher Publisher, repository orderDomain.Repository) Saga {
 }
 
 func (s *SagaImpl) HandleItemsReserved(ctx context.Context, event ItemsReserved) error {
-	cmd := AssignCourierCmd{
-		OrderID: event.OrderID,
-	}
+	cmd := AssignCourierCmd(event)
 	return s.publisher.PublishAssignCourierCmd(ctx, cmd)
 }
 
 func (s *SagaImpl) HandleItemsReservationFailed(ctx context.Context, event ItemsReservationFailed) error {
-	cmd := CancelOutOfStockCmd{
-		OrderID: event.OrderID,
-	}
+	cmd := CancelOutOfStockCmd(event)
 	return s.publisher.PublishCancelOutOfStockCmd(ctx, cmd)
 }
 
@@ -47,17 +43,12 @@ func (s *SagaImpl) HandleCourierAssignmentFailed(ctx context.Context, event Cour
 }
 
 func (s *SagaImpl) HandleItemsReleased(ctx context.Context, event ItemsReleased) error {
-	cmd := CancelCourierNotFoundCmd{
-		OrderID: event.OrderID,
-	}
+	cmd := CancelCourierNotFoundCmd(event)
 	return s.publisher.PublishCancelCourierNotFoundCmd(ctx, cmd)
 }
 
 func (s *SagaImpl) HandleCourierAssigned(ctx context.Context, event CourierAssigned) error {
-	cmd := BeginDeliveryCmd{
-		OrderID:   event.OrderID,
-		CourierID: event.CourierID,
-	}
+	cmd := BeginDeliveryCmd(event)
 	return s.publisher.PublishBeginDeliveryCmd(ctx, cmd)
 }
 

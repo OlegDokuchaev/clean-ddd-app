@@ -1,9 +1,10 @@
 package mothers
 
 import (
-	"github.com/google/uuid"
 	orderDomain "order/internal/domain/order"
 	"order/internal/tests/testutils/builders"
+
+	"github.com/google/uuid"
 )
 
 func DefaultOrder() *orderDomain.Order {

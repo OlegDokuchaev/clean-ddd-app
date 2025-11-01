@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"order/internal/infrastructure/messaging"
 	"strconv"
 	"time"
 
-	"order/internal/infrastructure/messaging"
-
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
 	confluentKafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/segmentio/kafka-go"
 	"github.com/testcontainers/testcontainers-go"
@@ -32,18 +32,22 @@ const (
 	TestCourierResGroupID    = "courier-res-consumer"
 )
 
-func (m *TestMessaging) CreateWriter(topic string) *kafka.Writer {
-	return &kafka.Writer{
-		Addr:  kafka.TCP(m.Cfg.Address),
-		Topic: topic,
-	}
+func (m *TestMessaging) CreateWriter(topic string) (*otelkafkakonsumer.Writer, error) {
+	return otelkafkakonsumer.NewWriter(
+		&kafka.Writer{
+			Addr:  kafka.TCP(m.Cfg.Address),
+			Topic: topic,
+		},
+	)
 }
 
-func (m *TestMessaging) CreateReader(topic string) *kafka.Reader {
-	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{m.Cfg.Address},
-		Topic:   topic,
-	})
+func (m *TestMessaging) CreateReader(topic string) (*otelkafkakonsumer.Reader, error) {
+	return otelkafkakonsumer.NewReader(
+		kafka.NewReader(kafka.ReaderConfig{
+			Brokers: []string{m.Cfg.Address},
+			Topic:   topic,
+		}),
+	)
 }
 
 func (m *TestMessaging) Close(ctx context.Context) error {

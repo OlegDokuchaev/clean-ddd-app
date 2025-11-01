@@ -3,11 +3,6 @@ package usecase_test
 import (
 	"context"
 	"errors"
-	"github.com/google/uuid"
-	"github.com/ozontech/allure-go/pkg/framework/provider"
-	"github.com/ozontech/allure-go/pkg/framework/suite"
-	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/mock"
 	"order/internal/application/order/usecase"
 	orderDomain "order/internal/domain/order"
 	orderMock "order/internal/mocks/order"
@@ -15,6 +10,12 @@ import (
 	"order/internal/tests/testutils/mothers"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/ozontech/allure-go/pkg/framework/provider"
+	"github.com/ozontech/allure-go/pkg/framework/suite"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/mock"
 )
 
 type OrderUseCaseTestSuite struct {

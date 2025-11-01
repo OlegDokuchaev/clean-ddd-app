@@ -8,6 +8,7 @@ import (
 	orderv1 "order/internal/presentation/grpc"
 	"order/internal/presentation/grpc/handler"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -35,6 +36,10 @@ var GRPCModule = fx.Options(
 
 func newGRPCServer(orderHandler orderv1.OrderServiceServer, logger logger.Logger) *grpc.Server {
 	server := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler(
+			otelgrpc.WithMessageEvents(otelgrpc.SentEvents, otelgrpc.ReceivedEvents),
+		)),
+
 		grpc.UnaryInterceptor(orderv1.LoggingInterceptor(logger)),
 		grpc.StreamInterceptor(orderv1.StreamLoggingInterceptor(logger)),
 	)

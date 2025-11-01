@@ -1,9 +1,10 @@
 package builders
 
 import (
-	"github.com/google/uuid"
 	orderDomain "order/internal/domain/order"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type OrderBuilder struct {

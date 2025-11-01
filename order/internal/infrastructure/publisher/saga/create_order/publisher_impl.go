@@ -3,17 +3,24 @@ package create_order
 import (
 	"context"
 	"encoding/json"
-	"github.com/segmentio/kafka-go"
 	createOrder "order/internal/application/order/saga/create_order"
+
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
+
+	"github.com/segmentio/kafka-go"
 )
 
 type PublisherImpl struct {
-	warehouseWriter *kafka.Writer
-	orderWriter     *kafka.Writer
-	courierWriter   *kafka.Writer
+	warehouseWriter *otelkafkakonsumer.Writer
+	orderWriter     *otelkafkakonsumer.Writer
+	courierWriter   *otelkafkakonsumer.Writer
 }
 
-func NewPublisher(warehouseWriter *kafka.Writer, orderWriter *kafka.Writer, courierWriter *kafka.Writer) *PublisherImpl {
+func NewPublisher(
+	warehouseWriter *otelkafkakonsumer.Writer,
+	orderWriter *otelkafkakonsumer.Writer,
+	courierWriter *otelkafkakonsumer.Writer,
+) *PublisherImpl {
 	return &PublisherImpl{
 		warehouseWriter: warehouseWriter,
 		orderWriter:     orderWriter,
@@ -59,16 +66,17 @@ func encodeMessage(msg CmdMessage) ([]byte, error) {
 	return buf, nil
 }
 
-func publishMessage(ctx context.Context, writer *kafka.Writer, msg CmdMessage) error {
+func publishMessage(ctx context.Context, writer *otelkafkakonsumer.Writer, msg CmdMessage) error {
 	value, err := encodeMessage(msg)
 	if err != nil {
 		return err
 	}
 
-	kafkaMsg := kafka.Message{
-		Value: value,
-	}
-	err = writer.WriteMessages(ctx, kafkaMsg)
+	kafkaMsg := kafka.Message{Value: value}
+
+	ctx = writer.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(&kafkaMsg))
+
+	err = writer.WriteMessage(ctx, kafkaMsg)
 	return parseError(err)
 }
 

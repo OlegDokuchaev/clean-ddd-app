@@ -17,6 +17,14 @@ func ToDomain(model *tables.Product) *productDomain.Product {
 	}
 }
 
+func ToDomains(models []*tables.Product) []*productDomain.Product {
+	res := make([]*productDomain.Product, 0, len(models))
+	for _, model := range models {
+		res = append(res, ToDomain(model))
+	}
+	return res
+}
+
 func toProductImageDomain(model tables.ProductImage) productDomain.Image {
 	return productDomain.Image{
 		Path: model.Path,

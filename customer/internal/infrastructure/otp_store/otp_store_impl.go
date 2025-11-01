@@ -112,13 +112,16 @@ func (s *OtpStoreImpl) VerifyAndConsume(
 	if wErr != nil {
 		return false, 0, false, uuid.Nil, wErr
 	}
+	if !outOK {
+		return false, outAttempts, outExpired, uuid.Nil, nil
+	}
 
 	consumerID, err = uuid.Parse(outConsumerStr)
 	if err != nil {
 		return false, 0, false, uuid.Nil, err
 	}
 
-	return outOK, outAttempts, outExpired, consumerID, nil
+	return true, outAttempts, outExpired, consumerID, nil
 }
 
 func (s *OtpStoreImpl) Invalidate(ctx context.Context, challengeID string) error {

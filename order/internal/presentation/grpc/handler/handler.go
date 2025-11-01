@@ -76,7 +76,7 @@ func (h *OrderServiceHandler) GetOrdersByCustomer(ctx context.Context, req *orde
 		return nil, response.ParseError(err)
 	}
 
-	return response.ToGetOrdersByCustomerResponse(orders), nil
+	return response.ToGetOrdersByCustomerResponse(orders)
 }
 
 func (h *OrderServiceHandler) GetCurrentOrdersByCourier(ctx context.Context, req *orderv1.GetCurrentOrdersByCourierRequest) (*orderv1.GetCurrentOrdersByCourierResponse, error) {
@@ -90,7 +90,7 @@ func (h *OrderServiceHandler) GetCurrentOrdersByCourier(ctx context.Context, req
 		return nil, response.ParseError(err)
 	}
 
-	return response.ToGetCurrentOrdersByCourierResponse(orders), nil
+	return response.ToGetCurrentOrdersByCourierResponse(orders)
 }
 
 var _ orderv1.OrderServiceServer = (*OrderServiceHandler)(nil)

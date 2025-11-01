@@ -1,9 +1,10 @@
 package di
 
 import (
-	"go.uber.org/fx"
 	"order/internal/domain/order"
 	orderRepository "order/internal/infrastructure/repository/order"
+
+	"go.uber.org/fx"
 )
 
 var RepositoryModule = fx.Provide(

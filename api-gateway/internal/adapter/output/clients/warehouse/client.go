@@ -10,7 +10,6 @@ import (
 	"io"
 
 	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type ClientImpl struct {
@@ -63,8 +62,10 @@ func (c *ClientImpl) CreateProduct(ctx context.Context, data warehouseDto.Create
 	return productID, nil
 }
 
-func (c *ClientImpl) GetAllItems(ctx context.Context) ([]*warehouseDto.ItemDto, error) {
-	resp, err := c.clients.Item.GetAllItems(ctx, &emptypb.Empty{})
+func (c *ClientImpl) GetAllItems(ctx context.Context, limit int, offset int) ([]*warehouseDto.ItemDto, error) {
+	request := toGetAllItemsRequest(limit, offset)
+
+	resp, err := c.clients.Item.GetAllItems(ctx, request)
 	if err != nil {
 		return nil, response.ParseGRPCError(err)
 	}

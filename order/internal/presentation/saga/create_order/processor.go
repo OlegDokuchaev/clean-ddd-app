@@ -7,6 +7,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Processor struct {
@@ -76,7 +80,7 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 
 		default:
 			// Read the result
-			msg, err := receiver.Read(ctx)
+			res, err := receiver.Read(ctx)
 			if ctx.Err() != nil {
 				continue
 			}
@@ -89,13 +93,17 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 			}
 
 			// Handle the command
+			sCtx, span := startProcessSpan(res)
 			startTime := time.Now()
-			err = p.handler.Handle(ctx, msg)
+
+			err = p.handler.Handle(sCtx, res.Msg)
+
 			duration := time.Since(startTime)
+			span.End()
 
 			if err != nil {
 				p.log(logger.Error, "process_error", "Result processing failed", map[string]any{
-					"result_id":   msg.ID,
+					"result_id":   res.Msg.ID,
 					"source":      source,
 					"error":       err.Error(),
 					"duration_ms": duration.Milliseconds(),
@@ -104,7 +112,7 @@ func (p *Processor) processMessages(ctx context.Context, source string, receiver
 			}
 
 			p.log(logger.Info, "process_success", "Result processed successfully", map[string]any{
-				"result_id":   msg.ID,
+				"result_id":   res.Msg.ID,
 				"source":      source,
 				"duration_ms": duration.Milliseconds(),
 			})
@@ -127,4 +135,19 @@ func (p *Processor) Stop() error {
 
 	p.log(logger.Info, "stopped", "Create order saga processor stopped", nil)
 	return nil
+}
+
+func startProcessSpan(res *ResEnvelope) (context.Context, trace.Span) {
+	return otel.Tracer("order-service.create-order-saga").Start(
+		res.Ctx,
+		"kafka.process",
+		trace.WithSpanKind(trace.SpanKindConsumer),
+		trace.WithAttributes(
+			semconv.MessagingSystemKey.String("kafka"),
+			semconv.MessagingDestinationName(res.Topic),
+			semconv.MessagingKafkaDestinationPartition(res.Partition),
+			semconv.MessagingOperationKey.String("process"),
+			attribute.String("result.id", res.Msg.ID.String()),
+		),
+	)
 }

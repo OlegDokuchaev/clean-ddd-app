@@ -1,7 +1,9 @@
 package create_order
 
 import (
+	"context"
 	"encoding/json"
+
 	"github.com/google/uuid"
 )
 
@@ -20,5 +22,12 @@ type (
 		ID      uuid.UUID
 		Name    ResMessageName
 		Payload json.RawMessage
+	}
+
+	ResEnvelope struct {
+		Ctx       context.Context
+		Msg       *ResMessage
+		Topic     string
+		Partition int
 	}
 )

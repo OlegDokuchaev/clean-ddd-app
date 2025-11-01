@@ -7,6 +7,8 @@ import (
 	"order/internal/infrastructure/logger"
 	createOrderConsumer "order/internal/presentation/saga/create_order"
 
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
+
 	"github.com/segmentio/kafka-go"
 )
 
@@ -15,11 +17,11 @@ type Writer interface {
 }
 
 type WriterImpl struct {
-	writer *kafka.Writer
+	writer *otelkafkakonsumer.Writer
 	logger logger.Logger
 }
 
-func NewWriter(writer *kafka.Writer, logger logger.Logger) *WriterImpl {
+func NewWriter(writer *otelkafkakonsumer.Writer, logger logger.Logger) *WriterImpl {
 	return &WriterImpl{
 		writer: writer,
 		logger: logger,
@@ -30,7 +32,7 @@ func (w *WriterImpl) log(level logger.Level, action, message string, extraFields
 	fields := map[string]any{
 		"component": "command_writer",
 		"action":    action,
-		"topic":     w.writer.Topic,
+		"topic":     w.writer.W.Topic,
 	}
 	for k, v := range extraFields {
 		fields[k] = v
@@ -54,12 +56,12 @@ func (w *WriterImpl) Write(ctx context.Context, res *createOrderConsumer.ResMess
 		return fmt.Errorf("error serializing response: %w", err)
 	}
 
-	kafkaMsg := kafka.Message{
-		Value: msg,
-	}
+	kafkaMsg := kafka.Message{Value: msg}
 
 	// Write the message to Kafka
-	if err = w.writer.WriteMessages(ctx, kafkaMsg); err != nil {
+	ctx = w.writer.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(&kafkaMsg))
+
+	if err = w.writer.WriteMessage(ctx, kafkaMsg); err != nil {
 		w.log(logger.Error, "kafka_write_error", "Failed to send response to Kafka", map[string]any{
 			"response_id": res.ID,
 			"error":       err.Error(),

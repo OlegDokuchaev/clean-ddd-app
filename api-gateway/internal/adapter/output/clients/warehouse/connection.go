@@ -3,10 +3,12 @@ package warehouse
 import (
 	warehouseGRPC "api-gateway/gen/warehouse/v1"
 	"context"
+	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
-	"time"
 )
 
 type GRPCClients struct {
@@ -23,6 +25,7 @@ func newConnection(config *Config) (*grpc.ClientConn, error) {
 		target,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: timeout}),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		return nil, err

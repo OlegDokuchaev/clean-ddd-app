@@ -91,6 +91,20 @@ const docTemplate = `{
                     "couriers"
                 ],
                 "summary": "Get courier orders",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of orders",
@@ -171,6 +185,77 @@ const docTemplate = `{
                 }
             }
         },
+        "/customers/auth-challenges/{challenge_id}": {
+            "patch": {
+                "description": "Verify OTP code for the authentication challenge",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Verify OTP code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Challenge ID",
+                        "name": "challenge_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "OTP verification data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/customer_request.VerifyOtpRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP verified",
+                        "schema": {
+                            "$ref": "#/definitions/customer_response.VerifyOtpResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired code",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Challenge not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid data format",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/customers/login": {
             "post": {
                 "description": "Authenticate a customer and get a JWT token",
@@ -216,6 +301,129 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Customer not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/password-resets": {
+            "post": {
+                "description": "Send password reset email to customer",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Request password reset",
+                "parameters": [
+                    {
+                        "description": "Password reset request data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/customer_request.RequestPasswordResetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Password reset email sent"
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Customer not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid data format",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/password-resets/{token}": {
+            "patch": {
+                "description": "Reset customer password using token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "customers"
+                ],
+                "summary": "Complete password reset",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Password reset token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New password data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/customer_request.CompletePasswordReset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Password reset completed"
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired token",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Token not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid data format",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponseDetail"
                         }
@@ -300,6 +508,20 @@ const docTemplate = `{
                     "items"
                 ],
                 "summary": "Get all warehouse items",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of items",
@@ -466,6 +688,20 @@ const docTemplate = `{
                     "orders"
                 ],
                 "summary": "Get customer orders",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of orders",
@@ -918,6 +1154,17 @@ const docTemplate = `{
                 }
             }
         },
+        "customer_request.CompletePasswordReset": {
+            "type": "object",
+            "required": [
+                "new_password"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string"
+                }
+            }
+        },
         "customer_request.LoginRequest": {
             "type": "object",
             "required": [
@@ -952,10 +1199,32 @@ const docTemplate = `{
                 }
             }
         },
+        "customer_request.RequestPasswordResetRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "customer_request.VerifyOtpRequest": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
         "customer_response.LoginResponse": {
             "type": "object",
             "properties": {
-                "token": {
+                "challenge_id": {
                     "type": "string"
                 }
             }
@@ -964,6 +1233,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "customer_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "customer_response.VerifyOtpResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
                     "type": "string"
                 }
             }
@@ -1105,8 +1382,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "count": {
-                    "type": "integer",
-                    "minimum": 1
+                    "type": "integer"
                 },
                 "product_id": {
                     "type": "string"
@@ -1223,7 +1499,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Clean DDD App API Gateway",
 	Description:      "This is the API Gateway for the Clean DDD application.",

@@ -6,7 +6,6 @@ import (
 	courierDto "api-gateway/internal/domain/dtos/courier"
 	courierClient "api-gateway/internal/port/output/clients/courier"
 	"context"
-
 	"github.com/google/uuid"
 )
 

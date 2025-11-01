@@ -1,14 +1,27 @@
-# Path to the environment file
+# Environment file
 ENV_FILE := .env
-# Base command for running tests
+
+# Base commands
+GOBIN ?= $(shell go env GOPATH)/bin
 GO_TEST := go test -v
+GO_VET := go vet
+GO_LINT := golangci-lint
+GO_IMPORTS := goimports
+
 # Allure
 ALLURE := allure
 ALLURE_OUTPUT_PATH  ?= /
 ALLURE_REPORT_PATH  ?= internal/tests/allure-report
 ALLURE_RESULTS_PATH ?= internal/tests/allure
 
-.PHONY: unit integration e2e allure
+# Thresholds
+CYCLO_LIMIT ?= 10
+MAINT_LIMIT ?= 20
+
+# Tools detection
+COMPLEXITY ?= $(shell command -v complexity 2>/dev/null || echo $(GOBIN)/complexity)
+
+.PHONY: unit integration e2e allure cycloover maintunder lint imports
 
 update_allure_history:
 	rm -rf "$(ALLURE_RESULTS_PATH)/history"
@@ -31,3 +44,15 @@ e2e: update_allure_history
 allure:
 	$(ALLURE) generate $(ALLURE_RESULTS_PATH) --clean -o $(ALLURE_REPORT_PATH)
 	$(ALLURE) open $(ALLURE_REPORT_PATH)
+
+cycloover:
+	$(GO_VET) -vettool="$(COMPLEXITY)" --cycloover $(CYCLO_LIMIT) ./...
+
+maintunder:
+	$(GO_VET) -vettool="$(COMPLEXITY)" --maintunder $(MAINT_LIMIT) ./...
+
+lint:
+	$(GO_LINT) run
+
+imports:
+	$(GO_IMPORTS) -w .

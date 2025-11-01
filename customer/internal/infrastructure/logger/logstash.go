@@ -22,6 +22,10 @@ func createLogstashConn(config *Config) (net.Conn, error) {
 }
 
 func NewLogstash(config *Config) (logrus.Hook, error) {
+	if config.LogstashHost == "" || config.LogstashPort == "" {
+		return nil, nil
+	}
+
 	conn, err := createLogstashConn(config)
 	if err != nil {
 		return nil, err

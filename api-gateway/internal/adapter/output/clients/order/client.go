@@ -6,7 +6,6 @@ import (
 	orderDto "api-gateway/internal/domain/dtos/order"
 	orderClient "api-gateway/internal/port/output/clients/order"
 	"context"
-
 	"github.com/google/uuid"
 )
 

@@ -3,17 +3,17 @@ package outbox
 import (
 	"context"
 	"encoding/json"
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
+	"github.com/segmentio/kafka-go"
 	outboxDomain "warehouse/internal/domain/outbox"
 	productDomain "warehouse/internal/domain/product"
-
-	"github.com/segmentio/kafka-go"
 )
 
 type PublisherImpl struct {
-	productWriter *kafka.Writer
+	productWriter *otelkafkakonsumer.Writer
 }
 
-func NewPublisher(productWriter *kafka.Writer) *PublisherImpl {
+func NewPublisher(productWriter *otelkafkakonsumer.Writer) *PublisherImpl {
 	return &PublisherImpl{productWriter: productWriter}
 }
 
@@ -25,7 +25,7 @@ func (p *PublisherImpl) Publish(ctx context.Context, message *outboxDomain.Messa
 	return publishMessage(ctx, writer, message)
 }
 
-func (p *PublisherImpl) getWriterByMessage(message *outboxDomain.Message) (*kafka.Writer, error) {
+func (p *PublisherImpl) getWriterByMessage(message *outboxDomain.Message) (*otelkafkakonsumer.Writer, error) {
 	switch message.Name {
 	case productDomain.CreatedEventName:
 		return p.productWriter, nil
@@ -48,17 +48,41 @@ func encodeMessage(message *outboxDomain.Message) ([]byte, error) {
 	return buf, nil
 }
 
-func publishMessage(ctx context.Context, writer *kafka.Writer, message *outboxDomain.Message) error {
+func publishMessage(ctx context.Context, writer *otelkafkakonsumer.Writer, message *outboxDomain.Message) error {
 	value, err := encodeMessage(message)
 	if err != nil {
 		return err
 	}
 
-	kafkaMsg := kafka.Message{
-		Value: value,
+	headers, err := parseHeadersFromMessage(message)
+	if err != nil {
+		return err
 	}
-	err = writer.WriteMessages(ctx, kafkaMsg)
+	kafkaMsg := kafka.Message{Value: value, Headers: headers}
+
+	err = writer.WriteMessage(ctx, kafkaMsg)
 	return parseError(err)
 }
 
 var _ outboxDomain.Publisher = (*PublisherImpl)(nil)
+
+func parseHeadersFromMessage(message *outboxDomain.Message) ([]kafka.Header, error) {
+	var headers []kafka.Header
+
+	for k, v := range message.Metadata {
+		switch vv := v.(type) {
+		case string:
+			headers = append(headers, kafka.Header{Key: k, Value: []byte(vv)})
+		case []byte:
+			headers = append(headers, kafka.Header{Key: k, Value: vv})
+		default:
+			if b, mErr := json.Marshal(v); mErr == nil {
+				headers = append(headers, kafka.Header{Key: k, Value: b})
+			} else {
+				return nil, parseError(mErr)
+			}
+		}
+	}
+
+	return headers, nil
+}

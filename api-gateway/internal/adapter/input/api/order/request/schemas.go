@@ -6,13 +6,13 @@ import (
 )
 
 type GetAllCustomerOrdersRequest struct {
-	Limit  int `form:"limit" binding:"required"`
-	Offset int `form:"offset" binding:"required"`
+	Limit  int `form:"limit" binding:"min=1"`
+	Offset int `form:"offset" binding:"min=0"`
 }
 
 type GetAllCourierOrdersRequest struct {
-	Limit  int `form:"limit" binding:"required"`
-	Offset int `form:"offset" binding:"required"`
+	Limit  int `form:"limit" binding:"min=1"`
+	Offset int `form:"offset" binding:"min=0"`
 }
 
 type CreateRequest struct {

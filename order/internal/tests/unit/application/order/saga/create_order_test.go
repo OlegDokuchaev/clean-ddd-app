@@ -3,13 +3,14 @@ package saga
 import (
 	"context"
 	"errors"
-	"github.com/ozontech/allure-go/pkg/framework/provider"
 	createOrder "order/internal/application/order/saga/create_order"
 	orderDomain "order/internal/domain/order"
 	orderMock "order/internal/mocks/order"
 	createOrderMock "order/internal/mocks/order/saga/create_order"
 	"order/internal/tests/testutils/mothers"
 	"testing"
+
+	"github.com/ozontech/allure-go/pkg/framework/provider"
 
 	"github.com/google/uuid"
 	"github.com/ozontech/allure-go/pkg/framework/suite"

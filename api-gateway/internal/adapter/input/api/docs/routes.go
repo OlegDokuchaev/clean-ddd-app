@@ -6,6 +6,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func RegisterRoutes(router *gin.RouterGroup) {
+func RegisterRoutes(router gin.IRouter) {
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

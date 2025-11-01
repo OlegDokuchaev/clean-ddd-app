@@ -10,3 +10,8 @@ type LoginDto struct {
 	Phone    string
 	Password string
 }
+
+type VerifyOtpDto struct {
+	ChallengeID string
+	Code        string
+}

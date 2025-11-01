@@ -8,18 +8,19 @@ import (
 	"order/internal/infrastructure/logger"
 	"sync"
 
+	otelkafkakonsumer "github.com/Trendyol/otel-kafka-konsumer"
 	"github.com/segmentio/kafka-go"
 )
 
 type Reader interface {
 	Start(ctx context.Context) error
-	Read(ctx context.Context) (*ResMessage, error)
+	Read(ctx context.Context) (*ResEnvelope, error)
 	Stop() error
 }
 
 type ReaderImpl struct {
-	reader     *kafka.Reader
-	resultChan chan *ResMessage
+	reader     *otelkafkakonsumer.Reader
+	resultChan chan *ResEnvelope
 	errorChan  chan error
 
 	cancelCtx  context.Context
@@ -32,7 +33,7 @@ type ReaderImpl struct {
 	logger logger.Logger
 }
 
-func NewReader(reader *kafka.Reader, logger logger.Logger) *ReaderImpl {
+func NewReader(reader *otelkafkakonsumer.Reader, logger logger.Logger) *ReaderImpl {
 	return &ReaderImpl{
 		reader: reader,
 		logger: logger,
@@ -43,7 +44,7 @@ func (r *ReaderImpl) log(level logger.Level, action, message string, extraFields
 	fields := map[string]any{
 		"component": "create_order_saga_reader",
 		"action":    action,
-		"topic":     r.reader.Config().Topic,
+		"topic":     r.reader.R.Config().Topic,
 	}
 	for k, v := range extraFields {
 		fields[k] = v
@@ -70,7 +71,7 @@ func (r *ReaderImpl) Start(ctx context.Context) error {
 		return errors.New("reader is already started")
 	}
 
-	r.resultChan = make(chan *ResMessage, 1)
+	r.resultChan = make(chan *ResEnvelope, 1)
 	r.errorChan = make(chan error, 1)
 
 	r.cancelCtx, r.cancelFunc = context.WithCancel(ctx)
@@ -108,7 +109,7 @@ func (r *ReaderImpl) readResults(ctx context.Context) {
 			}
 
 			// Parse the result message
-			resMsg, err := parseMessage(msg.Value)
+			res, err := r.parseResultEnvelope(ctx, msg)
 			if err != nil {
 				r.log(logger.Error, "parse_error", "Failed to parse result message", map[string]any{
 					"error":    err.Error(),
@@ -118,16 +119,16 @@ func (r *ReaderImpl) readResults(ctx context.Context) {
 				continue
 			}
 			r.log(logger.Info, "result_parsed", "Result parsed successfully", map[string]any{
-				"result":    resMsg,
+				"result":    res.Msg,
 				"partition": msg.Partition,
 				"offset":    msg.Offset,
 			})
 
 			// Send the result to the result channel
 			select {
-			case r.resultChan <- resMsg:
+			case r.resultChan <- res:
 				r.log(logger.Info, "result_queued", "Result queued for processing", map[string]any{
-					"result_id": resMsg.ID,
+					"result_id": res.Msg.ID,
 				})
 			case <-ctx.Done():
 				continue
@@ -136,7 +137,7 @@ func (r *ReaderImpl) readResults(ctx context.Context) {
 	}
 }
 
-func (r *ReaderImpl) Read(ctx context.Context) (*ResMessage, error) {
+func (r *ReaderImpl) Read(ctx context.Context) (*ResEnvelope, error) {
 	select {
 	case msg, ok := <-r.resultChan:
 		if !ok {
@@ -172,7 +173,23 @@ func (r *ReaderImpl) Stop() error {
 	return nil
 }
 
-func parseMessage(data []byte) (*ResMessage, error) {
+func (r *ReaderImpl) parseResultEnvelope(ctx context.Context, msg *kafka.Message) (*ResEnvelope, error) {
+	cmdMsg, err := parseResultMessage(msg.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = r.reader.TraceConfig.Propagator.Extract(ctx, otelkafkakonsumer.NewMessageCarrier(msg))
+
+	return &ResEnvelope{
+		Ctx:       ctx,
+		Msg:       cmdMsg,
+		Topic:     r.reader.R.Config().Topic,
+		Partition: msg.Partition,
+	}, nil
+}
+
+func parseResultMessage(data []byte) (*ResMessage, error) {
 	var msg ResMessage
 	if err := json.Unmarshal(data, &msg); err != nil {
 		return nil, fmt.Errorf("error deserializing message: %w", err)

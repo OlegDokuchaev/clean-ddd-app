@@ -10,7 +10,6 @@ import (
 //	@title			Clean DDD App API Gateway
 //	@version		1.0
 //	@description	This is the API Gateway for the Clean DDD application.
-//	@BasePath		/api/v1/
 
 //	@securityDefinitions.apikey	CourierBearerAuth
 //	@in							header
@@ -30,6 +29,7 @@ import (
 func main() {
 	fx.New(
 		di.ConfigModule,
+		di.TelemetryModule,
 		di.ClientsModule,
 		di.AuthModule,
 		di.UseCasesModule,

@@ -7,5 +7,9 @@ type RegisterResponse struct {
 }
 
 type LoginResponse struct {
+	ChallengeID string `json:"challenge_id"`
+}
+
+type VerifyOtpResponse struct {
 	Token string `json:"token"`
 }

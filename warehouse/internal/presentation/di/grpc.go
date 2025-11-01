@@ -3,6 +3,7 @@ package di
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"net"
 
 	"warehouse/internal/infrastructure/logger"
@@ -49,6 +50,10 @@ func newGRPCServer(
 	logger logger.Logger,
 ) *grpc.Server {
 	server := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler(
+			otelgrpc.WithMessageEvents(otelgrpc.SentEvents, otelgrpc.ReceivedEvents),
+		)),
+
 		grpc.UnaryInterceptor(warehousev1.LoggingInterceptor(logger)),
 		grpc.StreamInterceptor(warehousev1.StreamLoggingInterceptor(logger)),
 	)

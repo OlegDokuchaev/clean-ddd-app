@@ -6,7 +6,6 @@ import (
 	customerDto "api-gateway/internal/domain/dtos/customer"
 	customerClient "api-gateway/internal/port/output/clients/customer"
 	"context"
-
 	"github.com/google/uuid"
 )
 
@@ -44,7 +43,40 @@ func (c *ClientImpl) Login(ctx context.Context, data customerDto.LoginDto) (stri
 		return "", response.ParseGRPCError(err)
 	}
 
+	return resp.ChallengeId, nil
+}
+
+func (c *ClientImpl) VerifyOtp(ctx context.Context, data customerDto.VerifyOtpDto) (string, error) {
+	request := toVerifyOtpRequest(data)
+
+	resp, err := c.client.VerifyOtp(ctx, request)
+	if err != nil {
+		return "", response.ParseGRPCError(err)
+	}
+
 	return resp.Token, nil
+}
+
+func (c *ClientImpl) RequestPasswordReset(ctx context.Context, email string) error {
+	request := toRequestPasswordResetRequest(email)
+
+	_, err := c.client.RequestPasswordReset(ctx, request)
+	if err != nil {
+		return response.ParseGRPCError(err)
+	}
+
+	return nil
+}
+
+func (c *ClientImpl) CompletePasswordReset(ctx context.Context, token string, newPassword string) error {
+	request := toCompletePasswordResetRequest(token, newPassword)
+
+	_, err := c.client.CompletePasswordReset(ctx, request)
+	if err != nil {
+		return response.ParseGRPCError(err)
+	}
+
+	return nil
 }
 
 func (c *ClientImpl) Authenticate(ctx context.Context, token string) (uuid.UUID, error) {

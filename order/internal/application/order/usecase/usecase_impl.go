@@ -2,9 +2,10 @@ package usecase
 
 import (
 	"context"
-	"github.com/google/uuid"
 	createOrderSaga "order/internal/application/order/saga/create_order"
 	orderDomain "order/internal/domain/order"
+
+	"github.com/google/uuid"
 )
 
 type UseCaseImpl struct {

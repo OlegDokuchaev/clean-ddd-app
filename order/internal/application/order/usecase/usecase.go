@@ -2,8 +2,9 @@ package usecase
 
 import (
 	"context"
-	"github.com/google/uuid"
 	orderDomain "order/internal/domain/order"
+
+	"github.com/google/uuid"
 )
 
 type UseCase interface {

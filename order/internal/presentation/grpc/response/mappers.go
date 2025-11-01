@@ -1,6 +1,8 @@
 package response
 
 import (
+	"fmt"
+	"math"
 	orderDomain "order/internal/domain/order"
 	orderv1 "order/internal/presentation/grpc"
 
@@ -8,6 +10,13 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func safeIntToInt32(v int) (int32, error) {
+	if v > math.MaxInt32 || v < math.MinInt32 {
+		return 0, fmt.Errorf("value %d out of int32 range", v)
+	}
+	return int32(v), nil
+}
 
 func MapStatus(status orderDomain.Status) orderv1.OrderStatus {
 	switch status {
@@ -38,23 +47,37 @@ func ToEmptyResponse() *emptypb.Empty {
 	return &emptypb.Empty{}
 }
 
-func ToOrderItemResponse(item orderDomain.Item) *orderv1.OrderItem {
+func ToOrderItemResponse(item orderDomain.Item) (*orderv1.OrderItem, error) {
+	count32, err := safeIntToInt32(item.Count)
+	if err != nil {
+		return nil, err
+	}
+
 	return &orderv1.OrderItem{
 		ProductId: item.ProductID.String(),
 		Price:     item.Price.InexactFloat64(),
-		Count:     int32(item.Count),
-	}
+		Count:     count32,
+	}, nil
 }
 
-func ToOrderItemsResponse(items []orderDomain.Item) []*orderv1.OrderItem {
+func ToOrderItemsResponse(items []orderDomain.Item) ([]*orderv1.OrderItem, error) {
 	resp := make([]*orderv1.OrderItem, 0, len(items))
-	for _, item := range items {
-		resp = append(resp, ToOrderItemResponse(item))
+	for _, it := range items {
+		mapped, err := ToOrderItemResponse(it)
+		if err != nil {
+			return nil, err
+		}
+		resp = append(resp, mapped)
 	}
-	return resp
+	return resp, nil
 }
 
-func ToOrderResponse(order *orderDomain.Order) *orderv1.Order {
+func ToOrderResponse(order *orderDomain.Order) (*orderv1.Order, error) {
+	items, err := ToOrderItemsResponse(order.Items)
+	if err != nil {
+		return nil, err
+	}
+
 	var courierID *string
 	if order.Delivery.CourierID != nil {
 		courierId := order.Delivery.CourierID.String()
@@ -71,32 +94,46 @@ func ToOrderResponse(order *orderDomain.Order) *orderv1.Order {
 		CustomerId: order.CustomerID.String(),
 		Status:     MapStatus(order.Status),
 		Version:    order.Version.String(),
-		Items:      ToOrderItemsResponse(order.Items),
+		Items:      items,
 		Delivery: &orderv1.Delivery{
 			CourierId: courierID,
 			Address:   order.Delivery.Address,
 			Arrived:   arrived,
 		},
 		Created: timestamppb.New(order.Created),
-	}
+	}, nil
 }
 
-func ToOrdersResponse(orders []*orderDomain.Order) []*orderv1.Order {
+func ToOrdersResponse(orders []*orderDomain.Order) ([]*orderv1.Order, error) {
 	resp := make([]*orderv1.Order, 0, len(orders))
 	for _, order := range orders {
-		resp = append(resp, ToOrderResponse(order))
+		mapped, err := ToOrderResponse(order)
+		if err != nil {
+			return nil, err
+		}
+		resp = append(resp, mapped)
 	}
-	return resp
+	return resp, nil
 }
 
-func ToGetOrdersByCustomerResponse(orders []*orderDomain.Order) *orderv1.GetOrdersByCustomerResponse {
+func ToGetOrdersByCustomerResponse(orders []*orderDomain.Order) (*orderv1.GetOrdersByCustomerResponse, error) {
+	mappedOrders, err := ToOrdersResponse(orders)
+	if err != nil {
+		return nil, err
+	}
+
 	return &orderv1.GetOrdersByCustomerResponse{
-		Orders: ToOrdersResponse(orders),
-	}
+		Orders: mappedOrders,
+	}, nil
 }
 
-func ToGetCurrentOrdersByCourierResponse(orders []*orderDomain.Order) *orderv1.GetCurrentOrdersByCourierResponse {
-	return &orderv1.GetCurrentOrdersByCourierResponse{
-		Orders: ToOrdersResponse(orders),
+func ToGetCurrentOrdersByCourierResponse(orders []*orderDomain.Order) (*orderv1.GetCurrentOrdersByCourierResponse, error) {
+	mappedOrders, err := ToOrdersResponse(orders)
+	if err != nil {
+		return nil, err
 	}
+
+	return &orderv1.GetCurrentOrdersByCourierResponse{
+		Orders: mappedOrders,
+	}, nil
 }
